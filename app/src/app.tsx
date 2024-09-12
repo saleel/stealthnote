@@ -42,10 +42,6 @@ function App() {
         data
       );
 
-      console.log("publicKey", publicKey);
-      console.log("signature", signature);
-      console.log("data", data);
-
       if (!isValid) {
         throw new Error("Invalid token signature");
       }
@@ -64,20 +60,12 @@ function App() {
         "0x" + Buffer.from(signature).toString("hex")
       );
 
-      console.log("pubKeyBigInt", modulusBigInt);
-      console.log("signatureBigInt", signatureBigInt);
-
       const redc_parm = (1n << (2n * 2048n)) / modulusBigInt;
 
       const paddedData = new Uint8Array(1024);
       paddedData.set(data);
 
-      // console.log("paddedData", paddedData);
-
-      // if (data.length !== 917) {
-      //   throw new Error("asd'");
-      // }
-
+  
       const input = {
         pubkey_modulus_limbs: splitToWords(modulusBigInt, 120n, 18n).map((s) =>
           s.toString()
@@ -92,15 +80,16 @@ function App() {
         ),
       };
 
-      console.log(JSON.stringify(input));
+      console.log("input", input);
       const { witness } = await noir.execute(input);
       console.time("proof");
       const proof = await backend.generateProof(witness);
       console.timeEnd("proof");
-      console.log(proof);
+      
+      console.log("proof", proof);
 
       const verified = await backend.verifyProof(proof);
-      console.log(verified);
+      console.log("verified", verified);
     } catch (error) {
       console.error(error);
     }
@@ -132,8 +121,10 @@ function App() {
 
   const extractAndVerifyToken = async (idToken: string) => {
     try {
-      const [headerB64] = idToken.split(".");
+      const [headerB64, payloadB64] = idToken.split(".");
       const header = JSON.parse(atob(headerB64));
+
+      console.log("JWT payload", JSON.parse(atob(payloadB64)));
 
       // Fetch Google's public keys
       const response = await fetch(
