@@ -2,7 +2,7 @@
 name = "circuit"
 type = "bin"
 authors = [""]
-compiler_version = ">=0.32.0"
+compiler_version = ">=0.33.0"
 
 [dependencies]
 noir_rsa = { path = "../../noir_rsa/lib" }

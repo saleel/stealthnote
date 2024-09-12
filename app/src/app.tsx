@@ -1,17 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { GoogleLogin, useGoogleLogin } from "@react-oauth/google";
-import axios from "axios";
-import "./app.css";
-import pako from "pako";
-import circuit from "../../circuit/target/circuit.json";
+import React from "react";
+import { CompiledCircuit, Noir } from "@noir-lang/noir_js";
 import {
   BarretenbergBackend,
   BarretenbergVerifier as Verifier,
 } from "@noir-lang/backend_barretenberg";
-import { Noir } from "@noir-lang/noir_js";
-import { Buffer } from "buffer";
-
-globalThis.Buffer = Buffer;
+import circuit from "../../circuit/target/circuit.json";
 
 function App() {
   function splitToWords(
@@ -57,8 +50,8 @@ function App() {
         throw new Error("Invalid token signature");
       }
 
-      const backend = new BarretenbergBackend(circuit);
-      const noir = new Noir(circuit);
+      const backend = new BarretenbergBackend(circuit as CompiledCircuit);
+      const noir = new Noir(circuit as CompiledCircuit);
 
       const publicKeyJWK = await globalThis.crypto.subtle.exportKey(
         "jwk",
@@ -81,24 +74,24 @@ function App() {
 
       // console.log("paddedData", paddedData);
 
-      if (data.length !== 917) {
-        throw new Error("asd'");
-      }
+      // if (data.length !== 917) {
+      //   throw new Error("asd'");
+      // }
 
       const input = {
-        pubkey_modulus_limbs: splitToWords(modulusBigInt, 120n, 18n).map(
-          (s) => s.toString()
+        pubkey_modulus_limbs: splitToWords(modulusBigInt, 120n, 18n).map((s) =>
+          s.toString()
         ),
-        redc_params_limbs: splitToWords(redc_parm, 120n, 18n).map(
-          (s) => s.toString()
+        redc_params_limbs: splitToWords(redc_parm, 120n, 18n).map((s) =>
+          s.toString()
         ),
         data: Array.from(paddedData).map((s) => s.toString()),
-        data_length: 917,
-        signature_limbs: splitToWords(signatureBigInt, 120n, 18n).map(
-          (s) => s.toString()
+        data_length: data.length,
+        signature_limbs: splitToWords(signatureBigInt, 120n, 18n).map((s) =>
+          s.toString()
         ),
       };
-      
+
       console.log(JSON.stringify(input));
       const { witness } = await noir.execute(input);
       console.time("proof");
@@ -137,34 +130,9 @@ function App() {
     window.location.href = url;
   }
 
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const idToken = urlParams.get("id_token");
-    const state = urlParams.get("state");
-
-    if (idToken && state) {
-      // Verify state to prevent CSRF attacks
-      const storedState = localStorage.getItem("googleOAuthState");
-      if (state === storedState) {
-        // State is valid, process the id_token
-        console.log("Received ID Token:", idToken);
-        // TODO: Send this token to your backend for verification and user authentication
-
-        // Clear the state from localStorage
-        localStorage.removeItem("googleOAuthState");
-      } else {
-        console.error("Invalid state parameter");
-      }
-
-      // Remove query parameters from URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, []);
-
   const extractAndVerifyToken = async (idToken: string) => {
     try {
-      // Decode the JWT without verification to extract the header
-      const [headerB64, payloadB64] = idToken.split(".");
+      const [headerB64] = idToken.split(".");
       const header = JSON.parse(atob(headerB64));
 
       // Fetch Google's public keys
@@ -174,7 +142,7 @@ function App() {
       const keys = await response.json();
 
       // Find the correct key based on the 'kid' in the JWT header
-      const key = keys.keys.find((k: any) => k.kid === header.kid);
+      const key = keys.keys.find((k: { kid: string }) => k.kid === header.kid);
 
       if (!key) {
         throw new Error("Public key not found");
@@ -214,7 +182,7 @@ function App() {
     }
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.hash.substring(1));
     const idToken = urlParams.get("id_token");
     const state = urlParams.get("state");

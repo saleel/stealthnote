@@ -1,10 +1,9 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
+import { Buffer } from "buffer";
+import "./styles.css";
 import App from "./app.tsx";
-import { GoogleOAuthProvider } from "@react-oauth/google";
 
-createRoot(document.getElementById("root")!).render(
+globalThis.Buffer = Buffer;
 
-    <App />
-
-);
+createRoot(document.getElementById("root")!).render(<App />);
