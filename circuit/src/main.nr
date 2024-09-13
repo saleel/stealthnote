@@ -4,6 +4,8 @@ use dep::noir_rsa::bignum::BigNum;
 use dep::noir_rsa::bignum::runtime_bignum::BigNumInstance;
 use dep::noir_rsa::bignum::fields::Params2048;
 use dep::noir_rsa::types::RSA;
+use dep::string_search::{SubString, StringBody, SubString32, SubString256, StringBody1024};
+
 
 mod utils;
 
@@ -18,7 +20,9 @@ fn main(
     pubkey_modulus_limbs: [Field; 18],
     redc_params_limbs: [Field; 18],
     signature_limbs: [Field; 18],
-    body_start_index: u32
+    body_start_index: u32,
+    email_address_bytes: pub [u8; 256],
+    user_email_address_length: u32
 ) {
     let pubkey: BigNumInstance<18, Params2048> = BigNumInstance::new(pubkey_modulus_limbs, redc_params_limbs);
 
@@ -32,7 +36,24 @@ fn main(
     assert(data[body_start_index - 1] == 46);
     let decoded: [u8; 768] = utils::jwt_body_decode(data, body_start_index, data_length);
 
-    println(decoded);
+
+    let needle_text = "\"email_verified\":true".as_bytes();
+    let haystack: StringBody1024 = StringBody::new(decoded, decoded.len());
+    let needle: SubString32 = SubString::new(needle_text, needle_text.len());
+
+    let (result): (bool, u32) = haystack.substring_match(needle);
+    assert(result);
+
+    let email_prefix = "\"email\":\"".as_bytes();
+    let email_prefix_substring: SubString32 = SubString::new(email_prefix, email_prefix.len());
+    let email_substring: SubString256 = SubString::new(email_address_bytes, user_email_address_length);
+
+    let email_needle = email_prefix_substring.concat_into(email_substring);
+
+    let (email_found, email_match_position): (bool, u32) = haystack.substring_match(email_needle);
+    assert(email_found);
+
+    assert(decoded[email_match_position + email_needle.len()] == 34);
 }
 
 #[test]
@@ -44,5 +65,7 @@ fn test_main() {
         [1168806255959705181209950987749946322,333274691026862528009146732823060640,109827721138874484913865775263836697,1138882215619871831832493727997520595,654677511956142136867687970961806947,128774906453535716397716998601420432,327537757821620974860286749355041793,803069221084797947197041532194607248,1185484697072763022356627336302318573,1129324630614122747059271493549103030,1246688389673928357468459042906271394,101676577495205078277783567322594260,668744505548812062325922807663861508,923334944828904002799524384618561770,31182629640266890413051532846818868,949628758823132453111687548542037557,1172461786514369137112771275368034096,339],
         [747371525414017048954607496667654345,1022143055942223593484033565370829670,440523407131522798970531933920004858,938683451703363814445308861632537903,480231060980881638385141421787246582,140355947377092969396208732067134255,441787130187142456444018804394539526,882595268848914662124810724383924232,358028769196593502873776109640003798,1138412512628162583390855276710119240,502586143886908401219888641811982261,853143456628162540755224387250983302,1079019964028110926440958408670463107,1305640455900307887289661491369834518,966099736189648700400019510803301344,171882374922600447704812810934041486,434185841179857267929448508429773227,91],
         103,
+        [115, 97, 108, 101, 101, 108, 64, 97, 122, 116, 101, 99, 112, 114, 111, 116, 111, 99, 111, 108, 46, 99, 111, 109, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        24
     )
 }

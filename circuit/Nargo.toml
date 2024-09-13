@@ -6,4 +6,5 @@ compiler_version = ">=0.33.0"
 
 [dependencies]
 noir_rsa = { path = "../../noir_rsa/lib" }
-string_search = { tag = "v0.1", git = "https://github.com/noir-lang/noir_string_search"  }
+string_search = { path = "../../noir_string_search" }
+# string_search = { tag = "v0.1", git = "https://github.com/noir-lang/noir_string_search"  }
