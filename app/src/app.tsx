@@ -7,6 +7,8 @@ import {
 import circuit from "../../circuit/target/circuit.json";
 
 function App() {
+  const nonce = "dr3bzu51rrjomr7co4wayzmozj5kep0j";
+
   function splitToWords(
     number: bigint,
     wordsize: bigint,
@@ -65,7 +67,9 @@ function App() {
       const paddedData = new Uint8Array(1024);
       paddedData.set(data);
 
-  
+      const domainBytes = new Uint8Array(50);
+      domainBytes.set(Uint8Array.from(new TextEncoder().encode("aztecprotocol.com")));
+
       const input = {
         pubkey_modulus_limbs: splitToWords(modulusBigInt, 120n, 18n).map((s) =>
           s.toString()
@@ -78,9 +82,12 @@ function App() {
         signature_limbs: splitToWords(signatureBigInt, 120n, 18n).map((s) =>
           s.toString()
         ),
+        domain_name: Array.from(domainBytes).map((s) => s.toString()),
+        domain_name_length: "aztecprotocol.com".length,
+        nonce: Array.from(new TextEncoder().encode(nonce)).map((s) => s.toString()),
       };
 
-      console.log("input", input);
+      console.log("input", JSON.stringify(input));
       const { witness } = await noir.execute(input);
       console.time("proof");
       const proof = await backend.generateProof(witness);
@@ -104,8 +111,6 @@ function App() {
 
     const state = Math.random().toString(36).substring(2);
     localStorage.setItem("googleOAuthState", state);
-
-    const nonce = Math.random().toString(36).substring(2);
 
     const url =
       `https://accounts.google.com/o/oauth2/v2/auth?` +
