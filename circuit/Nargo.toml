@@ -5,5 +5,5 @@ authors = [""]
 compiler_version = ">=0.32.0"
 
 [dependencies]
-noir_rsa = { path = "../../noir_rsa/lib" }
+noir_rsa = { tag = "v0.3", git = "https://github.com/noir-lang/noir_rsa" }
 string_search = { path = "../../noir_string_search" }
