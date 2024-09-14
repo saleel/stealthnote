@@ -3,14 +3,14 @@ use dep::noir_rsa::bignum::BigNum;
 use dep::noir_rsa::bignum::runtime_bignum::BigNumInstance;
 use dep::noir_rsa::bignum::fields::Params2048;
 use dep::noir_rsa::types::RSA;
-// use dep::string_search::{SubString, StringBody, SubString32, SubString64, StringBody1024};
+use dep::string_search::{SubString, StringBody, SubString32, SubString64, StringBody256};
 // mod utils;
 
 type BN2048 = BigNum<18, Params2048>;
 type RSA2048 = RSA<BN2048, BigNumInstance<18, Params2048>, 256>;
 
 global MAX_DATA_LENGTH: u32 = 1024;
-global MAX_PAYLOAD_LENGTH: u32 = 660 - 300 - 300;
+global MAX_PAYLOAD_LENGTH: u32 = 200;
 
 fn main(
     data: [u8; MAX_DATA_LENGTH],
@@ -21,8 +21,8 @@ fn main(
     // body_start_index: u32,
     domain_name: pub [u8; 50],
     domain_name_length: u32,
-    hd_start_index: u32,
-    // nonce: pub [u8; 32],
+    // hd_start_index: u32,
+    nonce: pub [u8; 32],
     // nonce_start_index: u32,
 ) {
     let body_start_index = 103;
@@ -43,63 +43,56 @@ fn main(
     for i in 0..MAX_PAYLOAD_LENGTH {
         payload_data[i] = data[body_start_index + skip_chars + i];
     }
-    let decoded: [u8; 45] = base64_decode(payload_data);
+    let decoded: [u8; 150] = base64_decode(payload_data);
 
-    let skip_chars_decoded = skip_chars / 4 * 3;
+    // let skip_chars_decoded = skip_chars / 4 * 3;
 
-    let hd_index = hd_start_index - skip_chars_decoded;
+    // let hd_index = hd_start_index - skip_chars_decoded;
 
-    assert(decoded[hd_index] == 34);
-    assert(decoded[hd_index + 1] == 104);
-    assert(decoded[hd_index + 2] == 100);
-    assert(decoded[hd_index + 3] == 34);
-    assert(decoded[hd_index + 4] == 58);
-    assert(decoded[hd_index + 5] == 34);
+    // assert(decoded[hd_index] == 34);
+    // assert(decoded[hd_index + 1] == 104);
+    // assert(decoded[hd_index + 2] == 100);
+    // assert(decoded[hd_index + 3] == 34);
+    // assert(decoded[hd_index + 4] == 58);
+    // assert(decoded[hd_index + 5] == 34);
 
-    for i in 0..50 {
-        if i < domain_name_length {
-            assert(decoded[hd_index + 6 + i] == domain_name[i]);
-        }
-    }
+    // for i in 0..50 {
+    //     if i < domain_name_length {
+    //         assert(decoded[hd_index + 6 + i] == domain_name[i]);
+    //     }
+    // }
 
-    assert(decoded[hd_index + 6 + domain_name_length] == 34);
+    // assert(decoded[hd_index + 6 + domain_name_length] == 34);
 
-    // validate_hd_field(decoded, domain_name, domain_name_length, hd_start_index);
-    // validate_nonce(decoded, nonce, nonce_start_index);
+    validate_hd_field(decoded, domain_name, domain_name_length);
+    validate_nonce(decoded, nonce);
 }
 
-fn validate_hd_field(decoded: [u8; 495], domain_name: [u8; 50], domain_name_length: u32, hd_start_index: u32) {
-    // TODO: Switch to using substring matching - currently failing in v0.34 in frontend
+fn validate_hd_field(decoded: [u8; 150], domain_name: [u8; 50], domain_name_length: u32) {
+    let hd_prefix = "\"hd\":\"".as_bytes();
+    let hd_prefix_substring: SubString32 = SubString::new(hd_prefix, hd_prefix.len());
+    let domain_substring: SubString64 = SubString::new(domain_name, domain_name_length);
+    let domain_needle = hd_prefix_substring.concat_into(domain_substring);
 
-    // let hd_prefix = "\"hd\":\"".as_bytes();
-    // let hd_prefix_substring: SubString32 = SubString::new(hd_prefix, hd_prefix.len());
-    // let domain_substring: SubString64 = SubString::new(domain_name, domain_name_length);
-    // let domain_needle = hd_prefix_substring.concat_into(domain_substring);
-    // let (domain_found, domain_position): (bool, u32) = haystack.substring_match(domain_needle);
-    // assert(domain_found);
-    // assert(decoded[domain_position + domain_needle.len()] == 34);
-
+    let haystack: StringBody256 = StringBody::new(decoded, decoded.len());
+    let (domain_found, domain_position): (bool, u32) = haystack.substring_match(domain_needle);
     
+    assert(domain_found);
+    assert(decoded[domain_position + domain_needle.len()] == 34);
 }
 
-// fn validate_nonce(decoded: [u8; 495], nonce: [u8; 32], nonce_start_index: u32) {
-//     assert(decoded[nonce_start_index] == 34);
-//     assert(decoded[nonce_start_index + 1] == 110);
-//     assert(decoded[nonce_start_index + 2] == 111);
-//     assert(decoded[nonce_start_index + 3] == 110);
-//     assert(decoded[nonce_start_index + 4] == 99);
-//     assert(decoded[nonce_start_index + 5] == 101);
-//     assert(decoded[nonce_start_index + 6] == 34);
-//     assert(decoded[nonce_start_index + 7] == 58);
-//     assert(decoded[nonce_start_index + 8] == 34);
+fn validate_nonce(decoded: [u8; 150], nonce: [u8; 32]) {
+    let nonce_prefix = "\"nonce\":\"".as_bytes();
+    let nonce_prefix_substring: SubString32 = SubString::new(nonce_prefix, nonce_prefix.len());
+    let nonce_substring: SubString64 = SubString::new(nonce, 32);
+    let nonce_needle = nonce_prefix_substring.concat_into(nonce_substring);
 
-//     // nonce is always 32 chars
-//     for i in 0..32 {
-//         // println(decoded[nonce_start_index + 9 + i]);
-//         // println(nonce[i]);
-//         assert(decoded[nonce_start_index + 9 + i] == nonce[i]);
-//     }
-// }
+    let haystack: StringBody256 = StringBody::new(decoded, decoded.len());
+    let (nonce_found, nonce_position): (bool, u32) = haystack.substring_match(nonce_needle);
+    
+    assert(nonce_found);
+    assert(decoded[nonce_position + nonce_needle.len()] == 34);
+}
 
 
 // From zkemail.nr (modified)
@@ -161,8 +154,8 @@ fn test_main() {
 // 103,
 [97,122,116,101,99,112,114,111,116,111,99,111,108,46,99,111,109,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 17,
-229,
-// [100, 114, 51, 98, 122, 117, 53, 49, 114, 114, 106, 111, 109, 114, 55, 99, 111, 52, 119, 97, 121, 122, 109, 111, 122, 106, 53, 107, 101, 112, 48, 106],
+// 229,
+[100, 114, 51, 98, 122, 117, 53, 49, 114, 114, 106, 111, 109, 114, 55, 99, 111, 52, 119, 97, 121, 122, 109, 111, 122, 106, 53, 107, 101, 112, 48, 106],
 // 311
     )
 }

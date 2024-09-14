@@ -6,4 +6,4 @@ compiler_version = ">=0.32.0"
 
 [dependencies]
 noir_rsa = { path = "../../noir_rsa/lib" }
-# string_search = { path = "../../noir_string_search" }
+string_search = { path = "../../noir_string_search" }
