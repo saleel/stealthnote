@@ -2,50 +2,49 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { Message } from "../types";
+import { fetchMessages, submitMessage } from "../utils";
+import usePromise from "../hooks/use-promise";
 
-interface Message {
-  text: string;
-  sender: string;
-  timestamp: number;
-}
 
 export default function ChatPage() {
   const params = useParams();
   const domain = params.domain as string;
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      timestamp: 1726318347308,
-      text: "Hello! How can I help you today?",
-      sender: "bot",
-    },
-    {
-      timestamp: 1726318147308,
-      text: "I have a question about your services.",
-      sender: "user",
-    },
-    {
-      timestamp: 1726318447308,
-      text: "Sure, I'd be happy to help. What would you like to know?",
-      sender: "bot",
-    },
-  ]);
+  const [messages, { isFetching, error, reFetch, fetchedAt }] = usePromise<Message[]>(() => fetchMessages(domain), {
+    defaultValue: [],
+  });
   const [newMessage, setNewMessage] = useState("");
+
+
+  useEffect(() => {
+    fetchMessages(domain);
+  }, [domain]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  function handleMessageSubmit(e: React.FormEvent) {
+
+  async function handleMessageSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (newMessage.trim()) {
-      setMessages([
-        ...messages,
-        { timestamp: new Date().getTime(), text: newMessage, sender: "user" },
-      ]);
-      setNewMessage("");
+      const message: Message = {
+        timestamp: new Date().toISOString(),
+        text: newMessage,
+        sender: 123456,
+        domain: domain
+      };
+
+      try {
+        await submitMessage(message);
+        reFetch();
+        setNewMessage("");
+      } catch (error) {
+        alert(`Failed to send message: ${error}`);
+      }
     }
   }
 
@@ -72,6 +71,9 @@ export default function ChatPage() {
       </h1>
 
       <div className="message-list">
+        {isFetching && !fetchedAt && <div className="text-center">Loading...</div>}
+        {error && <div>Error: {error.message}</div>}
+
         {messages.map((message) => renderMessage(message))}
         <div ref={messagesEndRef} />
       </div>

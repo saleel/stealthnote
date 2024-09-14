@@ -135,3 +135,40 @@ p {
   cursor: pointer;
   font-size: 1rem;
 }
+
+.spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+  font-size: 1.2rem;
+  color: #133330;
+}
+
+.error-message {
+  color: #ff0000;
+  text-align: center;
+  padding: 1rem;
+}
+
+.message-input-button {
+  &.loading {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+}
+
+.message-input-field:disabled {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+}
+
+
+
+
+
+// Utils
+
+.text-center {
+  text-align: center;
+}

@@ -1,9 +1,15 @@
+import { Message } from "./types";
+
 export function signInWithGoogle({
   nonce,
   redirectPath = "",
 }: { nonce?: string; redirectPath?: string } = {}) {
-  const clientId =
-    "654304047015-s536rk3rg5ucgq8pk8t8mjdv1019gb1j.apps.googleusercontent.com";
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    console.error('Google Client ID is not set');
+    return;
+  }
+
   const redirectUri = window.origin + redirectPath;
   const scope = "email profile";
   const responseType = "id_token";
@@ -41,4 +47,39 @@ export function verifyNonceAndExtractPayload(idTokenStr: string) {
 
   const payload = idTokenStr.split(".")[1];
   return JSON.parse(atob(payload));
+}
+
+export async function fetchMessages(domain: string) {
+  const response = await fetch(`/api/messages?domain=${domain}`);
+  if (response.ok) {
+    const data = await response.json();
+    return data;
+  } else {
+    throw new Error("Failed to fetch messages");
+  }
+}
+
+export async function submitMessage(message: Message) {
+  const response = await fetch('/api/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(message),
+  });
+
+  if (response.ok) {
+    return response.json();
+  } else {
+    let errorMessage = response.statusText;
+
+    try {
+      const errorData = await response.json();
+      errorMessage = JSON.stringify(errorData);
+    } catch (error) {
+      //
+    }
+
+    throw new Error(errorMessage);
+  }
 }
