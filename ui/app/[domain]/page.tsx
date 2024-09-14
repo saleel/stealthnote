@@ -1,14 +1,12 @@
-'use client';
+"use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-
-// Remove the import for chat.module.css
+import React, { useState, useRef, useEffect } from "react";
+import { useParams } from "next/navigation";
 
 interface Message {
-  id: number;
   text: string;
-  sender: 'user' | 'bot';
+  sender: string;
+  timestamp: number;
 }
 
 export default function ChatPage() {
@@ -17,53 +15,79 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [messages, setMessages] = useState<Message[]>([
-    { id: 1, text: "Hello! How can I help you today?", sender: 'bot' },
-    { id: 2, text: "I have a question about your services.", sender: 'user' },
-    { id: 3, text: "Sure, I'd be happy to help. What would you like to know?", sender: 'bot' },
+    {
+      timestamp: 1726318347308,
+      text: "Hello! How can I help you today?",
+      sender: "bot",
+    },
+    {
+      timestamp: 1726318147308,
+      text: "I have a question about your services.",
+      sender: "user",
+    },
+    {
+      timestamp: 1726318447308,
+      text: "Sure, I'd be happy to help. What would you like to know?",
+      sender: "bot",
+    },
   ]);
-  const [newMessage, setNewMessage] = useState('');
-
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      setMessages([...messages, { id: Date.now(), text: newMessage, sender: 'user' }]);
-      setNewMessage('');
-      // Here you would typically send the message to your backend
-      // and then add the response to the messages array
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSendMessage();
-    }
-  };
+  const [newMessage, setNewMessage] = useState("");
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  function handleMessageSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (newMessage.trim()) {
+      setMessages([
+        ...messages,
+        { timestamp: new Date().getTime(), text: newMessage, sender: "user" },
+      ]);
+      setNewMessage("");
+    }
+  }
+
+  function renderMessage(message: Message) {
+    return (
+      <div key={message.timestamp} className={`message-box ${message.sender}`}>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span className="message-box-sender">{message.sender}</span>
+          <span className="message-box-timestamp">
+            {new Date(message.timestamp).toLocaleDateString()}{" "}
+            {new Date(message.timestamp).toLocaleTimeString()}
+          </span>
+        </div>
+        {message.text}
+      </div>
+    );
+  }
+
   return (
-    <div className="chatContainer">
-      <h1 className="chatHeader">Chat for {domain}</h1>
-      <div className="messageList">
-        {messages.map((message) => (
-          <div key={message.id} className={`message ${message.sender}`}>
-            {message.text}
-          </div>
-        ))}
+    <div className="messages-container">
+      <h1 className="messages-container-title">
+        Anonymous messages from members of{" "}
+        <span className="messages-container-title-domain">{domain}</span>
+      </h1>
+
+      <div className="message-list">
+        {messages.map((message) => renderMessage(message))}
         <div ref={messagesEndRef} />
       </div>
-      <div className="inputArea">
+
+      <form className="message-input-container" onSubmit={handleMessageSubmit} >
         <input
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Type your message..."
-          className="inputField"
+          placeholder="Type your anonymous message..."
+          className="message-input-field"
         />
-        <button onClick={handleSendMessage} className="sendButton">Send</button>
-      </div>
+        <button type="submit" className="message-input-button">
+          Submit
+        </button>
+      </form>
     </div>
   );
 }
