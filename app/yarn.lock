@@ -10,10 +10,10 @@
     "@jridgewell/gen-mapping" "^0.3.5"
     "@jridgewell/trace-mapping" "^0.3.24"
 
-"@aztec/bb.js@0.51.1":
-  version "0.51.1"
-  resolved "https://registry.yarnpkg.com/@aztec/bb.js/-/bb.js-0.51.1.tgz#f92e90e0139ef5efaf288b6e2c1f7c4da09a1a10"
-  integrity sha512-Fs47VEeQ0Gum8xMn/gaDIe6Y9jwBycKyj9l4FjG7UBqhq3VJnhrbTR+bTvhShZd2ioFsxo06y0fBJzbX8xvlPA==
+"@aztec/bb.js@0.55.0":
+  version "0.55.0"
+  resolved "https://registry.yarnpkg.com/@aztec/bb.js/-/bb.js-0.55.0.tgz#86788670170f2437c049419d2e1c58a51eb56e49"
+  integrity sha512-hdSn5qba/OVyDAPuNBxpF+nFodcv+lK16YPIqkgaaNJ/6hURSLXClbkfnXNg7egwmnvrBQrJb5dVuaoydm8y6w==
   dependencies:
     comlink "^4.4.1"
     commander "^10.0.1"
@@ -422,40 +422,40 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@noir-lang/acvm_js@0.49.0-21425de.nightly":
-  version "0.49.0-21425de.nightly"
-  resolved "https://registry.yarnpkg.com/@noir-lang/acvm_js/-/acvm_js-0.49.0-21425de.nightly.tgz#78749170e5ff6b57b23107b54b9df8f7a2fd7666"
-  integrity sha512-fmZ2QSRp2cqVvfsiWtLQuDdEYKqR4M3o8Vfc+Wy9bBqUXT3osgZcEsQ2+NySZoOJcbRUt+MwRGzuRd3kn6HZow==
+"@noir-lang/acvm_js@0.50.0":
+  version "0.50.0"
+  resolved "https://registry.yarnpkg.com/@noir-lang/acvm_js/-/acvm_js-0.50.0.tgz#b423998340b7422e6da94e750516a36cee4f0cba"
+  integrity sha512-tmD3eZ8GbkkD001S/YVIrp91sy+XW1ZeVRObio1WgvX9081kJS1xptBglMO4ITzdHOLLuIeaChlUhCgNtwFB9Q==
 
-"@noir-lang/backend_barretenberg@0.33.0-21425de.nightly":
-  version "0.33.0-21425de.nightly"
-  resolved "https://registry.yarnpkg.com/@noir-lang/backend_barretenberg/-/backend_barretenberg-0.33.0-21425de.nightly.tgz#0eaab73a4d004a591667d1f97bf899b4563d94ad"
-  integrity sha512-hMx+G+262qnI20IMGekKgc4nqPmsBwBnvI9IxBPEMwpOpqUHnpBwTLnJsqR0jBrlCB1bk5io5/RQ17q6bvI6Lg==
+"@noir-lang/backend_barretenberg@0.34.0":
+  version "0.34.0"
+  resolved "https://registry.yarnpkg.com/@noir-lang/backend_barretenberg/-/backend_barretenberg-0.34.0.tgz#d152ab15977d282212161f980e98149ecd87f72f"
+  integrity sha512-yDW+IN0wrbjtlVNzz0MMWpwIdzBvJ98ZdEt1jXXQItPQ8BZW7324oexWZTAtHb0oLsktdTpxyx6uM6AVpQG5ug==
   dependencies:
-    "@aztec/bb.js" "0.51.1"
-    "@noir-lang/types" "0.33.0-21425de.nightly"
+    "@aztec/bb.js" "0.55.0"
+    "@noir-lang/types" "0.34.0"
     fflate "^0.8.0"
 
-"@noir-lang/noir_js@0.33.0-21425de.nightly":
-  version "0.33.0-21425de.nightly"
-  resolved "https://registry.yarnpkg.com/@noir-lang/noir_js/-/noir_js-0.33.0-21425de.nightly.tgz#f7c7c92db0997940a54d85b0e63256523d39224f"
-  integrity sha512-jrWk9HGsOcaK3ts727+Br+H0BIMjsMDUVEu7fg/vKldkF6Zg930BVQz9G2MIhHyNwQ+v6/bWdPkcFB54ek1JfA==
+"@noir-lang/noir_js@0.34.0":
+  version "0.34.0"
+  resolved "https://registry.yarnpkg.com/@noir-lang/noir_js/-/noir_js-0.34.0.tgz#77cde030b786d6ad672a14eb354f67e0148bf243"
+  integrity sha512-NprF+UlG05d2SkUQDcJ+GBHiWvkkVp5QczsFGmAHtGjpETAj5fqaSE8iTzdp/QTl2K9OtrsNrDLYoK/PPCLgFQ==
   dependencies:
-    "@noir-lang/acvm_js" "0.49.0-21425de.nightly"
-    "@noir-lang/noirc_abi" "0.33.0-21425de.nightly"
-    "@noir-lang/types" "0.33.0-21425de.nightly"
+    "@noir-lang/acvm_js" "0.50.0"
+    "@noir-lang/noirc_abi" "0.34.0"
+    "@noir-lang/types" "0.34.0"
 
-"@noir-lang/noirc_abi@0.33.0-21425de.nightly":
-  version "0.33.0-21425de.nightly"
-  resolved "https://registry.yarnpkg.com/@noir-lang/noirc_abi/-/noirc_abi-0.33.0-21425de.nightly.tgz#aaffd7ac4056b0eb456f09c9d14bb223d92c8d81"
-  integrity sha512-600C6LkuNhnLUiggiKILlaM/8NBFHCmrUAKEC4t5pMocGNYkoDFdprFhFkYPRieB6wjzHtEtSp4I+LKnU75eQA==
+"@noir-lang/noirc_abi@0.34.0":
+  version "0.34.0"
+  resolved "https://registry.yarnpkg.com/@noir-lang/noirc_abi/-/noirc_abi-0.34.0.tgz#301b8a5fc807ebeb09728b1c2f9b81c9f72deb01"
+  integrity sha512-GrdOG0qQfjFN2llYOKEDenaNpMp1JAtB5NxRM+8hB69VDKmAFGJJRgcMxzWgbRcRhX5AOp/7CHqV2OVVqgTMYA==
   dependencies:
-    "@noir-lang/types" "0.33.0-21425de.nightly"
+    "@noir-lang/types" "0.34.0"
 
-"@noir-lang/types@0.33.0-21425de.nightly":
-  version "0.33.0-21425de.nightly"
-  resolved "https://registry.yarnpkg.com/@noir-lang/types/-/types-0.33.0-21425de.nightly.tgz#58a75e83ff532d25ec4f4680c3cd1628cdac8a01"
-  integrity sha512-+elPT9w97XmGHvVBfIh+VL7ILfBs3nmDgERyBBc9kajMRTWx/RQP3c5x8e+ZOIpT1RsZTl3EVRRKdUjSPcSOJA==
+"@noir-lang/types@0.34.0":
+  version "0.34.0"
+  resolved "https://registry.yarnpkg.com/@noir-lang/types/-/types-0.34.0.tgz#909d4a170177c7ab5adfeed5dc8660d69825ced2"
+  integrity sha512-04A14JMPt5G6/cCD4n59W0DUtAbcN8YByvSJ6gj0VQramd11tWK3ZqhKadnQrzhA0GwEvROd6jvn/blKdHlSXQ==
 
 "@rollup/rollup-android-arm-eabi@4.21.2":
   version "4.21.2"
