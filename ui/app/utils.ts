@@ -1,16 +1,13 @@
 import { Message } from "./types";
 
-export function signInWithGoogle({
-  nonce,
-  redirectPath = "",
-}: { nonce?: string; redirectPath?: string } = {}) {
+export function signInWithGoogle({ nonce }: { nonce?: string } = {}) {
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   if (!clientId) {
-    console.error('Google Client ID is not set');
+    console.error("Google Client ID is not set");
     return;
   }
 
-  const redirectUri = window.origin + redirectPath;
+  const redirectUri = window.origin;
   const scope = "email profile";
   const responseType = "id_token";
 
@@ -60,10 +57,10 @@ export async function fetchMessages(domain: string) {
 }
 
 export async function submitMessage(message: Message) {
-  const response = await fetch('/api/messages', {
-    method: 'POST',
+  const response = await fetch("/api/messages", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(message),
   });
@@ -82,4 +79,23 @@ export async function submitMessage(message: Message) {
 
     throw new Error(errorMessage);
   }
+}
+
+export async function signMessageWithGoogle(message: Message) {
+  const dataToHash = message.text + message.timestamp;
+  const messageHash = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(dataToHash)
+  );
+  const messageHashHex = Array.from(new Uint8Array(messageHash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  const nonce = messageHashHex.slice(0, 32);
+
+  console.log({ dataToHash, messageHashHex, nonce });
+  signInWithGoogle({ nonce, redirectPath: `${message.domain}` });
+}
+
+export function generateProof(idToken: string) {
+  return { hi: idToken };
 }

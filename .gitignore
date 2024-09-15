@@ -1,6 +1,9 @@
 # Dependencies
 node_modules
 
+.DS_Store
+circuit/target
+
 /.pnp
 .pnp.js
 

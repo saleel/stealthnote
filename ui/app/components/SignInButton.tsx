@@ -6,7 +6,7 @@ import { signInWithGoogle, verifyNonceAndExtractPayload } from '../utils';
 
 const SignInButton = () => {
   function handleGoogleSignIn() {
-    signInWithGoogle();
+    signInWithGoogle({ nonce: "init" });
   }
 
   React.useEffect(() => {
@@ -19,9 +19,13 @@ const SignInButton = () => {
 
       // Redirect to domains route
       if (domain) {
-        window.location.href = `/${domain}`;
+        if (payload.nonce === "init") {
+          window.location.href = `/${domain}`;
+        } else {
+          window.location.href = `/${domain}?idToken=${idToken}`;
+        }
       } else {
-        console.error("No domain found in the JWT payload");
+        alert("You can use this app with a Google account that is part of an organization.");
       }
 
       // Remove query parameters from URL
