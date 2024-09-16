@@ -25,26 +25,28 @@ export default function ChatPage() {
   }, [messages]);
 
   // Handle Google OAuth callback
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.hash.substring(1));
-    const idToken = urlParams.get("id_token");
+  // useEffect(() => {
+  //   const urlParams = new URLSearchParams(window.location.search);
+  //   const idToken = urlParams.get("idToken");
 
-    if (idToken) {
-      setIsProving(true);
+  //   if (idToken) {
+  //     window.history.replaceState({}, document.title, window.location.pathname);
 
-      (async () => {
-        try {
-          const proof = await generateProof(idToken);
-          console.log({ proof });
+  //     setIsProving(true);
 
-          // submitMessage(message, proof);
-        } catch (e) {
-          alert(`Failed to generate proof: ${e}`);
-        }
-      })();
+  //     (async () => {
+  //       try {
+  //         const proof = await generateProof(idToken);
+  //         console.log({ proof });
+
+  //         // submitMessage(message, proof);
+  //       } catch (e) {
+  //         alert(`Failed to generate proof: ${e}`);
+  //       }
+  //     })();
     
-    }
-  }, []);
+  //   }
+  // }, []);
 
   async function handleMessageSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,12 +60,20 @@ export default function ChatPage() {
       };
 
       try {
-        await signMessageWithGoogle(message);
-        // await submitMessage(message);
-        // reFetch();
+        const { idToken, tokenPayload } = await signMessageWithGoogle(message);
+        console.log({ idToken, tokenPayload });
+        
+        setIsProving(true);
+        const proof = await generateProof(idToken!);
+        console.log(proof);
+
+        await submitMessage(message, proof);
+        reFetch();
         setNewMessage("");
       } catch (error) {
         alert(`Failed to send message: ${error}`);
+      } finally {
+        setIsProving(false);
       }
     }
   }
@@ -94,6 +104,9 @@ export default function ChatPage() {
         {isFetching && !fetchedAt && (
           <div className="text-center">Loading...</div>
         )}
+        {fetchedAt && messages.length === 0 && (
+          <div className="text-center">No messages yet</div>
+        )}
         {error && <div>Error: {error.message}</div>}
 
         {messages.map((message) => renderMessage(message))}
@@ -107,9 +120,10 @@ export default function ChatPage() {
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type your anonymous message..."
           className="message-input-field"
+          disabled={isProving}
         />
-        <button type="submit" className="message-input-button">
-          Submit
+        <button type="submit" className="message-input-button" disabled={isProving}>
+          {isProving ? "Proving..." : "Submit"}
         </button>
       </form>
     </div>

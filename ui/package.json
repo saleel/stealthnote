@@ -14,7 +14,9 @@
     "next": "14.2.11",
     "react": "^18",
     "react-dom": "^18",
-    "sass": "^1.78.0"
+    "sass": "^1.78.0",
+    "@noir-lang/backend_barretenberg": "0.34.0",
+    "@noir-lang/noir_js": "0.34.0"
   },
   "devDependencies": {
     "@types/node": "^20",

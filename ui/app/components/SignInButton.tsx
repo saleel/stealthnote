@@ -1,18 +1,34 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Image from 'next/image';
-import { signInWithGoogle, verifyNonceAndExtractPayload } from '../utils';
+import React from "react";
+import Image from "next/image";
+import { signInWithGoogle, verifyNonceAndExtractPayload } from "../utils";
 
 const SignInButton = () => {
-  function handleGoogleSignIn() {
-    signInWithGoogle({ nonce: "init" });
+  async function handleGoogleSignIn() {
+    const { tokenPayload, error } = await signInWithGoogle({ nonce: "init" });
+
+    if (error) {
+      alert(error);
+      return;
+    }
+
+    const domain = tokenPayload.hd;
+
+    // Redirect to domains route
+    if (domain) {
+      window.location.href = `/${domain}`;
+    } else {
+      alert(
+        "You can use this app with a Google account that is part of an organization."
+      );
+    }
   }
 
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.hash.substring(1));
     const idToken = urlParams.get("id_token");
-    
+
     if (idToken) {
       const payload = verifyNonceAndExtractPayload(idToken);
       const domain = payload.hd;
@@ -25,7 +41,9 @@ const SignInButton = () => {
           window.location.href = `/${domain}?idToken=${idToken}`;
         }
       } else {
-        alert("You can use this app with a Google account that is part of an organization.");
+        alert(
+          "You can use this app with a Google account that is part of an organization."
+        );
       }
 
       // Remove query parameters from URL

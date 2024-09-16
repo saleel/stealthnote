@@ -11,13 +11,16 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(request: NextRequest) {
-  const { text, sender, timestamp, domain } = await request.json();
+  const { message, proof } = await request.json();
+  const { text, sender, timestamp, domain } = message;
+
+  console.log('Received proof:', proof);
 
   console.log('Received message:', { text, sender, timestamp, domain });
 
   const { data, error } = await supabase
     .from('messages')
-    .insert([{ text, sender, timestamp, domain }]);
+    .insert([{ text, sender, timestamp, domain, proof }]);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
