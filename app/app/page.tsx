@@ -1,7 +1,7 @@
 'use client';
 
 import React from "react";
-import SignInButton from "./components/SignInButton";
+import SignInButton from "./components/siwg";
 
 export default function Home() {
   return (

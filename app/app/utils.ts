@@ -1,12 +1,70 @@
 import { CompiledCircuit, Noir } from "@noir-lang/noir_js";
 import {
   BarretenbergBackend,
-  BarretenbergVerifier as Verifier,
+  UltraHonkBackend,
+  UltraHonkVerifier,
 } from "@noir-lang/backend_barretenberg";
 import circuit from "../../circuit/target/circuit.json";
 import { Message } from "./types";
 
-// Add this function to load the Google OAuth script
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (params: object) => void;
+          prompt: () => void;
+        };
+      };
+    };
+  }
+}
+
+export async function fetchMessages(domain: string) {
+  const response = await fetch(`/api/messages?domain=${domain}`);
+  if (response.ok) {
+    const data = await response.json();
+    return data;
+  } else {
+    throw new Error("Failed to fetch messages");
+  }
+}
+
+export async function fetchMessage(id: string) {
+  const response = await fetch(`/api/messages/${id}`);
+  if (response.ok) {
+    const data = await response.json();
+    return data;
+  } else {
+    throw new Error("Failed to fetch message");
+  }
+}
+
+export async function submitMessage(message: Message, proof: Uint8Array) {
+  const response = await fetch("/api/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ message, proof: Array.from(proof) }),
+  });
+
+  if (response.ok) {
+    return response.json();
+  } else {
+    let errorMessage = response.statusText;
+
+    try {
+      const errorData = await response.json();
+      errorMessage = JSON.stringify(errorData);
+    } catch (error) {
+      //
+    }
+
+    throw new Error(errorMessage);
+  }
+}
+
 async function loadGoogleOAuthScript() {
   return new Promise<void>((resolve) => {
     if (typeof window.google !== "undefined" && window.google.accounts) {
@@ -22,7 +80,7 @@ async function loadGoogleOAuthScript() {
 
 export async function signInWithGoogle({ nonce }: { nonce: string }): Promise<{
   idToken?: string;
-  tokenPayload?: any;
+  tokenPayload?: object;
   error?: string;
 }> {
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -31,10 +89,7 @@ export async function signInWithGoogle({ nonce }: { nonce: string }): Promise<{
     return { error: "Google Client ID is not set" };
   }
 
-  // Use the function before initializing the OAuth client
   await loadGoogleOAuthScript();
-  // const redirectUri = window.origin;
-  // const scope = "email profile openid";
 
   localStorage.setItem("googleOAuthNonce", nonce);
 
@@ -65,71 +120,12 @@ export async function signInWithGoogle({ nonce }: { nonce: string }): Promise<{
   });
 }
 
-export function verifyNonceAndExtractPayload(idTokenStr: string) {
-  console.log("verifyNonceAndExtractPayload", idTokenStr);
-  // Verify stored nonce is same as the one in the token
-  const storedNonce = localStorage.getItem("googleOAuthNonce");
-  if (!idTokenStr || !storedNonce) {
-    throw new Error("Invalid token or nonce");
-  }
-
-  const tokenPayload = JSON.parse(atob(idTokenStr.split(".")[1]));
-  if (tokenPayload.nonce !== storedNonce) {
-    throw new Error("Invalid nonce");
-  }
-
-  const payload = idTokenStr.split(".")[1];
-  return JSON.parse(atob(payload));
-}
-
-export async function fetchMessages(domain: string) {
-  const response = await fetch(`/api/messages?domain=${domain}`);
-  if (response.ok) {
-    const data = await response.json();
-    return data;
-  } else {
-    throw new Error("Failed to fetch messages");
-  }
-}
-
-export async function submitMessage(message: Message, proof: any) {
-  const response = await fetch("/api/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ message, proof }),
-  });
-
-  if (response.ok) {
-    return response.json();
-  } else {
-    let errorMessage = response.statusText;
-
-    try {
-      const errorData = await response.json();
-      errorMessage = JSON.stringify(errorData);
-    } catch (error) {
-      //
-    }
-
-    throw new Error(errorMessage);
-  }
-}
-
 export async function signMessageWithGoogle(message: Message) {
-  const dataToHash = message.text + message.timestamp;
-  const messageHash = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(dataToHash)
-  );
-  const messageHashHex = Array.from(new Uint8Array(messageHash))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  const nonce = messageHashHex.slice(0, 32);
+  const messageHash = await hashMessage(message);
 
-  console.log({ dataToHash, messageHashHex, nonce });
-  const { error, idToken, tokenPayload } = await signInWithGoogle({ nonce });
+  const { error, idToken, tokenPayload } = await signInWithGoogle({
+    nonce: messageHash,
+  });
   if (error) {
     throw new Error(error);
   }
@@ -137,7 +133,23 @@ export async function signMessageWithGoogle(message: Message) {
   return { idToken, tokenPayload };
 }
 
-export async function generateProof(idToken: string) {
+export async function hashMessage(message: Message) {
+  const dataToHash = message.text + message.timestamp;
+  const messageHash = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(dataToHash)
+  );
+
+  return Array.from(new Uint8Array(messageHash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 32); // Only using 32 bytes for the nonce
+}
+
+export async function generateProof(
+  idToken: string
+): Promise<{ proof: Uint8Array; provingTime: number }> {
+  // Parse token
   const [headerB64, payloadB64] = idToken.split(".");
   const header = JSON.parse(atob(headerB64));
   const payload = JSON.parse(atob(payloadB64));
@@ -191,7 +203,8 @@ export async function generateProof(idToken: string) {
     throw new Error("Invalid token signature");
   }
 
-  const backend = new BarretenbergBackend(circuit as CompiledCircuit);
+  // Initialize Noir JS
+  const backend = new UltraHonkBackend(circuit as CompiledCircuit);
   const noir = new Noir(circuit as CompiledCircuit);
 
   const publicKeyJWK = await globalThis.crypto.subtle.exportKey(
@@ -202,12 +215,13 @@ export async function generateProof(idToken: string) {
     "0x" + Buffer.from(publicKeyJWK.n as string, "base64").toString("hex")
   );
   const signatureBigInt = BigInt("0x" + Buffer.from(signature).toString("hex"));
-
   const redc_parm = (1n << (2n * 2048n)) / modulusBigInt;
 
+  // Pad data to 1024 bytes
   const paddedData = new Uint8Array(1024);
   paddedData.set(data);
 
+  // Pad domain to 50 bytes
   const domainBytes = new Uint8Array(50);
   domainBytes.set(
     Uint8Array.from(new TextEncoder().encode("aztecprotocol.com"))
@@ -232,16 +246,18 @@ export async function generateProof(idToken: string) {
     ),
   };
 
-  console.log("input", JSON.stringify(input));
-  const { witness } = await noir.execute(input);
-  console.time("proof");
-  const proof = await backend.generateProof(witness);
-  console.timeEnd("proof");
+  console.log("Inputs for circuit", JSON.stringify(input));
 
-  console.log("proof", proof);
+  // Generate witness and prove
+  const startTime = performance.now();
+  const { witness } = await noir.execute(input);
+  const proof = await backend.generateProof(witness);
+  const provingTime = performance.now() - startTime;
 
   const verified = await backend.verifyProof(proof);
-  console.log("verified", verified);
+  console.log("Proof verified", verified);
+
+  return { proof: proof.proof, provingTime };
 }
 
 function splitBigIntToChunks(
@@ -256,4 +272,43 @@ function splitBigIntToChunks(
     chunks.push(chunk);
   }
   return chunks;
+}
+
+export async function verifyProof(
+  message: Message,
+  domain: string,
+  proof: Uint8Array
+) {
+  if (domain !== message.domain) {
+    throw new Error("Domain does not match");
+  }
+
+  const backend = new BarretenbergBackend(circuit as CompiledCircuit);
+  const verifier = new UltraHonkVerifier();
+
+  const publicInputs = new Uint8Array(50 + 32).fill(0); // 50 bytes for domain, 32 for messageHash
+  const messageHash = await hashMessage(message);
+
+  publicInputs.set(new TextEncoder().encode(message.domain));
+  publicInputs.set(new TextEncoder().encode(messageHash), 50);
+
+  const proofData = {
+    proof: Uint8Array.from(proof),
+    publicInputs: Array.from(publicInputs).map(
+      (s) => "0x" + s.toString(16).padStart(64, "0")
+    ),
+  };
+
+  console.log(proofData);
+
+  const startTime = performance.now();
+  await verifier.instantiate();
+  const vkey = await backend.getVerificationKey();
+  // console.log(vkey);
+  const result = await verifier.verifyProof(proofData, vkey);
+  const verificationTime = performance.now() - startTime;
+
+  console.log(`Proof verified in ${verificationTime}ms`, result);
+
+  return { isValid: result, verificationTime };
 }

@@ -3,7 +3,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Message } from "../types";
-import { fetchMessages, generateProof, signMessageWithGoogle, submitMessage } from "../utils";
+import {
+  fetchMessage,
+  fetchMessages,
+  generateProof,
+  signMessageWithGoogle,
+  submitMessage,
+  verifyProof,
+} from "../utils";
 import usePromise from "../hooks/use-promise";
 
 export default function ChatPage() {
@@ -11,71 +18,79 @@ export default function ChatPage() {
   const domain = params.domain as string;
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const [messages, { isFetching, error, reFetch, fetchedAt }] = usePromise<Message[]>(
-    () => fetchMessages(domain), {
-      defaultValue: [],
-      dependencies: [domain],
-    }
-  );
   const [newMessage, setNewMessage] = useState("");
   const [isProving, setIsProving] = useState(false);
 
+  const [messages, { isFetching, error, reFetch, fetchedAt }] = usePromise<
+    Message[]
+  >(() => fetchMessages(domain), {
+    defaultValue: [],
+    dependencies: [domain],
+  });
+
+  // Automatically call refetch every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      reFetch();
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [reFetch]);
+
+  // Auto scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Handle Google OAuth callback
-  // useEffect(() => {
-  //   const urlParams = new URLSearchParams(window.location.search);
-  //   const idToken = urlParams.get("idToken");
-
-  //   if (idToken) {
-  //     window.history.replaceState({}, document.title, window.location.pathname);
-
-  //     setIsProving(true);
-
-  //     (async () => {
-  //       try {
-  //         const proof = await generateProof(idToken);
-  //         console.log({ proof });
-
-  //         // submitMessage(message, proof);
-  //       } catch (e) {
-  //         alert(`Failed to generate proof: ${e}`);
-  //       }
-  //     })();
-    
-  //   }
-  // }, []);
-
   async function handleMessageSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (newMessage.trim()) {
-      const message: Message = {
-        timestamp: new Date().toISOString(),
-        text: newMessage,
-        sender: 123456,
-        domain: domain,
-      };
-
-      try {
-        const { idToken, tokenPayload } = await signMessageWithGoogle(message);
-        console.log({ idToken, tokenPayload });
-        
-        setIsProving(true);
-        const proof = await generateProof(idToken!);
-        console.log(proof);
-
-        await submitMessage(message, proof);
-        reFetch();
-        setNewMessage("");
-      } catch (error) {
-        alert(`Failed to send message: ${error}`);
-      } finally {
-        setIsProving(false);
-      }
+    if (!newMessage.trim()) {
+      return;
     }
+
+    const message: Message = {
+      id: crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
+      text: newMessage,
+      sender: 123456,
+      domain: domain,
+    };
+
+    try {
+      const { idToken, tokenPayload } = await signMessageWithGoogle(message);
+      console.log("Message signed with Google", { tokenPayload });
+
+      setIsProving(true);
+      const { proof, provingTime } = await generateProof(idToken!);
+      console.log(`Proof generated in ${provingTime} ms`, proof);
+
+      await submitMessage(message, proof);
+      reFetch();
+      setNewMessage("");
+    } catch (error) {
+      console.error(`Failed to submit message: ${error}`);
+      alert('Oops, something went wrong. Please try again.');
+    } finally {
+      setIsProving(false);
+    }
+  }
+
+  async function onVerifyClick(messageId: string) {
+    console.log("Verifying proof");
+
+    // Fetch single message with proof
+    const message = await fetchMessage(messageId);
+    
+    // Prepare full proof object
+    const { isValid, verificationTime } = await verifyProof(message, domain, message.proof);
+
+    if (!isValid) {
+      alert("Proof is invalid");
+    }
+
+    // Verify proof
+    console.log(`Proof verified in ${verificationTime} ms`, isValid); 
   }
 
   function renderMessage(message: Message) {
@@ -86,6 +101,8 @@ export default function ChatPage() {
           <span className="message-box-timestamp">
             {new Date(message.timestamp).toLocaleDateString()}{" "}
             {new Date(message.timestamp).toLocaleTimeString()}
+
+            <button className="message-box-verify" onClick={() => onVerifyClick(message.id)}>Verify</button>
           </span>
         </div>
         {message.text}
@@ -122,7 +139,11 @@ export default function ChatPage() {
           className="message-input-field"
           disabled={isProving}
         />
-        <button type="submit" className="message-input-button" disabled={isProving}>
+        <button
+          type="submit"
+          className="message-input-button"
+          disabled={isProving}
+        >
           {isProving ? "Proving..." : "Submit"}
         </button>
       </form>

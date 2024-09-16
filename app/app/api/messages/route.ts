@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from('messages')
-    .select('*')
+    .select('id, text, sender, timestamp, domain')
     .eq('domain', domain)
     .order('timestamp', { ascending: true });
 
