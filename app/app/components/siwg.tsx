@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { signInWithGoogle } from "../utils";
+import { signInWithGoogle } from "../core";
 
 const SignInButton = () => {
   async function handleGoogleSignIn() {

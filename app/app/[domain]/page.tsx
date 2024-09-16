@@ -10,7 +10,7 @@ import {
   signMessageWithGoogle,
   submitMessage,
   verifyProof,
-} from "../utils";
+} from "../core";
 import usePromise from "../hooks/use-promise";
 
 export default function ChatPage() {
@@ -51,7 +51,7 @@ export default function ChatPage() {
 
     const message: Message = {
       id: crypto.randomUUID(),
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().getTime(),
       text: newMessage,
       sender: 123456,
       domain: domain,
@@ -65,12 +65,15 @@ export default function ChatPage() {
       const { proof, provingTime } = await generateProof(idToken!);
       console.log(`Proof generated in ${provingTime} ms`, proof);
 
-      await submitMessage(message, proof);
+      message.proof = proof;
+      await submitMessage(message);
+
+      // Update message list
       reFetch();
       setNewMessage("");
     } catch (error) {
       console.error(`Failed to submit message: ${error}`);
-      alert('Oops, something went wrong. Please try again.');
+      alert("Oops, something went wrong. Please try again.");
     } finally {
       setIsProving(false);
     }
@@ -81,28 +84,33 @@ export default function ChatPage() {
 
     // Fetch single message with proof
     const message = await fetchMessage(messageId);
-    
+
     // Prepare full proof object
-    const { isValid, verificationTime } = await verifyProof(message, domain, message.proof);
+    const { isValid, verificationTime } = await verifyProof(message);
 
     if (!isValid) {
       alert("Proof is invalid");
     }
 
     // Verify proof
-    console.log(`Proof verified in ${verificationTime} ms`, isValid); 
+    console.log(`Proof verified in ${verificationTime} ms`, isValid);
   }
 
   function renderMessage(message: Message) {
+    const timestamp = new Date(message.timestamp);
+
     return (
       <div key={message.timestamp} className={`message-box ${message.sender}`}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span className="message-box-sender">{message.sender}</span>
           <span className="message-box-timestamp">
-            {new Date(message.timestamp).toLocaleDateString()}{" "}
-            {new Date(message.timestamp).toLocaleTimeString()}
-
-            <button className="message-box-verify" onClick={() => onVerifyClick(message.id)}>Verify</button>
+            {timestamp.toLocaleDateString()} {timestamp.toLocaleTimeString()}
+            <button
+              className="message-box-verify"
+              onClick={() => onVerifyClick(message.id)}
+            >
+              Verify
+            </button>
           </span>
         </div>
         {message.text}

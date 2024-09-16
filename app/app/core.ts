@@ -3,7 +3,8 @@ import {
   UltraHonkBackend,
   UltraHonkVerifier,
 } from "@noir-lang/backend_barretenberg";
-import circuit from "../../circuit/target/circuit.json";
+import circuit from "../assets/circuit.json";
+import vkey from "../assets/circuit-vkey.json";
 import { Message } from "./types";
 
 declare global {
@@ -22,8 +23,13 @@ declare global {
 export async function fetchMessages(domain: string) {
   const response = await fetch(`/api/messages?domain=${domain}`);
   if (response.ok) {
-    const data = await response.json();
-    return data;
+    const res = await response.json();
+    const messages = res.map((message: Message) => {
+      message.timestamp = new Date(message.timestamp).getTime();
+      return message;
+    });
+
+    return messages;
   } else {
     throw new Error("Failed to fetch messages");
   }
@@ -32,20 +38,21 @@ export async function fetchMessages(domain: string) {
 export async function fetchMessage(id: string) {
   const response = await fetch(`/api/messages/${id}`);
   if (response.ok) {
-    const data = await response.json();
-    return data;
+    const message = await response.json();
+    message.timestamp = new Date(message.timestamp).getTime();
+    return message;
   } else {
     throw new Error("Failed to fetch message");
   }
 }
 
-export async function submitMessage(message: Message, proof: Uint8Array) {
+export async function submitMessage(message: Message) {
   const response = await fetch("/api/messages", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ message, proof: Array.from(proof) }),
+    body: JSON.stringify({ ...message, proof: Array.from(message.proof!) }),
   });
 
   if (response.ok) {
@@ -107,6 +114,7 @@ export async function signInWithGoogle({ nonce }: { nonce: string }): Promise<{
             reject({ error: "Invalid nonce" });
           }
 
+          localStorage.removeItem("googleOAuthNonce");
           resolve({ idToken: idTokenStr, tokenPayload });
         }
       },
@@ -148,6 +156,7 @@ export async function hashMessage(message: Message) {
 export async function generateProof(
   idToken: string
 ): Promise<{ proof: Uint8Array; provingTime: number }> {
+
   // Parse token
   const [headerB64, payloadB64] = idToken.split(".");
   const header = JSON.parse(atob(headerB64));
@@ -253,8 +262,7 @@ export async function generateProof(
   const proof = await backend.generateProof(witness);
   const provingTime = performance.now() - startTime;
 
-  const verified = await backend.verifyProof(proof);
-  console.log("Proof verified", verified);
+  console.log("Proof", proof);
 
   return { proof: proof.proof, provingTime };
 }
@@ -275,14 +283,10 @@ function splitBigIntToChunks(
 
 export async function verifyProof(
   message: Message,
-  domain: string,
-  proof: Uint8Array
 ) {
-  if (domain !== message.domain) {
-    throw new Error("Domain does not match");
-  }
+  // const backend = new UltraHonkBackend(circuit as CompiledCircuit);
+  // await backend.getVerificationKey();
 
-  const backend = new UltraHonkBackend(circuit as CompiledCircuit);
   const verifier = new UltraHonkVerifier();
 
   const publicInputs = new Uint8Array(50 + 32).fill(0); // 50 bytes for domain, 32 for messageHash
@@ -292,23 +296,16 @@ export async function verifyProof(
   publicInputs.set(new TextEncoder().encode(messageHash), 50);
 
   const proofData = {
-    proof: Uint8Array.from(proof),
+    proof: Uint8Array.from(message.proof!),
     publicInputs: Array.from(publicInputs).map(
       (s) => "0x" + s.toString(16).padStart(64, "0")
     ),
   };
 
-  console.log(proofData);
-
-  // const startTime = performance.now();
+  const startTime = performance.now();
   await verifier.instantiate();
-  console.log("Verifier instantiated");
-  const vkey = await backend.getVerificationKey();
-  console.log(vkey);
-  // const result = await verifier.verifyProof(proofData, vkey);
-  // const verificationTime = performance.now() - startTime;
+  const result = await verifier.verifyProof(proofData, Uint8Array.from(vkey));
+  const verificationTime = performance.now() - startTime;
 
-  // console.log(`Proof verified in ${verificationTime}ms`, result);
-
-  return { isValid: true, verificationTime: 0 };
+  return { isValid: result, verificationTime };
 }
