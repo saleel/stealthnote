@@ -1,12 +1,12 @@
 import React from 'react';
 
-type UsePromiseOptions = {
-  defaultValue?: any;
-  dependencies?: any[];
-  conditions?: any[];
+type UsePromiseOptions<T> = {
+  defaultValue?: T;
+  dependencies?: Array<string | number | object>;
+  conditions?: Array<string | number | object>;
 };
 
-function usePromise<T>(promise: () => Promise<T>, options: UsePromiseOptions = {}) {
+function usePromise<T>(promise: () => Promise<T>, options: UsePromiseOptions<T> = {}) {
   const { defaultValue, dependencies = [], conditions = [] } = options;
 
   const allConditionsValid = conditions.every((condition) => {
@@ -14,7 +14,7 @@ function usePromise<T>(promise: () => Promise<T>, options: UsePromiseOptions = {
     return !!condition;
   });
 
-  const [result, setResult] = React.useState<T>(defaultValue);
+  const [result, setResult] = React.useState<T>(defaultValue as T);
   const [fetchedAt, setFetchedAt] = React.useState<Date>();
   const [isFetching, setIsFetching] = React.useState<boolean>(allConditionsValid);
   const [error, setError] = React.useState<Error>();
@@ -53,6 +53,7 @@ function usePromise<T>(promise: () => Promise<T>, options: UsePromiseOptions = {
 
     // eslint-disable-next-line consistent-return
     return () => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       didCancel = true;
     };
   }, dependencies);
@@ -62,7 +63,7 @@ function usePromise<T>(promise: () => Promise<T>, options: UsePromiseOptions = {
   }
 
   function reset() {
-    setResult(defaultValue);
+    setResult(defaultValue as T);
     setFetchedAt(undefined);
     setIsFetching(false);
     setError(undefined);

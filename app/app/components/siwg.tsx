@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { signInWithGoogle, verifyNonceAndExtractPayload } from "../utils";
+import { signInWithGoogle } from "../utils";
 
 const SignInButton = () => {
   async function handleGoogleSignIn() {
@@ -13,7 +13,7 @@ const SignInButton = () => {
       return;
     }
 
-    const domain = tokenPayload.hd;
+    const domain = tokenPayload!.hd;
 
     // Redirect to domains route
     if (domain) {
@@ -25,32 +25,7 @@ const SignInButton = () => {
     }
   }
 
-  React.useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.hash.substring(1));
-    const idToken = urlParams.get("id_token");
-
-    if (idToken) {
-      const payload = verifyNonceAndExtractPayload(idToken);
-      const domain = payload.hd;
-
-      // Redirect to domains route
-      if (domain) {
-        if (payload.nonce === "init") {
-          window.location.href = `/${domain}`;
-        } else {
-          window.location.href = `/${domain}?idToken=${idToken}`;
-        }
-      } else {
-        alert(
-          "You can use this app with a Google account that is part of an organization."
-        );
-      }
-
-      // Remove query parameters from URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, []);
-
+  
   return (
     <button onClick={handleGoogleSignIn} className="google-sign-in-button">
       <Image

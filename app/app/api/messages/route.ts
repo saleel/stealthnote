@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
   console.log('Received message:', { text, sender, timestamp, domain });
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('messages')
     .insert([{ text, sender, timestamp, domain, proof }]);
 
