@@ -4,6 +4,8 @@ node_modules
 .DS_Store
 circuit/target
 
+.env
+
 /.pnp
 .pnp.js
 

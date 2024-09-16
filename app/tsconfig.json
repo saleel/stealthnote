@@ -19,9 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["../app/*"]
-    }app
+      "@/*": ["./*"]
+    }
   },
-  "include": ["../app/next-env.d.tsv.d.../app/**/*.tsypes../app/**/*.tsxd.ts../app/.next/types/**/*.ts.tsx", ".next/types/**/*.ts"],
-  "exclude": ["../app/node_modules"]
+  "include": ["types/next-env.d.ts", "types/global.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }
