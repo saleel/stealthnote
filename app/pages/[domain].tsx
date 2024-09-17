@@ -14,7 +14,7 @@ import {
 } from "../core";
 import usePromise from "../hooks/use-promise";
 
-export default function ChatPage() {
+export default function DomainChatPage() {
   const params = useParams();
   const domain = params?.domain as string;
   const messagesEndRef = useRef<HTMLDivElement>(null);

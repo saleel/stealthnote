@@ -1,5 +1,5 @@
+import type { NextApiRequest, NextApiResponse } from 'next'
 import { createClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -10,11 +10,8 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = params.id;
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { id } = req.query;
 
   try {
     const { data, error } = await supabase
@@ -24,16 +21,16 @@ export async function GET(
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return res.status(500).json({ error: error.message });
     }
 
     if (!data) {
-      return NextResponse.json({ error: 'Message not found' }, { status: 404 });
+      return res.status(404).json({ error: 'Message not found' });
     }
 
-    return NextResponse.json(data);
+    return res.json(data);
   } catch (error) {
     console.error('Error fetching message:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 }
