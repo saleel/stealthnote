@@ -96,9 +96,129 @@ export async function signInWithGoogle({ nonce }: { nonce: string }): Promise<{
     return { error: "Google Client ID is not set" };
   }
 
-  await loadGoogleOAuthScript();
+  // @ts-expect-error Check if we're in a Brave browser
+  const isBrave =
+    (navigator.brave && (await navigator.brave.isBrave())) || false;
 
+  if (isBrave) {
+    // Use the popup method for Brave
+    return signInWithGooglePopup({ nonce, clientId });
+  } else {
+    // Use the One Tap sign-in for other browsers
+    return signInWithGoogleOneTap({ nonce, clientId });
+  }
+}
+
+async function signInWithGooglePopup({
+  nonce,
+  clientId,
+}: {
+  nonce: string;
+  clientId: string;
+}) {
+  // Generate a random state
+  const state = Math.random().toString(36).substring(2, 15);
+
+  // Store the state and nonce in localStorage
+  localStorage.setItem("googleOAuthState", state);
   localStorage.setItem("googleOAuthNonce", nonce);
+
+  // Construct the Google OAuth URL
+  const redirectUri = `${window.location.origin}/auth/callback`;
+  const scope = "openid email";
+  const authUrl =
+    `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `client_id=${clientId}` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+    `&response_type=id_token` +
+    `&scope=${encodeURIComponent(scope)}` +
+    `&state=${state}` +
+    `&nonce=${nonce}`;
+
+  // Open the auth window
+  const authWindow = window.open(
+    authUrl,
+    "Google Sign In",
+    "width=500,height=600"
+  );
+
+  if (!authWindow) {
+    return { error: "Popup blocked. Please allow popups for this site." };
+  }
+
+  return new Promise((resolve, reject) => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data.type === "GOOGLE_SIGN_IN_SUCCESS") {
+        const { idToken, state: returnedState } = event.data;
+
+        // Verify the state
+        if (returnedState !== localStorage.getItem("googleOAuthState")) {
+          reject(new Error("Invalid state parameter"));
+          return;
+        }
+
+        // Parse the ID token
+        const [headerB64, payloadB64] = idToken.split(".");
+        const tokenPayload = JSON.parse(atob(payloadB64));
+        const headers = JSON.parse(atob(headerB64));
+
+        // Verify the nonce
+        if (tokenPayload.nonce !== nonce) {
+          reject(new Error("Invalid nonce"));
+          return;
+        }
+
+        // Clean up
+        localStorage.removeItem("googleOAuthState");
+        localStorage.removeItem("googleOAuthNonce");
+        window.removeEventListener("message", handleMessage);
+
+        resolve({ idToken, tokenPayload, headers });
+      } else if (event.data.type === "GOOGLE_SIGN_IN_ERROR") {
+        reject(new Error(event.data.error));
+        window.removeEventListener("message", handleMessage);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    // Periodically check if the auth window is still open
+    const checkInterval = setInterval(() => {
+      if (authWindow && authWindow.closed) {
+        clearInterval(checkInterval);
+        clearTimeout(timeout);
+        window.removeEventListener("message", handleMessage);
+        reject(new Error("Authentication cancelled"));
+      }
+    }, 1000);
+
+    // Set a timeout for the authentication process
+    const timeout = setTimeout(() => {
+      window.removeEventListener("message", handleMessage);
+      reject(new Error("Authentication timed out"));
+    }, 120000); // 2 minutes timeout
+
+    // Clean up the timeout if authentication succeeds
+    window.addEventListener(
+      "message",
+      () => {
+        clearTimeout(timeout);
+      },
+      { once: true }
+    );
+  });
+}
+
+async function signInWithGoogleOneTap({
+  nonce,
+  clientId,
+}: {
+  nonce: string;
+  clientId: string;
+}) {
+  await loadGoogleOAuthScript();
 
   return new Promise((resolve, reject) => {
     window.google!.accounts.id.initialize({
@@ -108,21 +228,19 @@ export async function signInWithGoogle({ nonce }: { nonce: string }): Promise<{
           reject(response.error);
         } else {
           const idTokenStr = response.credential;
-          const storedNonce = localStorage.getItem("googleOAuthNonce");
+          const [headerB64, payloadB64] = idTokenStr.split(".");
+          const tokenPayload = JSON.parse(atob(payloadB64));
+          const headers = JSON.parse(atob(headerB64));
 
-          const tokenPayload = JSON.parse(atob(idTokenStr.split(".")[1]));
-          if (tokenPayload.nonce !== storedNonce) {
+          if (tokenPayload.nonce !== nonce) {
             reject({ error: "Invalid nonce" });
+          } else {
+            resolve({ idToken: idTokenStr, tokenPayload, headers });
           }
-
-          localStorage.removeItem("googleOAuthNonce");
-
-          const headers = JSON.parse(atob(idTokenStr.split(".")[0]));
-          resolve({ idToken: idTokenStr, tokenPayload, headers });
         }
       },
       nonce: nonce,
-      context: "signIn",
+      context: "signin",
     });
 
     window.google!.accounts.id.prompt();
@@ -185,11 +303,9 @@ async function convertPubKey(pubkey: object) {
   return { publicKey, modulusBigInt, redcParam };
 }
 
-
 export async function generateProof(
   idToken: string
 ): Promise<{ proof: Uint8Array; provingTime: number }> {
-
   // Parse token
   const [headerB64, payloadB64] = idToken.split(".");
   const header = JSON.parse(atob(headerB64));
@@ -203,7 +319,7 @@ export async function generateProof(
   }
 
   const { publicKey, modulusBigInt, redcParam } = await convertPubKey(key);
- 
+
   const signedData = new TextEncoder().encode(
     idToken.split(".").slice(0, 2).join(".")
   );
@@ -218,7 +334,6 @@ export async function generateProof(
       .map((c) => c.charCodeAt(0))
   );
   const signatureBigInt = BigInt("0x" + Buffer.from(signature).toString("hex"));
-
 
   // Verify signature locally
   const isValid = await crypto.subtle.verify(
@@ -297,12 +412,11 @@ export async function instantiateVerifier() {
   await verifier.instantiate();
 }
 
-export async function verifyProof(
-  message: Message,
-) {
+export async function verifyProof(message: Message) {
   // We need to generate the vkey when circuit is modified. Generated one is saved to vkey.json
   // const backend = new UltraHonkBackend(circuit as CompiledCircuit);
-  // await backend.getVerificationKey();
+  // const vkey = await backend.getVerificationKey();
+  // console.log(JSON.stringify(Array.from(vkey)));
 
   const verifier = new UltraHonkVerifier();
 
@@ -312,22 +426,36 @@ export async function verifyProof(
   const { modulusBigInt } = await convertPubKey(key);
   const modulusLimbs = splitBigIntToChunks(modulusBigInt, 120, 18);
 
-  // 50 bytes for domain, 32 for messageHash, 18 for modulus chunks
-  const publicInputs = new Uint8Array(18 + 50 + 32).fill(0);
-  const messageHash = await hashMessage(message);
+  const domainUint8Array = new Uint8Array(50);
+  domainUint8Array.set(
+    Uint8Array.from(new TextEncoder().encode(message.domain))
+  );
 
-  publicInputs.set(Uint8Array.from(modulusLimbs.map(s => Number(s))), 0);
-  publicInputs.set(new TextEncoder().encode(message.domain), 18);
-  publicInputs.set(new TextEncoder().encode(messageHash), 18 + 50);
+  const messageHash = await hashMessage(message);
+  const messageHashUint8Array = new Uint8Array(32);
+  messageHashUint8Array.set(new TextEncoder().encode(messageHash));
+
+  const publicInputs = [];
+
+  // Push modulus limbs as 64 char hex strings
+  publicInputs.push(
+    ...modulusLimbs.map((s) => "0x" + s.toString(16).padStart(64, "0"))
+  );
+  publicInputs.push(
+    ...Array.from(domainUint8Array).map(
+      (s) => "0x" + s.toString(16).padStart(64, "0")
+    )
+  );
+  publicInputs.push(
+    ...Array.from(messageHashUint8Array).map(
+      (s) => "0x" + s.toString(16).padStart(64, "0")
+    )
+  );
 
   const proofData = {
     proof: Uint8Array.from(message.proof!),
-    publicInputs: Array.from(publicInputs).map(
-      (s) => "0x" + s.toString(16).padStart(64, "0")
-    ),
+    publicInputs,
   };
-
-  console.log(proofData);
 
   const startTime = performance.now();
   await verifier.instantiate();
