@@ -3,8 +3,8 @@ import {
   UltraHonkBackend,
   UltraHonkVerifier,
 } from "@noir-lang/backend_barretenberg";
-import circuit from "./assets/circuit.json";
-import vkey from "./assets/circuit-vkey.json";
+import circuit from "../assets/circuit.json";
+import vkey from "../assets/circuit-vkey.json";
 import { Message } from "./types";
 
 declare global {
@@ -125,7 +125,7 @@ async function signInWithGooglePopup({
   localStorage.setItem("googleOAuthNonce", nonce);
 
   // Construct the Google OAuth URL
-  const redirectUri = `${window.location.origin}/auth/callback`;
+  const redirectUri = `${window.location.origin}/auth`;
   const scope = "openid email";
   const authUrl =
     `https://accounts.google.com/o/oauth2/v2/auth?` +
@@ -287,7 +287,6 @@ export async function getGooglePublicKeys() {
 
 export async function convertPubKey(pubkey: object) {
   const { subtle } = globalThis.crypto;
-  console.log("pubkey", pubkey);
 
   const publicKey = await subtle.importKey(
     "jwk",
@@ -431,8 +430,6 @@ export async function verifyProof(message: Message) {
 
   // Find the correct key based on the 'kid' in the message
   const keys = await getGooglePublicKeys();
-  console.log("message.kid", message.kid);
-  console.log(keys);
   const key = keys.find((k: { kid: string }) => k.kid === message.kid);
   if (!key) {
     throw new Error("No matching key not found");

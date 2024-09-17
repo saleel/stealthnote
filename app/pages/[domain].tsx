@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { Message } from "../types";
+import { Message } from "../lib/types";
 import {
   fetchMessage,
   fetchMessages,
@@ -11,7 +11,7 @@ import {
   signMessageWithGoogle,
   submitMessage,
   verifyProof,
-} from "../core";
+} from "../lib/utils";
 import usePromise from "../hooks/use-promise";
 
 export default function DomainChatPage() {
