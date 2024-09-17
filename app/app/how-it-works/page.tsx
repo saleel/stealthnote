@@ -14,7 +14,7 @@ export default function HowItWorks() {
       <p>
         AnonChat only works for organizations that use Google Workspace. When
         you sign in with Google, Google returns  containing your
-        organization's domain.
+        organization&apos;s domain.
       </p>
     </div>
   );

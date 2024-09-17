@@ -112,7 +112,11 @@ async function signInWithGooglePopup({
 }: {
   nonce: string;
   clientId: string;
-}) {
+}): Promise<{
+  idToken?: string;
+  tokenPayload?: { hd: string; nonce: string };
+  headers?: { kid: string };
+}> {
   // Generate a random state
   const state = Math.random().toString(36).substring(2, 15);
 
@@ -138,10 +142,6 @@ async function signInWithGooglePopup({
     "Google Sign In",
     "width=500,height=600"
   );
-
-  if (!authWindow) {
-    return { error: "Popup blocked. Please allow popups for this site." };
-  }
 
   return new Promise((resolve, reject) => {
     const handleMessage = (event: MessageEvent) => {
@@ -214,7 +214,11 @@ async function signInWithGoogleOneTap({
 }: {
   nonce: string;
   clientId: string;
-}) {
+}): Promise<{
+  idToken?: string;
+  tokenPayload?: { hd: string; nonce: string };
+  headers?: { kid: string };
+}> {
   await loadGoogleOAuthScript();
 
   return new Promise((resolve, reject) => {
@@ -275,13 +279,13 @@ export async function hashMessage(message: Message) {
     .slice(0, 32); // Only using 32 bytes for the nonce
 }
 
-async function getGooglePublicKeys() {
+export async function getGooglePublicKeys() {
   const response = await fetch("https://www.googleapis.com/oauth2/v3/certs");
   const keys = await response.json();
   return keys.keys;
 }
 
-async function convertPubKey(pubkey: object) {
+export async function convertPubKey(pubkey: object) {
   const publicKey = await crypto.subtle.importKey(
     "jwk",
     pubkey,
@@ -395,7 +399,7 @@ export async function generateProof(
   return { proof: proof.proof, provingTime };
 }
 
-function splitBigIntToChunks(
+export function splitBigIntToChunks(
   bigInt: bigint,
   chunkSize: number,
   numChunks: number

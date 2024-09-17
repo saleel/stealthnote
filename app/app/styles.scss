@@ -204,7 +204,6 @@ body {
 .message-input-container {
   width: 100%;
   padding-top: 1rem;
-  padding-bottom: 1.5rem;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -279,6 +278,24 @@ body {
   cursor: not-allowed;
 }
 
+.status-box {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 600px;
+  height: 20px;
+  margin: 1rem auto;
+  margin-bottom: 1.5rem;
+}
+
+.status-box-message {
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  background-color: #f0f0f0;
+  border-radius: 9999px; // This creates a fully rounded shape
+  text-align: left;
+  width: 100%;
+}
 
 .skeleton-loader {
   display: flex;

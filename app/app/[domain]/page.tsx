@@ -7,7 +7,7 @@ import {
   fetchMessage,
   fetchMessages,
   generateProof,
-  instantiateVerifier,
+  // instantiateVerifier,
   signMessageWithGoogle,
   submitMessage,
   verifyProof,
@@ -16,11 +16,12 @@ import usePromise from "../hooks/use-promise";
 
 export default function ChatPage() {
   const params = useParams();
-  const domain = params.domain as string;
+  const domain = params?.domain as string;
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [newMessage, setNewMessage] = useState("");
   const [isProving, setIsProving] = useState(false);
+  const [status, setStatus] = useState("");
   const [verificationStatus, setVerificationStatus] = useState<{
     [key: string]: "idle" | "verifying" | "valid" | "invalid";
   }>({});
@@ -67,6 +68,7 @@ export default function ChatPage() {
     };
 
     try {
+      setStatus("Sign in with Google to continue...");
       const { idToken, tokenPayload, headers } = await signMessageWithGoogle(
         message
       );
@@ -74,18 +76,28 @@ export default function ChatPage() {
       console.log("Message signed with Google", { tokenPayload });
 
       setIsProving(true);
+      setStatus("Generating proof. This will take 1-2 minutes...");
+
       const { proof, provingTime } = await generateProof(idToken!);
       console.log(`Proof generated in ${provingTime} ms`, proof);
 
       message.proof = proof;
+
+      setStatus("Proof generated. Submitting message...");
       await submitMessage(message);
 
       // Update message list
       reFetch();
       setNewMessage("");
+      
+      setStatus("Message submitted!");
+
+      setTimeout(() => {
+        setStatus("");
+      }, 3000);
     } catch (error) {
       console.error(`Failed to submit message: ${error}`);
-      alert("Oops, something went wrong. Please try again.");
+      setStatus("Oops, something went wrong. Please try again.");
     } finally {
       setIsProving(false);
     }
@@ -174,6 +186,16 @@ export default function ChatPage() {
     );
   }
 
+  function renderStatusBox() {  
+    return (
+      <div className="status-box">
+        {status && (
+          <div className="status-box-message">{status}</div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="messages-container">
       <h1 className="messages-container-title">
@@ -207,6 +229,9 @@ export default function ChatPage() {
           {isProving ? <span className="spinner-icon"></span> : "Submit"}
         </button>
       </form>
+
+      {renderStatusBox()}
+
     </div>
   );
 }
