@@ -32,10 +32,10 @@ export default function ChatPage() {
     dependencies: [domain],
   });
 
-  // Instantiate verifier on mount to make verification faster
-  useEffect(() => {
-    instantiateVerifier();
-  }, []);
+  // // Instantiate verifier on mount to make verification faster
+  // useEffect(() => {
+  //   instantiateVerifier();
+  // }, []);
 
   // Automatically call refetch every 10 seconds
   useEffect(() => {

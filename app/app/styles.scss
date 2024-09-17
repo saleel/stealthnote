@@ -58,6 +58,14 @@ body {
   p {
     text-align: justify;
     margin-bottom: 1.5rem;
+    margin-top: 0;
+  }
+
+  h3 {
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 1.1rem;
   }
 }
 
@@ -218,7 +226,7 @@ body {
   flex-grow: 1;
   margin-right: 1rem;
   padding: 1rem;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .message-input-button {
@@ -231,6 +239,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100px;
 
   &:hover {
     background-color: #f0f0f0;
@@ -269,14 +278,6 @@ body {
   cursor: not-allowed;
 }
 
-
-
-// Utils
-
-
-.text-center {
-  text-align: center;
-}
 
 .skeleton-loader {
   display: flex;
@@ -345,3 +346,26 @@ body {
   height: 12px;
   border-width: 1px;
 }
+
+
+
+// Utils
+
+
+.text-center {
+  text-align: center;
+}
+
+.text-small {
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.mt-1 {
+  margin-top: 1rem;
+}
+
+.mt-3 {
+  margin-top: 3rem;
+}
+
