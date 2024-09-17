@@ -9,14 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@noir-lang/backend_barretenberg": "0.34.0",
+    "@noir-lang/noir_js": "0.34.0",
     "@supabase/supabase-js": "^2.45.4",
+    "bulma": "^1.0.2",
+    "cal-sans": "^1.0.1",
     "dotenv": "^16.4.5",
     "next": "14.2.11",
     "react": "^18",
     "react-dom": "^18",
-    "sass": "^1.78.0",
-    "@noir-lang/backend_barretenberg": "0.34.0",
-    "@noir-lang/noir_js": "0.34.0"
+    "sass": "^1.78.0"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -32,7 +34,12 @@
       "next/typescript"
     ],
     "rules": {
-      "max-len": ["error", { "code": 120 }]
+      "max-len": [
+        "error",
+        {
+          "code": 120
+        }
+      ]
     }
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"

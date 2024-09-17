@@ -96,15 +96,20 @@ export default function ChatPage() {
     console.log(`Proof verified in ${verificationTime} ms`, isValid);
   }
 
-  function renderMessage(message: Message) {
+  function renderMessage(message: Message, index: number) {
     const timestamp = new Date(message.timestamp);
 
     return (
-      <div key={message.timestamp} className={`message-box ${message.sender}`}>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span className="message-box-sender">{message.sender}</span>
+      <div key={message.timestamp} className="message-box">
+        <div className="message-box-header">
           <span className="message-box-timestamp">
-            {timestamp.toLocaleDateString()} {timestamp.toLocaleTimeString()}
+            {`#${(index + 1).toString()} `}
+            {/* {timestamp.toLocaleDateString()} {timestamp.toLocaleTimeString()} */}
+          </span>
+          <span>
+            <span className="message-box-timestamp">
+              {timestamp.toLocaleDateString()} {timestamp.toLocaleTimeString()}
+            </span>
             <button
               className="message-box-verify"
               onClick={() => onVerifyClick(message.id)}
@@ -114,6 +119,15 @@ export default function ChatPage() {
           </span>
         </div>
         {message.text}
+      </div>
+    );
+  }
+
+  function renderNoMessages() {
+    return (
+      <div className="text-center">
+        <p>No messages yet</p>
+        <p>Be the first to send a message!</p>
       </div>
     );
   }
@@ -129,23 +143,21 @@ export default function ChatPage() {
         {isFetching && !fetchedAt && (
           <div className="text-center">Loading...</div>
         )}
-        {fetchedAt && messages.length === 0 && (
-          <div className="text-center">No messages yet</div>
-        )}
-        {error && <div>Error: {error.message}</div>}
+        {fetchedAt && messages.length === 0 && renderNoMessages()}
+        {!fetchedAt && error && <div>Error: {error.message}</div>}
 
-        {messages.map((message) => renderMessage(message))}
+        {messages.map(renderMessage)}
         <div ref={messagesEndRef} />
       </div>
 
       <form className="message-input-container" onSubmit={handleMessageSubmit}>
-        <input
-          type="text"
+        <textarea
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type your anonymous message..."
           className="message-input-field"
           disabled={isProving}
+          rows={2}
         />
         <button
           type="submit"

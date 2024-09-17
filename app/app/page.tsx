@@ -7,15 +7,19 @@ export default function Home() {
   return (
     <div className="page">
       <main className="intro">
-        <h1 className="title">Welcome to AnonChat</h1>
+        <h1 className="intro-title">Welcome to AnonChat</h1>
         <p>
-          AnonChat is an application for anonymously sending messages by proving
-          you are part of an organization.
+          AnonChat is an application for people in an organization to anonymously
+          broadcast messages.
         </p>
         <p>
-          You can prove you are part of an organization without revealing any
-          information about yourself using Zero Knowledge Proofs.
+          We use Zero Knowledge Proofs to prove that you are part of an organization
+          without revealing any information about yourself.
         </p>
+        <p>
+          Sign in with your <u>work Google account</u> (Google Workspace) to get started.
+        </p>
+
         <SignInButton />
       </main>
     </div>
