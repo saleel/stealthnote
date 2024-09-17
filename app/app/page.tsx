@@ -26,7 +26,7 @@ export default function Home() {
         <p className="text-small mt-3">
           If you are on Brave broswer, you might need to disable{" "}
           Brave Shields to see the Google sign in popup.
-          There are no trackers or ads in this website.
+          Note that there are no trackers or ads in this website.
         </p>
       </main>
     </div>
