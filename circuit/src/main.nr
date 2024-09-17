@@ -1,161 +1,112 @@
+mod utils;
+
 use dep::std::hash::sha256_var;
 use dep::noir_rsa::bignum::BigNum;
 use dep::noir_rsa::bignum::runtime_bignum::BigNumInstance;
 use dep::noir_rsa::bignum::fields::Params2048;
 use dep::noir_rsa::types::RSA;
 use dep::string_search::{SubString, StringBody, SubString32, SubString64, StringBody256};
-// mod utils;
+
+
+global MAX_DATA_LENGTH: u32 = 1024;
+global MAX_DOMAIN_LENGTH: u32 = 50;
+global NONCE_LENGTH: u32 = 32;
+global B64_SKIP_CHARS: u32 = 300;
+global B64_DECODE_LENGTH: u32 = 200;
+global ENCODED_PAYLOAD_LENGTH: u32 = B64_DECODE_LENGTH * 3 / 4;
 
 type BN2048 = BigNum<18, Params2048>;
 type RSA2048 = RSA<BN2048, BigNumInstance<18, Params2048>, 256>;
 
-global MAX_DATA_LENGTH: u32 = 1024;
-global MAX_PAYLOAD_LENGTH: u32 = 200;
 
+// TODO:
+// - Partial SHA can skip first few blocks
+// - Pack public inputs in to fewer fields, hash pubkey modulus
+// - Make body length dynamic
+// - Add more tests
+// - Not necessary, but add a nullifier
+
+
+/**
+ * @brief Verify JWT signature (RSA/SHA256 only) and validate hd and nonce fields
+ *
+ *
+ * @param data: OIDC JWT (id_token) base64 data (`$header.$payload`) as byte array of ascii characters, padded to MAX_DATA_LENGTH
+ * @param data_length: The actual length of the `data`
+ * @param pubkey_modulus_limbs: RSA public key modulus limbs (2048-bit split into 18 limbs)
+ * @param redc_params_limbs: RSA reduction parameters limbs
+ * @param signature_limbs: RSA signature limbs
+ * @param domain_name: Domain name (`hd` key) as a byte array of ascii characters padded to MAX_DOMAIN_LENGTH
+ * @param domain_name_length: The actual length of the `domain_name`
+ * @param nonce: JWT `nonce` as a byte array of ascii characters - 32 bytes
+ **/
 fn main(
     data: [u8; MAX_DATA_LENGTH],
     data_length: u32,
-    pubkey_modulus_limbs: [Field; 18],
+    pubkey_modulus_limbs: pub [Field; 18],
     redc_params_limbs: [Field; 18],
     signature_limbs: [Field; 18],
-    // body_start_index: u32,
     domain_name: pub [u8; 50],
     domain_name_length: u32,
-    // hd_start_index: u32,
     nonce: pub [u8; 32],
-    // nonce_start_index: u32,
 ) {
-    let body_start_index = 103;
-
-    let pubkey: BigNumInstance<18, Params2048> = BigNumInstance::new(pubkey_modulus_limbs, redc_params_limbs);
-
+    // Hash the data using SHA256
     let data_hash: [u8; 32] = sha256_var(data, data_length as u64);
-    let signature: BN2048 = BigNum::from_array(signature_limbs);
 
     // Verify RSA signature
     let rsa: RSA2048 = RSA {};
+    let pubkey: BigNumInstance<18, Params2048> = BigNumInstance::new(pubkey_modulus_limbs, redc_params_limbs);
+    let signature: BN2048 = BigNum::from_array(signature_limbs);
     assert(rsa.verify_sha256_pkcs1v15(pubkey, data_hash, signature, 65537));
 
-    assert(data[body_start_index - 1] == 46);
+    // Assert the value before $payload is a '.' (JWT structure => `$header.$payload.$signature`)
+    // `payload_start_index` is hardcoded for Google as header length is always 102
+    // TODO: Make this dynamic based to be more generic
+    let payload_start_index = 103;  
+    assert(data[payload_start_index - 1] == 46);
 
-    let skip_chars = 300;
-    let mut payload_data: [u8; MAX_PAYLOAD_LENGTH] = [0; MAX_PAYLOAD_LENGTH];
-    for i in 0..MAX_PAYLOAD_LENGTH {
-        payload_data[i] = data[body_start_index + skip_chars + i];
+    // Decode the base64 payload
+    // Base64 decoding is expensive, so we only decode some portion of the payload
+    // The data we want to check (hd, nonce) is in between 225th and 425th characters of decoded payload
+    // So we decode only 300th to 500th base64 encoded characters, as 4 base64 chars = 3 bytes (3 ascii chars)
+    // Since base64 encoding happen in 4 byte chunks, we can skip multiple of 4 characters
+    // We decode 200 base64 encoded characters and get 150 ascii characters
+    let mut payload_b64: [u8; B64_DECODE_LENGTH] = [0; B64_DECODE_LENGTH];
+    for i in 0..B64_DECODE_LENGTH {
+        payload_b64[i] = data[payload_start_index + B64_SKIP_CHARS + i];
     }
-    let decoded: [u8; 150] = base64_decode(payload_data);
+    let payload: [u8; ENCODED_PAYLOAD_LENGTH] = utils::base64_decode(payload_b64);
 
-    // let skip_chars_decoded = skip_chars / 4 * 3;
-
-    // let hd_index = hd_start_index - skip_chars_decoded;
-
-    // assert(decoded[hd_index] == 34);
-    // assert(decoded[hd_index + 1] == 104);
-    // assert(decoded[hd_index + 2] == 100);
-    // assert(decoded[hd_index + 3] == 34);
-    // assert(decoded[hd_index + 4] == 58);
-    // assert(decoded[hd_index + 5] == 34);
-
-    // for i in 0..50 {
-    //     if i < domain_name_length {
-    //         assert(decoded[hd_index + 6 + i] == domain_name[i]);
-    //     }
-    // }
-
-    // assert(decoded[hd_index + 6 + domain_name_length] == 34);
-
-    validate_hd_field(decoded, domain_name, domain_name_length);
-    validate_nonce(decoded, nonce);
+    validate_hd_field(payload, domain_name, domain_name_length);
+    validate_nonce(payload, nonce);
 }
 
-fn validate_hd_field(decoded: [u8; 150], domain_name: [u8; 50], domain_name_length: u32) {
+// Validate the hd field in the payload is same as domain_name
+fn validate_hd_field(payload: [u8; ENCODED_PAYLOAD_LENGTH], domain_name: [u8; 50], domain_name_length: u32) {
     let hd_prefix = "\"hd\":\"".as_bytes();
     let hd_prefix_substring: SubString32 = SubString::new(hd_prefix, hd_prefix.len());
     let domain_substring: SubString64 = SubString::new(domain_name, domain_name_length);
     let domain_needle = hd_prefix_substring.concat_into(domain_substring);
 
-    let haystack: StringBody256 = StringBody::new(decoded, decoded.len());
+    let haystack: StringBody256 = StringBody::new(payload, payload.len());
     let (domain_found, domain_position): (bool, u32) = haystack.substring_match(domain_needle);
     
     assert(domain_found);
-    assert(decoded[domain_position + domain_needle.len()] == 34);
+
+    // Assert the value after hd value is a `"` - to prevent partial match attacks
+    assert(payload[domain_position + domain_needle.len()] == 34);
 }
 
-fn validate_nonce(decoded: [u8; 150], nonce: [u8; 32]) {
+// Validate the nonce field in the payload is same as nonce passed
+fn validate_nonce(payload: [u8; ENCODED_PAYLOAD_LENGTH], nonce: [u8; NONCE_LENGTH]) {
     let nonce_prefix = "\"nonce\":\"".as_bytes();
     let nonce_prefix_substring: SubString32 = SubString::new(nonce_prefix, nonce_prefix.len());
     let nonce_substring: SubString64 = SubString::new(nonce, 32);
     let nonce_needle = nonce_prefix_substring.concat_into(nonce_substring);
 
-    let haystack: StringBody256 = StringBody::new(decoded, decoded.len());
+    let haystack: StringBody256 = StringBody::new(payload, payload.len());
     let (nonce_found, nonce_position): (bool, u32) = haystack.substring_match(nonce_needle);
     
     assert(nonce_found);
-    assert(decoded[nonce_position + nonce_needle.len()] == 34);
-}
-
-
-// From zkemail.nr (modified)
-pub fn base64_decode(payload_encoded: [u8; MAX_PAYLOAD_LENGTH]) -> [u8; MAX_PAYLOAD_LENGTH * 6 / 8] {
-    let mut total_bits = [0 as u1; MAX_PAYLOAD_LENGTH * 6];
-
-    for i in 0..MAX_PAYLOAD_LENGTH {
-        let translate = base64_lookup(payload_encoded[i] as u8);
-        // Store as big endian
-        let translate_bits: [u1; 6] = (translate as Field).to_be_bits();
-        for j in 0..6 {
-            total_bits[i * 6 + j] = translate_bits[j];
-        }
-    }
-
-    // Since we're returning the SHA256 hash, only need first 32 bytes (=256 bits)
-    let mut output = [0 as u8; MAX_PAYLOAD_LENGTH * 6 / 8];
-    for i in 0..MAX_PAYLOAD_LENGTH * 6 / 8 {
-        for j in 0..8 {
-            // Convert from big endian back to little endian
-            output[i] |= (total_bits[i * 8 + j] as u8) << (7 - j) as u8;
-        }
-    }
-
-    output
-}
-
-fn base64_lookup(input: u8) -> u8 {
-    // A-Z: 65-90
-    if input >= 65 & input <= 90 {
-        input - 65
-    } else if input >= 97 & input <= 122 {
-        // a-z: 97-122
-        input - 71
-    } else if input >= 48 & input <= 57 {
-        // 0-9: 48-57
-        input + 4
-    } else if input == 43 {
-        // +
-        62
-    } else if input == 47 {
-        // /
-        63
-    } else {
-        // =
-        0
-    }
-}
-
-
-#[test]
-fn test_main() {
-    main(
-[101,121,74,104,98,71,99,105,79,105,74,83,85,122,73,49,78,105,73,115,73,109,116,112,90,67,73,54,73,109,81,51,89,106,107,122,79,84,99,51,77,87,69,51,79,68,65,119,89,122,81,120,77,50,89,53,77,68,65,49,77,84,65,120,77,109,81,53,78,122,85,53,79,68,69,53,77,84,90,107,78,122,69,105,76,67,74,48,101,88,65,105,79,105,74,75,86,49,81,105,102,81,46,101,121,74,112,99,51,77,105,79,105,74,111,100,72,82,119,99,122,111,118,76,50,70,106,89,50,57,49,98,110,82,122,76,109,100,118,98,50,100,115,90,83,53,106,98,50,48,105,76,67,74,104,101,110,65,105,79,105,73,50,78,84,81,122,77,68,81,119,78,68,99,119,77,84,85,116,99,122,85,122,78,110,74,114,77,51,74,110,78,88,86,106,90,51,69,52,99,71,115,52,100,68,104,116,97,109,82,50,77,84,65,120,79,87,100,105,77,87,111,117,89,88,66,119,99,121,53,110,98,50,57,110,98,71,86,49,99,50,86,121,89,50,57,117,100,71,86,117,100,67,53,106,98,50,48,105,76,67,74,104,100,87,81,105,79,105,73,50,78,84,81,122,77,68,81,119,78,68,99,119,77,84,85,116,99,122,85,122,78,110,74,114,77,51,74,110,78,88,86,106,90,51,69,52,99,71,115,52,100,68,104,116,97,109,82,50,77,84,65,120,79,87,100,105,77,87,111,117,89,88,66,119,99,121,53,110,98,50,57,110,98,71,86,49,99,50,86,121,89,50,57,117,100,71,86,117,100,67,53,106,98,50,48,105,76,67,74,122,100,87,73,105,79,105,73,120,77,84,99,49,79,68,107,48,78,122,103,51,78,68,107,48,77,84,103,119,77,68,77,48,78,106,69,105,76,67,74,111,90,67,73,54,73,109,70,54,100,71,86,106,99,72,74,118,100,71,57,106,98,50,119,117,89,50,57,116,73,105,119,105,90,87,49,104,97,87,119,105,79,105,74,122,89,87,120,108,90,87,120,65,89,88,112,48,90,87,78,119,99,109,57,48,98,50,78,118,98,67,53,106,98,50,48,105,76,67,74,108,98,87,70,112,98,70,57,50,90,88,74,112,90,109,108,108,90,67,73,54,100,72,74,49,90,83,119,105,98,109,57,117,89,50,85,105,79,105,74,107,99,106,78,105,101,110,85,49,77,88,74,121,97,109,57,116,99,106,100,106,98,122,82,51,89,88,108,54,98,87,57,54,97,106,86,114,90,88,65,119,97,105,73,115,73,109,53,105,90,105,73,54,77,84,99,121,78,106,73,53,78,84,77,120,78,83,119,105,98,109,70,116,90,83,73,54,73,108,78,104,98,71,86,108,98,67,66,81,97,87,78,111,90,87,52,105,76,67,74,119,97,87,78,48,100,88,74,108,73,106,111,105,97,72,82,48,99,72,77,54,76,121,57,115,97,68,77,117,90,50,57,118,90,50,120,108,100,88,78,108,99,109,78,118,98,110,82,108,98,110,81,117,89,50,57,116,76,50,69,118,81,85,78,110,79,71,57,106,83,84,85,53,77,68,70,54,86,122,90,86,81,85,78,71,89,109,107,48,97,85,112,117,87,88,78,87,77,84,108,51,86,85,74,67,86,50,112,77,90,50,108,114,78,85,85,119,77,109,90,97,90,69,100,50,84,85,53,122,85,109,82,66,80,88,77,53,78,105,49,106,73,105,119,105,90,50,108,50,90,87,53,102,98,109,70,116,90,83,73,54,73,108,78,104,98,71,86,108,98,67,73,115,73,109,90,104,98,87,108,115,101,86,57,117,89,87,49,108,73,106,111,105,85,71,108,106,97,71,86,117,73,105,119,105,97,87,70,48,73,106,111,120,78,122,73,50,77,106,107,49,78,106,69,49,76,67,74,108,101,72,65,105,79,106,69,51,77,106,89,121,79,84,107,121,77,84,85,115,73,109,112,48,97,83,73,54,73,106,85,51,78,68,89,53,77,87,81,50,90,84,104,107,78,109,86,107,77,122,86,107,79,84,74,104,90,84,108,105,77,84,85,51,79,84,89,119,77,122,70,107,78,50,81,48,89,109,81,52,78,106,73,105,102,81,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-945,
-        [1134320245921500934516865200733121927,634338324761634783763845245009857439,1070478337089268773936730067327038714,1254446317159994859931815609363218756,231221636938451469222989781292051825,835160706885148406124967491550112377,1122221420547810842929831780227034102,506704305960799821834835871953944058,868905384958952557686601416952599699,246238310097381796811607529469359948,409145356625541028393432762775012781,100876574760469586610748346057843749,163076682047769376272009048868107209,1270768037994131283967019741159327237,513563865209816591796185363653864619,864221249733168082760848297003544641,1089735294325752345762108012619475455,192],
-[1168806255959705181209950987749946322,333274691026862528009146732823060640,109827721138874484913865775263836697,1138882215619871831832493727997520595,654677511956142136867687970961806947,128774906453535716397716998601420432,327537757821620974860286749355041793,803069221084797947197041532194607248,1185484697072763022356627336302318573,1129324630614122747059271493549103030,1246688389673928357468459042906271394,101676577495205078277783567322594260,668744505548812062325922807663861508,923334944828904002799524384618561770,31182629640266890413051532846818868,949628758823132453111687548542037557,1172461786514369137112771275368034096,339],
-[1093496241250005763504190831814359085,798525280816753271405526264134430477,284293638023195617124541043004611354,1254466400882850868894469003716205809,196518702971962952583810278683768759,1317935685541868692057566672479045227,189149679676035572364634516724792331,387156866302974660818096163548601541,1306040235962139512368509649136723393,1241361756444505243310447795370497338,503756607139493167774221513605728643,139514771217034751957069820795649800,771778750032296298961874700391180285,523014117292372366920431498345666717,667717904503438077477405411231702415,129808770938368153403175707162390964,714349581493645716831927134984556058,57],
-// 103,
-[97,122,116,101,99,112,114,111,116,111,99,111,108,46,99,111,109,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-17,
-// 229,
-[100, 114, 51, 98, 122, 117, 53, 49, 114, 114, 106, 111, 109, 114, 55, 99, 111, 52, 119, 97, 121, 122, 109, 111, 122, 106, 53, 107, 101, 112, 48, 106],
-// 311
-    )
+    assert(payload[nonce_position + nonce_needle.len()] == 34);
 }
