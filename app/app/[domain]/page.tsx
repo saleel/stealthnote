@@ -51,7 +51,6 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-
   async function handleMessageSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -68,7 +67,9 @@ export default function ChatPage() {
     };
 
     try {
-      const { idToken, tokenPayload, headers } = await signMessageWithGoogle(message);
+      const { idToken, tokenPayload, headers } = await signMessageWithGoogle(
+        message
+      );
       message.kid = headers!.kid;
       console.log("Message signed with Google", { tokenPayload });
 
@@ -116,29 +117,30 @@ export default function ChatPage() {
     return (
       <div key={message.timestamp} className="message-box">
         <div className="message-box-header">
-          <span className="message-box-timestamp">
+          <span className="message-box-header-text">
             {`#${(index + 1).toString()} `}
           </span>
-          <span className="message-box-timestamp">
+          <span className="message-box-header-text">
             <span>
               {timestamp.toLocaleDateString()} {timestamp.toLocaleTimeString()}
             </span>
-            <button
-              className={`message-box-verify ${status}`}
-              onClick={() => onVerifyClick(message.id)}
-              disabled={status === "verifying"}
-            >
-              {status === "idle" && "Verify"}
+
+            <span className={`message-box-verify ${status}`}>
+              <button
+                className={"message-box-verify-button"}
+                onClick={() => onVerifyClick(message.id)}
+                disabled={status === "verifying"}
+                style={{ display: status === "idle" ? "inline" : "none" }}
+              >
+                {status === "idle" && "Verify"}
+              </button>
+
               {status === "verifying" && (
-                <span className="spinner-icon small"></span>
+                <span className="message-box-verify-icon spinner-icon small"></span>
               )}
-              {status === "valid" && (
-                <span className="verify-icon valid">✓</span>
-              )}
-              {status === "invalid" && (
-                <span className="verify-icon invalid">✗</span>
-              )}
-            </button>
+              {status === "valid" && <span className="message-box-verify-icon valid">✓</span>}
+              {status === "invalid" && <span className="message-box-verify-icon invalid">+</span>}
+            </span>
           </span>
         </div>
         {message.text}
@@ -165,7 +167,9 @@ export default function ChatPage() {
     return (
       <div className="text-center">
         <p>No messages yet</p>
-        <p>Be the first at <span>{domain}</span> to send a message!</p>
+        <p>
+          Be the first at <span>{domain}</span> to send a message!
+        </p>
       </div>
     );
   }

@@ -146,57 +146,58 @@ body {
   align-items: center;
   margin-bottom: 1rem;
   opacity: 0.9;
+  height: 20px;
 }
 
 .message-box-sender {
   font-weight: bold;
   margin-bottom: 1rem;
+  height: 20px;
 }
 
-.message-box-timestamp {
+.message-box-header-text {
   font-size: 0.8rem;
-  height: 20px;
   color: #666;
+  height: 20px;
 }
 
 .message-box-verify {
+  width: 32px;
+  height: 20px;
+  text-align: right;
+  margin-left: 1rem;
+  display: inline-block;
+
+  &:hover:not(:disabled) {
+    text-decoration: underline;
+  }
+}
+
+.message-box-verify-button {
   background: none;
   border: none;
   padding: 0;
   margin: 0;
   cursor: pointer;
   font-size: 0.8rem;
-  margin-left: 1rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  width: 32px;
-  height: 20px;
-  text-align: right;
+}
 
-  &:hover:not(:disabled) {
-    text-decoration: underline;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
+.message-box-verify-icon {
+  font-size: 1.2rem;
+  display: inline-block;
+  font-weight: bold;
 
   &.verifying {
     cursor: wait;
   }
-
-  .verify-icon {
-    font-size: 1rem;
     
-    &.valid {
-      color: #4caf50;
-    }
+  &.valid {
+    color: #4caf50;
+  }
 
-    &.invalid {
-      color: #f44336;
-    }
+  &.invalid {
+    color: #f44336;
+    transform: rotate(45deg);
   }
 }
 

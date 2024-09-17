@@ -96,16 +96,13 @@ export async function signInWithGoogle({ nonce }: { nonce: string }): Promise<{
     return { error: "Google Client ID is not set" };
   }
 
-  // @ts-expect-error Check if we're in a Brave browser
-  const isBrave =
-    (navigator.brave && (await navigator.brave.isBrave())) || false;
-
-  if (isBrave) {
-    // Use the popup method for Brave
+  try {
+    // First, try One Tap sign-in
+    return await signInWithGoogleOneTap({ nonce, clientId });
+  } catch (error) {
+    console.log("One Tap sign-in failed, falling back to popup method", error);
+    // If One Tap fails, fall back to popup method
     return signInWithGooglePopup({ nonce, clientId });
-  } else {
-    // Use the One Tap sign-in for other browsers
-    return signInWithGoogleOneTap({ nonce, clientId });
   }
 }
 
@@ -243,7 +240,12 @@ async function signInWithGoogleOneTap({
       context: "signin",
     });
 
-    window.google!.accounts.id.prompt();
+    // @ts-expect-error its valid to pass this callback
+    window.google!.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        reject("One Tap not displayed or skipped");
+      }
+    });
   });
 }
 
