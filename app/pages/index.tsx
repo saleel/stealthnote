@@ -7,9 +7,9 @@ export default function Home() {
   return (
     <div className="page">
       <main className="intro">
-        <h1 className="intro-title">Welcome to AnonChat</h1>
+        <h1 className="intro-title">Welcome to StealthNote</h1>
         <p>
-          AnonChat is an application for people in an organization to
+          StealthNote is an application for people in an organization to
           anonymously broadcast messages.
         </p>
         <p>

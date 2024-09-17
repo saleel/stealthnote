@@ -6,13 +6,13 @@ export default function HowItWorks() {
       <h1 className="intro-title">How It Works</h1>
 
       <p>
-        AnonChat is an application for people in an organization to anonymously
+        StealthNote is an application for people in an organization to anonymously
         broadcast messages. Here is how it works:
       </p>
       
       <h3>Sign in with Google</h3>
       <p>
-        AnonChat only works for organizations that use Google Workspace. When
+        StealthNote only works for organizations that use Google Workspace. When
         you sign in with Google, Google returns  containing your
         organization&apos;s domain.
       </p>
