@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+// import { UltraHonkVerifier } from "@noir-lang/backend_barretenberg";
+// import vkey from "../../../assets/circuit-vkey.json";
 // import { verifyProof } from '../../core';
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -12,32 +14,49 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(request: NextRequest) {
-  const { id, text, sender, timestamp, domain, proof } = await request.json();
+  const { id, text, sender, timestamp, domain, kid, proof } =
+    await request.json();
 
-  console.log("Received message:", { text, sender, timestamp, domain, proof });
+  console.log("Received message:", {
+    text,
+    sender,
+    timestamp,
+    domain,
+    kid,
+    proof,
+  });
 
+  // TODO: Verify proof in server before writing to DB - currently failing with bbjs
   // try {
-  //   const { isValid } = await verifyProof({ id, text, sender, timestamp, domain, proof });
-  //   if (!isValid) {
+  //   const verifier = new UltraHonkVerifier();
+  //   await verifier.instantiate();
+  //   const result = await verifier.verifyProof(
+  //     { proof: Uint8Array.from(proof), publicInputs: [] },
+  //     Uint8Array.from(vkey)
+  //   );
+
+  //   if (!result) {
   //     throw new Error("Proof verification failed");
   //   }
   // } catch (error) {
   //   console.log("error", error);
-  //   return NextResponse.json({ error: "Proof verification failed" }, { status: 400 });
+  //   return NextResponse.json(
+  //     { error: "Proof verification failed" },
+  //     { status: 400 }
+  //   );
   // }
 
-  const { error } = await supabase
-    .from("messages")
-    .insert([
-      {
-        id,
-        text,
-        sender,
-        timestamp: new Date(timestamp).toISOString(),
-        domain,
-        proof,
-      },
-    ]);
+  const { error } = await supabase.from("messages").insert([
+    {
+      id,
+      text,
+      sender,
+      timestamp: new Date(timestamp).toISOString(),
+      domain,
+      kid,
+      proof,
+    },
+  ]);
 
   if (error) {
     console.log("error", error);

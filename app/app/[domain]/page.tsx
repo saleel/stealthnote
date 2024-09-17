@@ -68,7 +68,8 @@ export default function ChatPage() {
     };
 
     try {
-      const { idToken, tokenPayload } = await signMessageWithGoogle(message);
+      const { idToken, tokenPayload, headers } = await signMessageWithGoogle(message);
+      message.kid = headers!.kid;
       console.log("Message signed with Google", { tokenPayload });
 
       setIsProving(true);
@@ -164,7 +165,7 @@ export default function ChatPage() {
     return (
       <div className="text-center">
         <p>No messages yet</p>
-        <p>Be the first to send a message!</p>
+        <p>Be the first at <span>{domain}</span> to send a message!</p>
       </div>
     );
   }

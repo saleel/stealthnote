@@ -87,6 +87,7 @@ async function loadGoogleOAuthScript() {
 export async function signInWithGoogle({ nonce }: { nonce: string }): Promise<{
   idToken?: string;
   tokenPayload?: { hd: string; nonce: string };
+  headers?: { kid: string };
   error?: string;
 }> {
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -115,12 +116,13 @@ export async function signInWithGoogle({ nonce }: { nonce: string }): Promise<{
           }
 
           localStorage.removeItem("googleOAuthNonce");
-          resolve({ idToken: idTokenStr, tokenPayload });
+
+          const headers = JSON.parse(atob(idTokenStr.split(".")[0]));
+          resolve({ idToken: idTokenStr, tokenPayload, headers });
         }
       },
       nonce: nonce,
-      login_uri: window.origin,
-      parent_origin: window.origin,
+      context: "signIn",
     });
 
     window.google!.accounts.id.prompt();
@@ -130,14 +132,14 @@ export async function signInWithGoogle({ nonce }: { nonce: string }): Promise<{
 export async function signMessageWithGoogle(message: Message) {
   const messageHash = await hashMessage(message);
 
-  const { error, idToken, tokenPayload } = await signInWithGoogle({
+  const { error, idToken, tokenPayload, headers } = await signInWithGoogle({
     nonce: messageHash,
   });
   if (error) {
     throw new Error(error);
   }
 
-  return { idToken, tokenPayload };
+  return { idToken, tokenPayload, headers };
 }
 
 export async function hashMessage(message: Message) {
@@ -153,6 +155,37 @@ export async function hashMessage(message: Message) {
     .slice(0, 32); // Only using 32 bytes for the nonce
 }
 
+async function getGooglePublicKeys() {
+  const response = await fetch("https://www.googleapis.com/oauth2/v3/certs");
+  const keys = await response.json();
+  return keys.keys;
+}
+
+async function convertPubKey(pubkey: object) {
+  const publicKey = await crypto.subtle.importKey(
+    "jwk",
+    pubkey,
+    {
+      name: "RSASSA-PKCS1-v1_5",
+      hash: "SHA-256",
+    },
+    true,
+    ["verify"]
+  );
+
+  const publicKeyJWK = await globalThis.crypto.subtle.exportKey(
+    "jwk",
+    publicKey
+  );
+  const modulusBigInt = BigInt(
+    "0x" + Buffer.from(publicKeyJWK.n as string, "base64").toString("hex")
+  );
+  const redcParam = (1n << (2n * 2048n)) / modulusBigInt;
+
+  return { publicKey, modulusBigInt, redcParam };
+}
+
+
 export async function generateProof(
   idToken: string
 ): Promise<{ proof: Uint8Array; provingTime: number }> {
@@ -162,49 +195,37 @@ export async function generateProof(
   const header = JSON.parse(atob(headerB64));
   const payload = JSON.parse(atob(payloadB64));
 
-  // Fetch Google's public keys
-  const response = await fetch("https://www.googleapis.com/oauth2/v3/certs");
-  const keys = await response.json();
-
-  // Find the correct key based on the 'kid' in the JWT header
-  const key = keys.keys.find((k: { kid: string }) => k.kid === header.kid);
+  // Fetch Google's public keys and find the correct key based on the 'kid' in the JWT header
+  const keys = await getGooglePublicKeys();
+  const key = keys.find((k: { kid: string }) => k.kid === header.kid);
   if (!key) {
     throw new Error("No matching key not found");
   }
 
-  //  Verify the signature locally
-  const publicKey = await crypto.subtle.importKey(
-    "jwk",
-    key,
-    {
-      name: "RSASSA-PKCS1-v1_5",
-      hash: "SHA-256",
-    },
-    true,
-    ["verify"]
-  );
-
-  const signatureBase64Url = idToken.split(".")[2];
-  const data = new TextEncoder().encode(
+  const { publicKey, modulusBigInt, redcParam } = await convertPubKey(key);
+ 
+  const signedData = new TextEncoder().encode(
     idToken.split(".").slice(0, 2).join(".")
   );
 
+  const signatureBase64Url = idToken.split(".")[2];
   const signatureBase64 = signatureBase64Url
     .replace(/-/g, "+")
     .replace(/_/g, "/");
-
   const signature = new Uint8Array(
     atob(signatureBase64)
       .split("")
       .map((c) => c.charCodeAt(0))
   );
+  const signatureBigInt = BigInt("0x" + Buffer.from(signature).toString("hex"));
+
 
   // Verify signature locally
   const isValid = await crypto.subtle.verify(
     "RSASSA-PKCS1-v1_5",
     publicKey,
     signature,
-    data
+    signedData
   );
 
   if (!isValid) {
@@ -215,19 +236,9 @@ export async function generateProof(
   const backend = new UltraHonkBackend(circuit as CompiledCircuit);
   const noir = new Noir(circuit as CompiledCircuit);
 
-  const publicKeyJWK = await globalThis.crypto.subtle.exportKey(
-    "jwk",
-    publicKey
-  );
-  const modulusBigInt = BigInt(
-    "0x" + Buffer.from(publicKeyJWK.n as string, "base64").toString("hex")
-  );
-  const signatureBigInt = BigInt("0x" + Buffer.from(signature).toString("hex"));
-  const redc_parm = (1n << (2n * 2048n)) / modulusBigInt;
-
   // Pad data to 1024 bytes
   const paddedData = new Uint8Array(1024);
-  paddedData.set(data);
+  paddedData.set(signedData);
 
   // Pad domain to 50 bytes
   const domainBytes = new Uint8Array(50);
@@ -239,11 +250,11 @@ export async function generateProof(
     pubkey_modulus_limbs: splitBigIntToChunks(modulusBigInt, 120, 18).map((s) =>
       s.toString()
     ),
-    redc_params_limbs: splitBigIntToChunks(redc_parm, 120, 18).map((s) =>
+    redc_params_limbs: splitBigIntToChunks(redcParam, 120, 18).map((s) =>
       s.toString()
     ),
     data: Array.from(paddedData).map((s) => s.toString()),
-    data_length: data.length,
+    data_length: signedData.length,
     signature_limbs: splitBigIntToChunks(signatureBigInt, 120, 18).map((s) =>
       s.toString()
     ),
@@ -295,11 +306,19 @@ export async function verifyProof(
 
   const verifier = new UltraHonkVerifier();
 
-  const publicInputs = new Uint8Array(50 + 32).fill(0); // 50 bytes for domain, 32 for messageHash
+  // Find the correct key based on the 'kid' in the message
+  const keys = await getGooglePublicKeys();
+  const key = keys.find((k: { kid: string }) => k.kid === message.kid);
+  const { modulusBigInt } = await convertPubKey(key);
+  const modulusLimbs = splitBigIntToChunks(modulusBigInt, 120, 18);
+
+  // 50 bytes for domain, 32 for messageHash, 18 for modulus chunks
+  const publicInputs = new Uint8Array(18 + 50 + 32).fill(0);
   const messageHash = await hashMessage(message);
 
-  publicInputs.set(new TextEncoder().encode(message.domain));
-  publicInputs.set(new TextEncoder().encode(messageHash), 50);
+  publicInputs.set(Uint8Array.from(modulusLimbs.map(s => Number(s))), 0);
+  publicInputs.set(new TextEncoder().encode(message.domain), 18);
+  publicInputs.set(new TextEncoder().encode(messageHash), 18 + 50);
 
   const proofData = {
     proof: Uint8Array.from(message.proof!),
@@ -307,6 +326,8 @@ export async function verifyProof(
       (s) => "0x" + s.toString(16).padStart(64, "0")
     ),
   };
+
+  console.log(proofData);
 
   const startTime = performance.now();
   await verifier.instantiate();

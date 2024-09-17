@@ -4,6 +4,18 @@ import React from "react";
 import SignInButton from "./components/siwg";
 
 export default function Home() {
+  const [isBrave, setIsBrave] = React.useState(false);
+
+  React.useEffect(() => {
+    // @ts-expect-error brave
+    if (navigator.brave) {
+      // @ts-expect-error brave
+      navigator.brave.isBrave().then((isBrave) => {
+        setIsBrave(isBrave);
+      });
+    }
+  }, []);
+
   return (
     <div className="page">
       <main className="intro">
@@ -23,11 +35,13 @@ export default function Home() {
 
         <SignInButton />
 
-        <p className="text-small mt-3">
-          If you are on Brave broswer, you might need to disable{" "}
-          Brave Shields to see the Google sign in popup.
-          Note that there are no trackers or ads in this website.
-        </p>
+        {isBrave && (
+          <p className="text-small mt-3">
+            If you are on Brave broswer, sign in with Google might not work
+            correctly. Try disabling Brave sheilds for this site, or use a
+            different browser if the issue persists.
+          </p>
+        )}
       </main>
     </div>
   );
