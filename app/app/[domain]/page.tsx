@@ -7,6 +7,7 @@ import {
   fetchMessage,
   fetchMessages,
   generateProof,
+  instantiateVerifier,
   signMessageWithGoogle,
   submitMessage,
   verifyProof,
@@ -20,6 +21,9 @@ export default function ChatPage() {
 
   const [newMessage, setNewMessage] = useState("");
   const [isProving, setIsProving] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<{
+    [key: string]: "idle" | "verifying" | "valid" | "invalid";
+  }>({});
 
   const [messages, { isFetching, error, reFetch, fetchedAt }] = usePromise<
     Message[]
@@ -27,6 +31,11 @@ export default function ChatPage() {
     defaultValue: [],
     dependencies: [domain],
   });
+
+  // Instantiate verifier on mount to make verification faster
+  useEffect(() => {
+    instantiateVerifier();
+  }, []);
 
   // Automatically call refetch every 10 seconds
   useEffect(() => {
@@ -41,6 +50,7 @@ export default function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
 
   async function handleMessageSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -80,45 +90,72 @@ export default function ChatPage() {
   }
 
   async function onVerifyClick(messageId: string) {
-    console.log("Verifying proof");
+    console.log("Verifying proof for message", messageId);
+    setVerificationStatus((prev) => ({ ...prev, [messageId]: "verifying" }));
 
-    // Fetch single message with proof
-    const message = await fetchMessage(messageId);
+    try {
+      const message = await fetchMessage(messageId);
+      const { isValid, verificationTime } = await verifyProof(message);
 
-    // Prepare full proof object
-    const { isValid, verificationTime } = await verifyProof(message);
-
-    if (!isValid) {
-      alert("Proof is invalid");
+      console.log(`Proof verified in ${verificationTime} ms`, isValid);
+      setVerificationStatus((prev) => ({
+        ...prev,
+        [messageId]: isValid ? "valid" : "invalid",
+      }));
+    } catch (error) {
+      console.error("Verification failed:", error);
+      setVerificationStatus((prev) => ({ ...prev, [messageId]: "invalid" }));
     }
-
-    // Verify proof
-    console.log(`Proof verified in ${verificationTime} ms`, isValid);
   }
 
   function renderMessage(message: Message, index: number) {
     const timestamp = new Date(message.timestamp);
+    const status = verificationStatus[message.id] || "idle";
 
     return (
       <div key={message.timestamp} className="message-box">
         <div className="message-box-header">
           <span className="message-box-timestamp">
             {`#${(index + 1).toString()} `}
-            {/* {timestamp.toLocaleDateString()} {timestamp.toLocaleTimeString()} */}
           </span>
-          <span>
-            <span className="message-box-timestamp">
+          <span className="message-box-timestamp">
+            <span>
               {timestamp.toLocaleDateString()} {timestamp.toLocaleTimeString()}
             </span>
             <button
-              className="message-box-verify"
+              className={`message-box-verify ${status}`}
               onClick={() => onVerifyClick(message.id)}
+              disabled={status === "verifying"}
             >
-              Verify
+              {status === "idle" && "Verify"}
+              {status === "verifying" && (
+                <span className="spinner-icon small"></span>
+              )}
+              {status === "valid" && (
+                <span className="verify-icon valid">✓</span>
+              )}
+              {status === "invalid" && (
+                <span className="verify-icon invalid">✗</span>
+              )}
             </button>
           </span>
         </div>
         {message.text}
+      </div>
+    );
+  }
+
+  function renderLoading() {
+    return (
+      <div className="skeleton-loader">
+        {[...Array(4)].map((_, index) => (
+          <div key={index} className="skeleton-message-box">
+            <div className="skeleton-message-box-header">
+              <div className="skeleton-text skeleton-short"></div>
+            </div>
+            <div className="skeleton-text skeleton-long"></div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -140,9 +177,7 @@ export default function ChatPage() {
       </h1>
 
       <div className="message-list">
-        {isFetching && !fetchedAt && (
-          <div className="text-center">Loading...</div>
-        )}
+        {isFetching && !fetchedAt && renderLoading()}
         {fetchedAt && messages.length === 0 && renderNoMessages()}
         {!fetchedAt && error && <div>Error: {error.message}</div>}
 
@@ -161,10 +196,10 @@ export default function ChatPage() {
         />
         <button
           type="submit"
-          className="message-input-button"
+          className={`message-input-button ${isProving ? "loading" : ""}`}
           disabled={isProving}
         >
-          {isProving ? "Proving..." : "Submit"}
+          {isProving ? <span className="spinner-icon"></span> : "Submit"}
         </button>
       </form>
     </div>

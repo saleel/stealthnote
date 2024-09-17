@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import "./styles.scss";
 
-import 'cal-sans';
+import "cal-sans";
 
 function Header() {
   return (
@@ -13,8 +13,17 @@ function Header() {
         <Link href="/">AnonChat</Link>
       </div>
       <nav>
-        <Link className="nav-link" href="/how-it-works">How It Works</Link>
-        <Link className="nav-link" href="https://github.com/saleel/anon-chat">Github</Link>
+        <Link className="nav-link" href="/how-it-works">
+          How It Works
+        </Link>
+        <Link
+          className="nav-link"
+          target="_blank"
+          rel="noopener noreferrer"
+          href="https://github.com/saleel/anon-chat"
+        >
+          Github
+        </Link>
       </nav>
     </header>
   );

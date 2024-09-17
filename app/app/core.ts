@@ -281,9 +281,15 @@ function splitBigIntToChunks(
   return chunks;
 }
 
+export async function instantiateVerifier() {
+  const verifier = new UltraHonkVerifier();
+  await verifier.instantiate();
+}
+
 export async function verifyProof(
   message: Message,
 ) {
+  // We need to generate the vkey when circuit is modified. Generated one is saved to vkey.json
   // const backend = new UltraHonkBackend(circuit as CompiledCircuit);
   // await backend.getVerificationKey();
 
