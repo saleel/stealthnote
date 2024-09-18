@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
-// import { verifyProof } from "../../../lib/utils";
+import { verifyProof } from "../../../lib/utils";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -36,7 +36,7 @@ export async function postMessage(
 
   // Verifying is not working on NextJS on Vercel/Netlify
   // Need some changes to bb.js to allow custom path for downloading files
-  // await verifyProof({ id, text, sender, timestamp, domain, kid, proof });
+  await verifyProof({ id, text, sender, timestamp, domain, kid, proof });
 
   const { error } = await supabase.from("messages").insert([
     {

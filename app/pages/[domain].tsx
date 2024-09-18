@@ -72,6 +72,7 @@ export default function DomainChatPage() {
       const { idToken, tokenPayload, headers } = await signMessageWithGoogle(
         message
       );
+
       message.kid = headers!.kid;
       console.log("Message signed with Google", { tokenPayload });
 

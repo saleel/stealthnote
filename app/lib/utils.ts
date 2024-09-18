@@ -470,7 +470,7 @@ export async function verifyProof(message: Message) {
   };
 
   const startTime = performance.now();
-  await verifier.instantiate();
+  await verifier.instantiate({ crsPath: "/tmp" });
   const result = await verifier.verifyProof(proofData, Uint8Array.from(vkey));
   const verificationTime = performance.now() - startTime;
 
