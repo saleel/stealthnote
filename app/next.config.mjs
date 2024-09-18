@@ -5,7 +5,9 @@ dotenv.config();
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    appDir: false,
+    outputFileTracingIncludes: {
+      '/api/messages': ['node_modules/@aztec/bb.js/dest/node/barretenberg_wasm/barretenberg-threads.wasm'],
+    },
   },
   reactStrictMode: true,
   sassOptions: {
