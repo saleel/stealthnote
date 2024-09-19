@@ -34,6 +34,7 @@ export async function postMessage(
   request: NextApiRequest,
   res: NextApiResponse
 ) {
+  fs.writeFileSync("/tmp/bn254_g1.dat", new Uint8Array());
   // list all files in /tmp
   console.log(fs.readdirSync("/tmp"));
 
