@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
+import fs from "fs";
 import { verifyProof } from "../../../lib/utils";
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -33,6 +34,9 @@ export async function postMessage(
   request: NextApiRequest,
   res: NextApiResponse
 ) {
+  // list all files in /tmp
+  console.log(fs.readdirSync("/tmp"));
+
   const { id, text, sender, timestamp, domain, kid, proof } =
     await request.body;
 
