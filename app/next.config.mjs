@@ -6,9 +6,10 @@ dotenv.config();
 const nextConfig = {
   experimental: {
     outputFileTracingIncludes: {
-      '/api/messages': ['node_modules/@aztec/bb.js/dest/node/barretenberg_wasm/barretenberg-threads.wasm'],
-      // eslint-disable-next-line max-len
-      '/api/messages': ['node_modules/@aztec/bb.js/dest/node/barretenberg_wasm/barretenberg_wasm_main/factory/node/main.worker.js'],
+      '/api/messages': [
+        'node_modules/@aztec/bb.js/dest/node/barretenberg_wasm/barretenberg-threads.wasm',
+        'node_modules/@aztec/bb.js/dest/node/barretenberg_wasm/barretenberg_wasm_main/factory/node/main.worker.js'
+      ],
     },
   },
   reactStrictMode: true,
