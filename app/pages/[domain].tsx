@@ -13,6 +13,7 @@ import {
   verifyProof,
 } from "../lib/utils";
 import usePromise from "../hooks/use-promise";
+import Head from "next/head";
 
 export default function DomainChatPage() {
   const params = useParams();
@@ -198,8 +199,12 @@ export default function DomainChatPage() {
   }
 
   return (
-    <div className="messages-container">
-      <h1 className="messages-container-title">
+    <>
+      <Head>
+        <title>Anonymous messages from {domain} - StealthNote</title>
+      </Head>
+      <div className="messages-container">
+        <h1 className="messages-container-title">
         Anonymous messages from members of{" "}
         <span className="messages-container-title-domain">{domain}</span>
       </h1>
@@ -234,5 +239,6 @@ export default function DomainChatPage() {
       {renderStatusBox()}
 
     </div>
+    </>
   );
 }
