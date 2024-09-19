@@ -34,8 +34,6 @@ export async function postMessage(
 
   console.log("Received message:", { domain, text });
 
-  // Verifying is not working on NextJS on Vercel/Netlify
-  // Need some changes to bb.js to allow custom path for downloading files
   await verifyProof({ id, text, sender, timestamp, domain, kid, proof });
 
   const { error } = await supabase.from("messages").insert([

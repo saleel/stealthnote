@@ -158,12 +158,12 @@
   resolved "https://registry.npmjs.org/@noir-lang/acvm_js/-/acvm_js-0.50.0.tgz"
   integrity sha512-tmD3eZ8GbkkD001S/YVIrp91sy+XW1ZeVRObio1WgvX9081kJS1xptBglMO4ITzdHOLLuIeaChlUhCgNtwFB9Q==
 
-"@noir-lang/backend_barretenberg@https://gitpkg.vercel.app/saleel/noir/tooling/noir_js_backend_barretenberg?master":
+"@noir-lang/backend_barretenberg@https://gitpkg.vercel.app/saleel/noir/tooling/noir_js_backend_barretenberg?dist":
   version "0.34.0"
-  resolved "https://gitpkg.vercel.app/saleel/noir/tooling/noir_js_backend_barretenberg?master#d55bda06c998e7955b43c670acfb91c31ecc7352"
+  resolved "https://gitpkg.vercel.app/saleel/noir/tooling/noir_js_backend_barretenberg?dist#c3523686a9b37318c816b52db1cde9517c2e50ac"
   dependencies:
     "@aztec/bb.js" "0.55.0"
-    "@noir-lang/types" "workspace:*"
+    "@noir-lang/types" "0.34.0"
     fflate "^0.8.0"
 
 "@noir-lang/noir_js@0.34.0":
@@ -182,7 +182,7 @@
   dependencies:
     "@noir-lang/types" "0.34.0"
 
-"@noir-lang/types@0.34.0", "@noir-lang/types@workspace:*":
+"@noir-lang/types@0.34.0":
   version "0.34.0"
   resolved "https://registry.yarnpkg.com/@noir-lang/types/-/types-0.34.0.tgz#909d4a170177c7ab5adfeed5dc8660d69825ced2"
   integrity sha512-04A14JMPt5G6/cCD4n59W0DUtAbcN8YByvSJ6gj0VQramd11tWK3ZqhKadnQrzhA0GwEvROd6jvn/blKdHlSXQ==

@@ -6,12 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "postinstall": "yarn build-bbjs",
-    "build-bbjs": "(cd node_modules/@noir-lang/backend_barretenberg && yarn add @noir-lang/types && npx tsc && npx tsc -p ./tsconfig.cjs.json && yarn generate:package)"
+    "lint": "next lint"
   },
   "dependencies": {
-    "@noir-lang/backend_barretenberg": "https://gitpkg.vercel.app/saleel/noir/tooling/noir_js_backend_barretenberg?master",
+    "@noir-lang/backend_barretenberg": "https://gitpkg.vercel.app/saleel/noir/tooling/noir_js_backend_barretenberg?dist",
     "@noir-lang/noir_js": "0.34.0",
     "@supabase/supabase-js": "^2.45.4",
     "bulma": "^1.0.2",

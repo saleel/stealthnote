@@ -37,4 +37,6 @@ nargo compile
 
 <br />
 
-Built with [Noir](https://www.noir-lang.org/). Inspiration: [https://www.nozee.xyz/](https://www.nozee.xyz/)
+Built with [Noir](https://www.noir-lang.org/). 
+
+Inspiration: [https://www.nozee.xyz/](https://www.nozee.xyz/)
