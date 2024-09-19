@@ -35,6 +35,12 @@ export async function postMessage(
   res: NextApiResponse
 ) {
   fs.writeFileSync("/tmp/bn254_g1.dat", new Uint8Array());
+
+  const response2 = await fetch('https://aztec-ignition.s3.amazonaws.com/MAIN%20IGNITION/flat/g2.dat', {
+    cache: 'force-cache',
+  });
+  fs.writeFileSync('/tmp/bn254_g2.dat', new Uint8Array(await response2.arrayBuffer()));
+
   // list all files in /tmp
   console.log(fs.readdirSync("/tmp"));
 
