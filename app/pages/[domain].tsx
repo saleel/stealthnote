@@ -14,6 +14,7 @@ import {
 } from "../lib/utils";
 import usePromise from "../hooks/use-promise";
 import Head from "next/head";
+import { set } from 'idb-keyval';
 
 export default function DomainChatPage() {
   const params = useParams();
@@ -38,6 +39,14 @@ export default function DomainChatPage() {
   // useEffect(() => {
   //   instantiateVerifier();
   // }, []);
+
+  useEffect(() => {
+    async function writeToIndexedDB() {
+      // A hack to prevent download of large g1Data file which is not needed
+      await set('g1Data', new Uint8Array());
+    }
+    writeToIndexedDB();
+  }, [messages]);
 
   // Automatically call refetch every 10 seconds
   useEffect(() => {

@@ -15,6 +15,7 @@
     "bulma": "^1.0.2",
     "cal-sans": "^1.0.1",
     "dotenv": "^16.4.5",
+    "idb-keyval": "^6.2.1",
     "next": "14.2.11",
     "react": "^18",
     "react-dom": "^18",
