@@ -44,18 +44,17 @@ export async function postMessage(
 
 
   
-  const { id, text, sender, timestamp, domain, kid, proof } =
+  const { id, text, timestamp, domain, kid, proof } =
     await request.body;
 
   console.log("Received message:", { domain, text });
 
-  await verifyProof({ id, text, sender, timestamp, domain, kid, proof });
+  await verifyProof({ id, text, timestamp, domain, kid, proof });
 
   const { error } = await supabase.from("messages").insert([
     {
       id,
       text,
-      sender,
       timestamp: new Date(timestamp).toISOString(),
       domain,
       kid,
@@ -87,7 +86,7 @@ export async function getMessage(
 
   const { data, error } = await supabase
     .from("messages")
-    .select("id, text, sender, timestamp, domain")
+    .select("id, text, timestamp, domain")
     .eq("domain", domain)
     .order("timestamp", { ascending: true });
 

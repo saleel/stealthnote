@@ -64,7 +64,6 @@ export default function DomainChatPage() {
       id: crypto.randomUUID(),
       timestamp: new Date().getTime(),
       text: newMessage,
-      sender: 123456,
       domain: domain,
     };
 
