@@ -15,7 +15,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export const config = {
   maxDuration: 60,
 };
- 
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -36,16 +36,19 @@ export async function postMessage(
 ) {
   // A hack to make proof verification work in serverless environment
   // Download and write expected files
-  fs.writeFileSync(process.env.TEMP_DIR + "/tmp/bn254_g1.dat", new Uint8Array()); // g1 is not used
-  const response2 = await fetch('https://aztec-ignition.s3.amazonaws.com/MAIN%20IGNITION/flat/g2.dat', {
-    cache: 'force-cache',
-  });
-  fs.writeFileSync('/tmp/bn254_g2.dat', new Uint8Array(await response2.arrayBuffer())); // write g2
+  fs.writeFileSync(process.env.TEMP_DIR + "/bn254_g1.dat", new Uint8Array()); // g1 is not used
+  const response2 = await fetch(
+    "https://aztec-ignition.s3.amazonaws.com/MAIN%20IGNITION/flat/g2.dat",
+    {
+      cache: "force-cache",
+    }
+  );
+  fs.writeFileSync(
+    process.env.TEMP_DIR + "/bn254_g2.dat",
+    new Uint8Array(await response2.arrayBuffer())
+  ); // write g2
 
-
-  
-  const { id, text, timestamp, domain, kid, proof } =
-    await request.body;
+  const { id, text, timestamp, domain, kid, proof } = await request.body;
 
   console.log("Received message:", { domain, text });
 
