@@ -471,7 +471,7 @@ export async function verifyProof(message: Message) {
 
   const startTime = performance.now();
  
-  await verifier.instantiate({ crsPath: "/tmp" });
+  await verifier.instantiate({ crsPath: process.env.TEMP_DIR });
   const result = await verifier.verifyProof(proofData, Uint8Array.from(vkey));
   const verificationTime = performance.now() - startTime;
 
