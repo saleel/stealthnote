@@ -7,3 +7,4 @@ compiler_version = ">=0.34.0"
 [dependencies]
 noir_rsa = { tag = "v0.3.0", git = "https://github.com/noir-lang/noir_rsa", directory="lib" }
 string_search = { path = "../../noir_string_search" } # TODO: Change to git once https://github.com/noir-lang/noir_string_search/pull/4 is merged
+noir_base64 = { path = "../../noir_base64" }
