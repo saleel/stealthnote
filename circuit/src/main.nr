@@ -1,4 +1,5 @@
 // mod utils;
+// mod sha256;
 
 use dep::std::hash::sha256_var;
 use dep::noir_rsa::bignum::BigNum;
@@ -6,7 +7,7 @@ use dep::noir_rsa::bignum::runtime_bignum::BigNumInstance;
 use dep::noir_rsa::bignum::fields::Params2048;
 use dep::noir_rsa::types::RSA;
 use dep::string_search::{SubString, StringBody, SubString32, SubString64, StringBody256};
-use dep::noir_base64::{base64_encode};
+use dep::noir_base64::{base64_decode};
 
 
 global MAX_DATA_LENGTH: u32 = 1024;
@@ -76,7 +77,7 @@ fn main(
     for i in 0..B64_DECODE_LENGTH {
         payload_b64[i] = data[payload_start_index + B64_SKIP_CHARS + i];
     }
-    let payload: [u8; ENCODED_PAYLOAD_LENGTH] = base64_encode(payload_b64);
+    let payload: [u8; ENCODED_PAYLOAD_LENGTH] = base64_decode(payload_b64);
 
     validate_hd_field(payload, domain_name, domain_name_length);
     validate_nonce(payload, nonce);
