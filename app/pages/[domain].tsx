@@ -2,19 +2,18 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { Message } from "../lib/types";
+import { Message, SignedMessage, SignedMessageWithProof } from "../lib/types";
 import {
   fetchMessage,
   fetchMessages,
-  generateProof,
-  // instantiateVerifier,
-  signMessageWithGoogle,
+  generateKeyPairAndRegister,
+  isRegistered,
+  signMessage,
   submitMessage,
-  verifyProof,
+  verifyMessage,
 } from "../lib/utils";
 import usePromise from "../hooks/use-promise";
 import Head from "next/head";
-import { set } from 'idb-keyval';
 
 export default function DomainChatPage() {
   const params = useParams();
@@ -22,8 +21,7 @@ export default function DomainChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [newMessage, setNewMessage] = useState("");
-  const [isProving, setIsProving] = useState(false);
-  const [status, setStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<{
     [key: string]: "idle" | "verifying" | "valid" | "invalid";
   }>({});
@@ -35,32 +33,19 @@ export default function DomainChatPage() {
     dependencies: [domain],
   });
 
-  // // Instantiate verifier on mount to make verification faster
-  // useEffect(() => {
-  //   instantiateVerifier();
-  // }, []);
-
-  useEffect(() => {
-    async function writeToIndexedDB() {
-      // A hack to prevent download of large g1Data file which is not needed
-      await set('g1Data', new Uint8Array());
-    }
-    writeToIndexedDB();
-  }, [messages]);
-
   // Automatically call refetch every 10 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       reFetch();
-    }, 10000);
+    }, 10_000);
 
     return () => clearInterval(interval);
   }, [reFetch]);
 
-  // Auto scroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  // // Auto scroll to bottom when new messages arrive
+  // useEffect(() => {
+  //   messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // }, [messages]);
 
   async function handleMessageSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -68,6 +53,13 @@ export default function DomainChatPage() {
     if (!newMessage.trim()) {
       return;
     }
+
+    if (!isRegistered()) {
+      console.log("Not registered. Generating key pair and registering.");
+      await generateKeyPairAndRegister();
+    }
+
+    setIsSubmitting(true);
 
     const message: Message = {
       id: crypto.randomUUID(),
@@ -77,51 +69,36 @@ export default function DomainChatPage() {
     };
 
     try {
-      setStatus("Sign in with Google to continue...");
-      const { idToken, tokenPayload, headers } = await signMessageWithGoogle(
-        message
-      );
+      console.log("Signing message", message);
+      const { signatureHex, pubkey } = await signMessage(message);
+      const signedMessage: SignedMessage = {
+        ...message,
+        signature: signatureHex,
+        pubkey: pubkey as string,
+      };
 
-      message.kid = headers!.kid;
-      console.log("Message signed with Google", { tokenPayload });
-
-      setIsProving(true);
-      setStatus("Generating proof. This will take 1-2 minutes...");
-
-      const { proof, provingTime } = await generateProof(idToken!);
-      console.log(`Proof generated in ${provingTime} ms`, proof);
-
-      message.proof = proof;
-
-      setStatus("Proof generated. Submitting message...");
-      await submitMessage(message);
+      console.log("Submitting message", signedMessage);
+      await submitMessage(signedMessage);
 
       // Update message list
       reFetch();
       setNewMessage("");
-      
-      setStatus("Message submitted!");
-
-      setTimeout(() => {
-        setStatus("");
-      }, 3000);
     } catch (error) {
-      console.error(`Failed to submit message: ${error}`);
-      setStatus("Oops, something went wrong. Please try again.");
+      console.error(`Failed to submit message: ${(error as Error).stack}`);
     } finally {
-      setIsProving(false);
+      setIsSubmitting(false);
     }
   }
 
   async function onVerifyClick(messageId: string) {
-    console.log("Verifying proof for message", messageId);
     setVerificationStatus((prev) => ({ ...prev, [messageId]: "verifying" }));
 
     try {
-      const message = await fetchMessage(messageId);
-      const { isValid, verificationTime } = await verifyProof(message);
+      const message = (await fetchMessage(messageId)) as SignedMessageWithProof;
 
-      console.log(`Proof verified in ${verificationTime} ms`, isValid);
+      console.log("Verifying message", message);
+      const isValid = await verifyMessage(message);
+
       setVerificationStatus((prev) => ({
         ...prev,
         [messageId]: isValid ? "valid" : "invalid",
@@ -160,8 +137,12 @@ export default function DomainChatPage() {
               {status === "verifying" && (
                 <span className="message-box-verify-icon spinner-icon small"></span>
               )}
-              {status === "valid" && <span className="message-box-verify-icon valid">✓</span>}
-              {status === "invalid" && <span className="message-box-verify-icon invalid">+</span>}
+              {status === "valid" && (
+                <span className="message-box-verify-icon valid">✓</span>
+              )}
+              {status === "invalid" && (
+                <span className="message-box-verify-icon invalid">+</span>
+              )}
             </span>
           </span>
         </div>
@@ -196,57 +177,49 @@ export default function DomainChatPage() {
     );
   }
 
-  function renderStatusBox() {  
-    return (
-      <div className="status-box">
-        {status && (
-          <div className="status-box-message">{status}</div>
-        )}
-      </div>
-    );
-  }
+  const title = `Anonymous messages from ${domain} - StealthNote`;
 
   return (
     <>
       <Head>
-        <title>Anonymous messages from {domain} - StealthNote</title>
+        <title>{title}</title>
       </Head>
       <div className="messages-container">
         <h1 className="messages-container-title">
-        Anonymous messages from members of{" "}
-        <span className="messages-container-title-domain">{domain}</span>
-      </h1>
+          Anonymous messages from members of{" "}
+          <span className="messages-container-title-domain">{domain}</span>
+        </h1>
 
-      <div className="message-list">
-        {isFetching && !fetchedAt && renderLoading()}
-        {fetchedAt && messages.length === 0 && renderNoMessages()}
-        {!fetchedAt && error && <div>Error: {error.message}</div>}
+        <div className="message-list">
+          {isFetching && !fetchedAt && renderLoading()}
+          {fetchedAt && messages.length === 0 && renderNoMessages()}
+          {!fetchedAt && error && <div>Error: {error.message}</div>}
 
-        {messages.map(renderMessage)}
-        <div ref={messagesEndRef} />
-      </div>
+          {messages.map(renderMessage)}
+          <div ref={messagesEndRef} />
+        </div>
 
-      <form className="message-input-container" onSubmit={handleMessageSubmit}>
-        <textarea
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Type your anonymous message..."
-          className="message-input-field"
-          disabled={isProving}
-          rows={2}
-        />
-        <button
-          type="submit"
-          className={`message-input-button ${isProving ? "loading" : ""}`}
-          disabled={isProving}
+        <form
+          className="message-input-container"
+          onSubmit={handleMessageSubmit}
         >
-          {isProving ? <span className="spinner-icon"></span> : "Submit"}
-        </button>
-      </form>
-
-      {renderStatusBox()}
-
-    </div>
+          <textarea
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Type your anonymous message..."
+            className="message-input-field"
+            disabled={isSubmitting}
+            rows={2}
+          />
+          <button
+            type="submit"
+            className={`message-input-button ${isSubmitting ? "loading" : ""}`}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? <span className="spinner-icon"></span> : "Submit"}
+          </button>
+        </form>
+      </div>
     </>
   );
 }

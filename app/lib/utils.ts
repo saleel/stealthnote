@@ -5,7 +5,7 @@ import {
 } from "@noir-lang/backend_barretenberg";
 import circuit from "../assets/circuit.json";
 import vkey from "../assets/circuit-vkey.json";
-import { Message } from "./types";
+import { Message, SignedMessage, SignedMessageWithProof } from "./types";
 
 declare global {
   interface Window {
@@ -19,6 +19,14 @@ declare global {
     };
   }
 }
+
+export const LocalStorageKeys = {
+  Domain: "domain",
+  PrivateKey: "privateKey",
+  PublicKeyModulus: "publicKey",
+  GoogleOAuthState: "googleOAuthState",
+  GoogleOAuthNonce: "googleOAuthNonce",
+};
 
 export async function fetchMessages(domain: string) {
   const response = await fetch(`/api/messages?domain=${domain}`);
@@ -46,13 +54,13 @@ export async function fetchMessage(id: string) {
   }
 }
 
-export async function submitMessage(message: Message) {
+export async function submitMessage(message: SignedMessage) {
   const response = await fetch("/api/messages", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ ...message, proof: Array.from(message.proof!) }),
+    body: JSON.stringify(message),
   });
 
   if (response.ok) {
@@ -121,8 +129,8 @@ async function signInWithGooglePopup({
   const state = Math.random().toString(36).substring(2, 15);
 
   // Store the state and nonce in localStorage
-  localStorage.setItem("googleOAuthState", state);
-  localStorage.setItem("googleOAuthNonce", nonce);
+  localStorage.setItem(LocalStorageKeys.GoogleOAuthState, state);
+  localStorage.setItem(LocalStorageKeys.GoogleOAuthNonce, nonce);
 
   // Construct the Google OAuth URL
   const redirectUri = `${window.location.origin}/auth`;
@@ -151,7 +159,10 @@ async function signInWithGooglePopup({
         const { idToken, state: returnedState } = event.data;
 
         // Verify the state
-        if (returnedState !== localStorage.getItem("googleOAuthState")) {
+        if (
+          returnedState !==
+          localStorage.getItem(LocalStorageKeys.GoogleOAuthState)
+        ) {
           reject(new Error("Invalid state parameter"));
           return;
         }
@@ -168,8 +179,8 @@ async function signInWithGooglePopup({
         }
 
         // Clean up
-        localStorage.removeItem("googleOAuthState");
-        localStorage.removeItem("googleOAuthNonce");
+        localStorage.removeItem(LocalStorageKeys.GoogleOAuthState);
+        localStorage.removeItem(LocalStorageKeys.GoogleOAuthNonce);
         window.removeEventListener("message", handleMessage);
 
         resolve({ idToken, tokenPayload, headers });
@@ -253,8 +264,8 @@ async function signInWithGoogleOneTap({
   });
 }
 
-export async function signMessageWithGoogle(message: Message) {
-  const messageHash = await hashMessage(message);
+export async function signPubKeyWithGoogle(pubkey: string) {
+  const messageHash = await hashPublicKey(pubkey);
 
   const { error, idToken, tokenPayload, headers } = await signInWithGoogle({
     nonce: messageHash,
@@ -267,10 +278,19 @@ export async function signMessageWithGoogle(message: Message) {
 }
 
 export async function hashMessage(message: Message) {
-  const dataToHash = message.text + message.timestamp;
+  const dataToHash = message.domain + message.text + message.timestamp;
   const messageHash = await crypto.subtle.digest(
     "SHA-256",
     new TextEncoder().encode(dataToHash)
+  );
+
+  return new Uint8Array(messageHash);
+}
+
+export async function hashPublicKey(key: string) {
+  const messageHash = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(key)
   );
 
   return Array.from(new Uint8Array(messageHash))
@@ -279,16 +299,14 @@ export async function hashMessage(message: Message) {
     .slice(0, 32); // Only using 32 bytes for the nonce
 }
 
-export async function getGooglePublicKeys() {
+export async function fetchGooglePublicKeys() {
   const response = await fetch("https://www.googleapis.com/oauth2/v3/certs");
   const keys = await response.json();
   return keys.keys;
 }
 
-export async function convertPubKey(pubkey: object) {
-  const { subtle } = globalThis.crypto;
-
-  const publicKey = await subtle.importKey(
+export async function parseJWKPubkey(pubkey: object) {
+  const publicKey = await crypto.subtle.importKey(
     "jwk",
     pubkey,
     {
@@ -299,10 +317,7 @@ export async function convertPubKey(pubkey: object) {
     ["verify"]
   );
 
-  const publicKeyJWK = await subtle.exportKey(
-    "jwk",
-    publicKey
-  );
+  const publicKeyJWK = await crypto.subtle.exportKey("jwk", publicKey);
   const modulusBigInt = BigInt(
     "0x" + Buffer.from(publicKeyJWK.n as string, "base64").toString("hex")
   );
@@ -311,7 +326,7 @@ export async function convertPubKey(pubkey: object) {
   return { publicKey, modulusBigInt, redcParam };
 }
 
-export async function generateProof(
+export async function generateJWTProof(
   idToken: string
 ): Promise<{ proof: Uint8Array; provingTime: number }> {
   // Parse token
@@ -320,13 +335,13 @@ export async function generateProof(
   const payload = JSON.parse(atob(payloadB64));
 
   // Fetch Google's public keys and find the correct key based on the 'kid' in the JWT header
-  const keys = await getGooglePublicKeys();
+  const keys = await fetchGooglePublicKeys();
   const key = keys.find((k: { kid: string }) => k.kid === header.kid);
   if (!key) {
-    throw new Error("No matching key not found");
+    throw new Error("No matching Google public key found");
   }
 
-  const { publicKey, modulusBigInt, redcParam } = await convertPubKey(key);
+  const { publicKey, modulusBigInt, redcParam } = await parseJWKPubkey(key);
 
   const signedData = new TextEncoder().encode(
     idToken.split(".").slice(0, 2).join(".")
@@ -388,15 +403,11 @@ export async function generateProof(
     ),
   };
 
-  console.log("Inputs for circuit", JSON.stringify(input));
-
   // Generate witness and prove
   const startTime = performance.now();
   const { witness } = await noir.execute(input);
   const proof = await backend.generateProof(witness);
   const provingTime = performance.now() - startTime;
-
-  console.log("Proof", proof);
 
   return { proof: proof.proof, provingTime };
 }
@@ -415,37 +426,152 @@ export function splitBigIntToChunks(
   return chunks;
 }
 
-export async function instantiateVerifier() {
-  const verifier = new UltraHonkVerifier();
-  await verifier.instantiate();
+export async function generateSigningKey() {
+  const key = await crypto.subtle.generateKey(
+    {
+      name: "RSASSA-PKCS1-v1_5",
+      modulusLength: 2048,
+      publicExponent: new Uint8Array([1, 0, 1]),
+      hash: "SHA-256",
+    },
+    true,
+    ["sign", "verify"]
+  );
+
+  const privateKey = await crypto.subtle.exportKey("jwk", key.privateKey);
+  localStorage.setItem(LocalStorageKeys.PrivateKey, JSON.stringify(privateKey));
+
+  const publicKey = await crypto.subtle.exportKey("jwk", key.publicKey);
+  localStorage.setItem(
+    LocalStorageKeys.PublicKeyModulus,
+    publicKey.n as string
+  );
+
+  return { publicKeyModulus: publicKey.n };
 }
 
-export async function verifyProof(message: Message) {
+async function getSigningKey() {
+  const privateKeyString = localStorage.getItem(LocalStorageKeys.PrivateKey);
+  if (!privateKeyString) {
+    throw new Error("No privateKey found");
+  }
+
+  const privateKey = await crypto.subtle.importKey(
+    "jwk",
+    JSON.parse(privateKeyString),
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+
+  return privateKey;
+}
+
+export async function getPubkeyString() {
+  try {
+    const modulus = localStorage.getItem(LocalStorageKeys.PublicKeyModulus);
+    return modulus;
+  } catch (error) {
+    return null;
+  }
+}
+
+export async function generateKeyPairAndRegister(
+  onStatusChange: (status: string) => void = console.log
+) {
+  onStatusChange("Generating key...");
+  const { publicKeyModulus } = await generateSigningKey();
+
+  onStatusChange("Signing with Google...");
+  const { idToken, headers, tokenPayload } = await signPubKeyWithGoogle(
+    publicKeyModulus as string
+  );
+
+  onStatusChange("Generating proof...");
+  const { proof } = await generateJWTProof(idToken!);
+  const domain = tokenPayload!.hd;
+
+  if (!domain) {
+    throw new Error(
+      "You can use this app with a Google account that is part of an organization."
+    );
+  }
+
+  onStatusChange("Registering...");
+  const response = await fetch("/api/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      domain,
+      kid: headers!.kid,
+      publicKey: publicKeyModulus as string,
+      proof: Array.from(proof),
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Call to /register API failed");
+  }
+
+  window.localStorage.setItem(LocalStorageKeys.Domain, domain);
+  onStatusChange("Done!");
+}
+
+export function isRegistered() {
+  return (
+    window.localStorage.getItem(LocalStorageKeys.Domain) !== null &&
+    window.localStorage.getItem(LocalStorageKeys.PublicKeyModulus) !== null &&
+    window.localStorage.getItem(LocalStorageKeys.PrivateKey) !== null
+  );
+}
+
+export function getDomain() {
+  return window.localStorage.getItem(LocalStorageKeys.Domain);
+}
+
+export async function signMessage(message: Message) {
+  const privateKey = await getSigningKey();
+  const pubkey = await getPubkeyString();
+  const messageHash = await hashMessage(message);
+
+  const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", privateKey, messageHash);
+
+  const signatureHex = Array.from(new Uint8Array(signature))
+    .map((s) => s.toString(16).padStart(2, "0"))
+    .join("");
+
+  return { pubkey, signatureHex };
+}
+
+export async function verifyPubkeyZKProof(
+  domain: string,
+  pubkey: string,
+  kid: string,
+  proof: Uint8Array
+) {
   // We need to generate the vkey when circuit is modified. Generated one is saved to vkey.json
   // const backend = new UltraHonkBackend(circuit as CompiledCircuit);
-  // const vkey = await backend.getVerificationKey();
-  // console.log(JSON.stringify(Array.from(vkey)));
+  // const newVkey = await backend.getVerificationKey();
+  // console.log(JSON.stringify(Array.from(newVkey)));
 
-  const verifier = new UltraHonkVerifier();
+  // Hash of the pubkey which is used as the nonce in JWT
+  const pubkeyHash = await hashPublicKey(pubkey);
 
   // Find the correct key based on the 'kid' in the message
-  const keys = await getGooglePublicKeys();
-  const key = keys.find((k: { kid: string }) => k.kid === message.kid);
+  const keys = await fetchGooglePublicKeys();
+  const key = keys.find((k: { kid: string }) => k.kid === kid);
   if (!key) {
     throw new Error("No matching key not found");
   }
 
-  const { modulusBigInt } = await convertPubKey(key);
+  const { modulusBigInt } = await parseJWKPubkey(key);
   const modulusLimbs = splitBigIntToChunks(modulusBigInt, 120, 18);
 
   const domainUint8Array = new Uint8Array(50);
-  domainUint8Array.set(
-    Uint8Array.from(new TextEncoder().encode(message.domain))
-  );
+  domainUint8Array.set(Uint8Array.from(new TextEncoder().encode(domain)));
 
-  const messageHash = await hashMessage(message);
-  const messageHashUint8Array = new Uint8Array(32);
-  messageHashUint8Array.set(new TextEncoder().encode(messageHash));
+  const pubkeyHashUint8Array = new Uint8Array(32);
+  pubkeyHashUint8Array.set(new TextEncoder().encode(pubkeyHash));
 
   const publicInputs = [];
 
@@ -459,21 +585,56 @@ export async function verifyProof(message: Message) {
     )
   );
   publicInputs.push(
-    ...Array.from(messageHashUint8Array).map(
+    ...Array.from(pubkeyHashUint8Array).map(
       (s) => "0x" + s.toString(16).padStart(64, "0")
     )
   );
 
   const proofData = {
-    proof: Uint8Array.from(message.proof!),
+    proof: proof,
     publicInputs,
   };
 
-  const startTime = performance.now();
- 
-  await verifier.instantiate({ crsPath: process.env.TEMP_DIR });
+  const verifier = new UltraHonkVerifier();
   const result = await verifier.verifyProof(proofData, Uint8Array.from(vkey));
-  const verificationTime = performance.now() - startTime;
 
-  return { isValid: result, verificationTime };
+  return result;
+}
+
+export async function verifyMessage(message: SignedMessageWithProof) {
+  const pubkey = await crypto.subtle.importKey(
+    "jwk",
+    {
+      kty: "RSA",
+      n: message.pubkey,
+      e: "AQAB", // 65537
+      alg: "RS256",
+      ext: true,
+      key_ops: ["verify"],
+    },
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    true,
+    ["verify"]
+  );
+
+  const messageHash = await hashMessage(message);
+
+  const isValid = await crypto.subtle.verify(
+    "RSASSA-PKCS1-v1_5",
+    pubkey,
+    Buffer.from(message.signature, "hex"),
+    messageHash
+  );
+
+  if (!isValid) {
+    console.error("Signature verification failed for the message");
+    return false;
+  }
+
+  return verifyPubkeyZKProof(
+    message.domain,
+    message.pubkey,
+    message.kid!,
+    message.proof!
+  );
 }

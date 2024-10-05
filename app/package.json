@@ -1,5 +1,5 @@
 {
-  "name": "ui",
+  "name": "@stealthnote/ui",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,17 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@noir-lang/backend_barretenberg": "https://gitpkg.vercel.app/saleel/noir/tooling/noir_js_backend_barretenberg?dist",
-    "@noir-lang/noir_js": "0.34.0",
+    "@noir-lang/backend_barretenberg": "0.35.0",
+    "@noir-lang/noir_js": "0.35.0",
     "@supabase/supabase-js": "^2.45.4",
-    "bulma": "^1.0.2",
-    "cal-sans": "^1.0.1",
     "dotenv": "^16.4.5",
-    "idb-keyval": "^6.2.1",
     "next": "14.2.11",
     "react": "^18",
-    "react-dom": "^18",
-    "sass": "^1.78.0"
+    "react-dom": "^18"
   },
   "devDependencies": {
     "@types/node": "^20",

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
-import fs from "fs";
-import { verifyProof } from "../../../lib/utils";
+import { verifyMessage } from "../../../lib/utils";
+import { SignedMessage, SignedMessageWithProof } from "../../../lib/types";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -11,10 +11,6 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-export const config = {
-  maxDuration: 60,
-};
 
 export default async function handler(
   req: NextApiRequest,
@@ -34,45 +30,55 @@ export async function postMessage(
   request: NextApiRequest,
   res: NextApiResponse
 ) {
-  // A hack to make proof verification work in serverless environment
-  // Download and write expected files
-  fs.writeFileSync(process.env.TEMP_DIR + "/bn254_g1.dat", new Uint8Array()); // g1 is not used
-  const response2 = await fetch(
-    "https://aztec-ignition.s3.amazonaws.com/MAIN%20IGNITION/flat/g2.dat",
-    {
-      cache: "force-cache",
+  try {
+    const signedMessage = (await request.body) as SignedMessage;
+    const { id, text, timestamp, domain, signature, pubkey } = signedMessage;
+
+    // Verify pubkey is registered
+    const { data, error } = await supabase
+      .from("pubkeys")
+      .select("*")
+      .eq("pubkey", pubkey)
+      .eq("domain", domain)
+      .single();
+
+    if (error) {
+      throw error;
     }
-  );
-  fs.writeFileSync(
-    process.env.TEMP_DIR + "/bn254_g2.dat",
-    new Uint8Array(await response2.arrayBuffer())
-  ); // write g2
 
-  const { id, text, timestamp, domain, kid, proof } = await request.body;
+    const signedMessageWithProof: SignedMessageWithProof = {
+      ...signedMessage,
+      proof: data?.proof,
+      kid: data?.kid,
+    };
 
-  console.log("Received message:", { domain, text });
+    const isValid = await verifyMessage(signedMessageWithProof);
+    if (!isValid) {
+      throw new Error("Message verification failed");
+    }
 
-  await verifyProof({ id, text, timestamp, domain, kid, proof });
+    console.log("Message is valid");
+    const { error: insertError } = await supabase.from("messages").insert([
+      {
+        id,
+        text,
+        timestamp: new Date(timestamp).toISOString(),
+        domain,
+        signature,
+        pubkey,
+      },
+    ]);
 
-  const { error } = await supabase.from("messages").insert([
-    {
-      id,
-      text,
-      timestamp: new Date(timestamp).toISOString(),
-      domain,
-      kid,
-      proof,
-    },
-  ]);
+    if (insertError) {
+      throw insertError;
+    }
 
-  if (error) {
-    res.status(500).json({ error: error.message });
+    res.status(201).json({ message: "Message saved successfully" });
     res.end();
-    return;
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+    res.end();
   }
-
-  res.status(201).json({ message: "Message saved successfully" });
-  res.end();
 }
 
 export async function getMessage(
@@ -89,7 +95,9 @@ export async function getMessage(
 
   const { data, error } = await supabase
     .from("messages")
-    .select("id, text, timestamp, domain")
+    .select(
+      "id, text, timestamp, domain, signature, pubkey"
+    )
     .eq("domain", domain)
     .order("timestamp", { ascending: true });
 
