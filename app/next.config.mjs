@@ -45,7 +45,6 @@ const nextConfig = {
     );
     return config
   },
-  transpilePackages: ['@zk-email/helpers'],
 };
 
 export default nextConfig;

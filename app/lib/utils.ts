@@ -6,7 +6,7 @@ import {
 import circuit from "../assets/circuit.json";
 import vkey from "../assets/circuit-vkey.json";
 import { Message, SignedMessage, SignedMessageWithProof } from "./types";
-import { generatePartialSHA } from "@zk-email/helpers/src";
+import { generatePartialSHA } from "@zk-email/helpers";
 
 declare global {
   interface Window {
