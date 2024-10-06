@@ -1,12 +1,7 @@
-import { CompiledCircuit, Noir } from "@noir-lang/noir_js";
-import {
-  UltraHonkBackend,
-  UltraHonkVerifier,
-} from "@noir-lang/backend_barretenberg";
-import circuit from "../assets/circuit.json";
-import vkey from "../assets/circuit-vkey.json";
+import { type Noir, type CompiledCircuit } from "@noir-lang/noir_js";
 import { Message, SignedMessage, SignedMessageWithProof } from "./types";
 import { generatePartialSHA } from "@zk-email/helpers";
+import { UltraHonkBackend, UltraHonkVerifier } from "@noir-lang/backend_barretenberg";
 
 declare global {
   interface Window {
@@ -36,7 +31,7 @@ export async function fetchMessages(
   afterTimestamp?: number | null,
   beforeTimestamp?: number | null
 ) {
-  const publicKey = localStorage.getItem(LocalStorageKeys.PublicKeyModulus);
+  const pubkey = localStorage.getItem(LocalStorageKeys.PublicKeyModulus);
   const headers: HeadersInit = {
     "Content-Type": "application/json",
   };
@@ -45,10 +40,10 @@ export async function fetchMessages(
     if (domain !== getDomain()) {
       throw new Error("Not registered for this domain");
     }
-    if (!publicKey) {
+    if (!pubkey) {
       throw new Error("No public key found");
     }
-    headers["Authorization"] = `Bearer ${publicKey}`;
+    headers["Authorization"] = `Bearer ${pubkey}`;
   }
 
   let url = `/api/messages?domain=${domain}&isInternal=${isInternal}&limit=${limit}`;
@@ -68,16 +63,16 @@ export async function fetchMessages(
 }
 
 export async function fetchMessage(id: string, isInternal: boolean = false) {
-  const publicKey = localStorage.getItem(LocalStorageKeys.PublicKeyModulus);
+  const pubkey = localStorage.getItem(LocalStorageKeys.PublicKeyModulus);
   const headers: HeadersInit = {
     "Content-Type": "application/json",
   };
 
   if (isInternal) {
-    if (!publicKey) {
+    if (!pubkey) {
       throw new Error("No public key found");
     }
-    headers["Authorization"] = `Bearer ${publicKey}`;
+    headers["Authorization"] = `Bearer ${pubkey}`;
   }
 
   const response = await fetch(`/api/messages/${id}`, { headers });
@@ -364,9 +359,48 @@ export async function parseJWKPubkey(pubkey: object) {
   return { publicKey, modulusBigInt, redcParam };
 }
 
-export async function generateJWTProof(
-  idToken: string
-): Promise<{ proof: Uint8Array; provingTime: number }> {
+type ProverModules = {
+  Noir: typeof Noir;
+  UltraHonkBackend: typeof UltraHonkBackend;
+  circuit: object;
+};
+
+type VerifierModules = {
+  UltraHonkVerifier: typeof UltraHonkVerifier;
+  vkey: object;
+};
+
+let proverPromise: Promise<ProverModules> | null = null;
+let verifierPromise: Promise<VerifierModules> | null = null;
+
+export async function initProver(): Promise<ProverModules> {
+  if (!proverPromise) {
+    proverPromise = (async () => {
+      const [{ Noir }, { UltraHonkBackend }] = await Promise.all([
+        import("@noir-lang/noir_js"),
+        import("@noir-lang/backend_barretenberg")
+      ]);
+      const circuit = await import("../assets/circuit.json");
+      return { Noir, UltraHonkBackend, circuit: circuit.default };
+    })();
+  }
+  return proverPromise;
+}
+
+export async function initVerifier(): Promise<VerifierModules> {
+  if (!verifierPromise) {
+    verifierPromise = (async () => {
+      const { UltraHonkVerifier } = await import("@noir-lang/backend_barretenberg");
+      const vkey = await import("../assets/circuit-vkey.json");
+      return { UltraHonkVerifier, vkey: vkey.default };
+    })();
+  }
+  return verifierPromise;
+}
+
+export async function generateJWTProof(idToken: string): Promise<{ proof: Uint8Array; provingTime: number }> {
+  const { Noir, UltraHonkBackend, circuit } = await initProver();
+  
   // Parse token
   const [headerB64, payloadB64] = idToken.split(".");
   const header = JSON.parse(atob(headerB64));
@@ -583,7 +617,7 @@ export async function generateKeyPairAndRegister(
     publicKeyModulus as string
   );
 
-  onStatusChange("Generating proof...");
+  onStatusChange("Generating ZK proof. This will take about 40 seconds...");
   const { proof } = await generateJWTProof(idToken!);
   const domain = tokenPayload!.hd;
 
@@ -594,19 +628,19 @@ export async function generateKeyPairAndRegister(
   }
 
   onStatusChange("Registering...");
-  const response = await fetch("/api/register", {
+  const response = await fetch("/api/pubkeys", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       domain,
       kid: headers!.kid,
-      publicKey: publicKeyModulus as string,
+      pubkey: publicKeyModulus as string,
       proof: Array.from(proof),
     }),
   });
 
   if (!response.ok) {
-    throw new Error("Call to /register API failed");
+    throw new Error("Call to /pubkeys API failed");
   }
 
   window.localStorage.setItem(LocalStorageKeys.Domain, domain);
@@ -649,6 +683,8 @@ export async function verifyPubkeyZKProof(
   kid: string,
   proof: Uint8Array
 ) {
+  const { UltraHonkVerifier, vkey } = await initVerifier();
+  
   // Hash of the pubkey which is used as the nonce in JWT
   const pubkeyHash = await hashPublicKey(pubkey);
 

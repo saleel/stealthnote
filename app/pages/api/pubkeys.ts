@@ -13,10 +13,10 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { domain, publicKey, kid, proof } = req.body;
+    const { domain, pubkey, kid, proof } = req.body;
 
     try {
-      const isValid = await verifyPubkeyZKProof(domain, publicKey, kid, proof);
+      const isValid = await verifyPubkeyZKProof(domain, pubkey, kid, Uint8Array.from(proof));
       if (!isValid) {
         throw new Error('Invalid proof');
       }
@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const {  error } = await supabase
         .from('pubkeys')
         .insert([
-          { domain, pubkey: publicKey, kid: kid, proof: JSON.stringify(proof) }
+          { domain, pubkey: pubkey, kid: kid, proof: JSON.stringify(proof) }
         ]);
 
       if (error) throw error;

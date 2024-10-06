@@ -117,11 +117,11 @@ export async function fetchMessages(
       return;
     }
 
-    const publicKey = authHeader.split(' ')[1];
+    const pubkey = authHeader.split(' ')[1];
     const { data: pubkeyData, error: pubkeyError } = await supabase
       .from("pubkeys")
       .select("*")
-      .eq("pubkey", publicKey)
+      .eq("pubkey", pubkey)
       .eq("domain", domain)
       .single();
 

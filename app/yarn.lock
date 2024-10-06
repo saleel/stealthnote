@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@aztec/bb.js@https://gitpkg.vercel.app/saleel/aztec-packages/barretenberg/ts?master", "@aztec/bb.js@portal:../../../aztec-packages/barretenberg/ts":
+"@aztec/bb.js@portal:../../../aztec-packages/barretenberg/ts":
   version "0.56.0"
   resolved "https://gitpkg.vercel.app/saleel/aztec-packages/barretenberg/ts?master#7ac6b16d23ee2eef821ceedce1f70666ac4ae13e"
   dependencies:

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import {
   generateKeyPairAndRegister,
   getDomain,
+  initProver,
   isRegistered,
 } from "../lib/utils";
 import Head from "next/head";
@@ -13,6 +14,11 @@ import { useRouter } from "next/navigation";
 export default function HomePage() {
   const [status, setStatus] = useState("");
   const router = useRouter();
+
+  React.useEffect(() => {
+    // Trigger the initialization of the prover
+    initProver();
+  }, [])
 
   async function onClick(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
