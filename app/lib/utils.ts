@@ -616,10 +616,10 @@ export async function generateKeyPairAndRegister(
   const { idToken, headers, tokenPayload } = await signPubKeyWithGoogle(
     publicKeyModulus as string
   );
-
-  onStatusChange("Generating ZK proof. This will take about 40 seconds...");
-  const { proof } = await generateJWTProof(idToken!);
   const domain = tokenPayload!.hd;
+
+  onStatusChange(`Generating ZK proof that you are part of ${domain}.\nThis will take about 40 seconds...`);
+  const { proof } = await generateJWTProof(idToken!);
 
   if (!domain) {
     throw new Error(
