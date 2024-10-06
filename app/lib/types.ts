@@ -4,11 +4,12 @@ export interface Message {
   text: string;
   domain: string;
   internal: boolean;
+  displayName?: string;
 }
 
 export interface SignedMessage extends Message {
   signature: string;
-  pubkey: string; // Pubkey modulus (n) - exp is 65537
+  pubkey: string;
 }
 
 export interface SignedMessageWithProof extends SignedMessage {

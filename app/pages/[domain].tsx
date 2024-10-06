@@ -2,14 +2,8 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Message } from "../lib/types";
-import {
-  fetchMessages,
-  generateKeyPairAndRegister,
-  isRegistered,
-  signMessage,
-  submitMessage,
-} from "../lib/utils";
+import { Message, SignedMessage } from "../lib/types";
+import { fetchMessages, signMessage, submitMessage } from "../lib/utils";
 import Head from "next/head";
 import MessageCard from "../components/message-card";
 
@@ -22,7 +16,7 @@ export default function DomainChatPage() {
 
   const [newMessage, setNewMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<SignedMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -57,7 +51,10 @@ export default function DomainChatPage() {
         latestTimestamp
       );
       if (newMessages.length > 0) {
-        setMessages((prevMessages) => [...prevMessages, ...newMessages.reverse()]); // Append new messages to the end
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          ...newMessages.reverse(),
+        ]); // Append new messages to the end
       }
     } catch (error) {
       console.error("Error fetching new messages:", error);
@@ -82,7 +79,10 @@ export default function DomainChatPage() {
         oldestTimestamp
       );
       if (olderMessages.length > 0) {
-        setMessages((prevMessages) => [...olderMessages.reverse(), ...prevMessages]); // Prepend older messages
+        setMessages((prevMessages) => [
+          ...olderMessages.reverse(),
+          ...prevMessages,
+        ]); // Prepend older messages
         setHasMore(olderMessages.length === 50);
       } else {
         setHasMore(false);
@@ -122,8 +122,8 @@ export default function DomainChatPage() {
   useEffect(() => {
     const messageList = messageListRef.current;
     if (messageList) {
-      messageList.addEventListener('scroll', handleScroll);
-      return () => messageList.removeEventListener('scroll', handleScroll);
+      messageList.addEventListener("scroll", handleScroll);
+      return () => messageList.removeEventListener("scroll", handleScroll);
     }
   }, [handleScroll]);
 
@@ -139,10 +139,6 @@ export default function DomainChatPage() {
 
     if (!newMessage.trim()) {
       return;
-    }
-
-    if (!isRegistered()) {
-      await generateKeyPairAndRegister();
     }
 
     setIsSubmitting(true);
@@ -164,9 +160,9 @@ export default function DomainChatPage() {
       };
 
       await submitMessage(signedMessage);
+      await fetchNewMessages();
 
       // Update message list
-      setMessages((prevMessages) => [...prevMessages, message]);
       setNewMessage("");
       setIsAtBottom(true); // Force scroll to bottom after sending a message
     } catch (error) {
@@ -226,9 +222,9 @@ export default function DomainChatPage() {
           <div ref={messagesEndRef} />
         </div>
 
-        {isLoading && (
-          <div className="loading-indicator">Loading more messages...</div>
-        )}
+        <div className="text-center" style={{ height: "60px" }}>
+          {isLoading && <span className="spinner-icon small"></span>}
+        </div>
 
         <form
           className="message-input-container"
@@ -242,13 +238,35 @@ export default function DomainChatPage() {
             disabled={isSubmitting}
             rows={2}
           />
-          <button
-            type="submit"
-            className={`message-input-button ${isSubmitting ? "loading" : ""}`}
-            disabled={isSubmitting}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
           >
-            {isSubmitting ? <span className="spinner-icon"></span> : "Submit"}
-          </button>
+            <div>
+              {/* <span>
+                Sending as: {generateNameFromPubkey(getPubkeyString() || "")}
+              </span> */}
+              {/* <button
+                type="button"
+                onClick={() => generateKeyPairAndRegister()}
+                className="update-name-button"
+              >
+                &#x21bb;
+              </button> */}
+            </div>
+            <button
+              type="submit"
+              className={`message-input-button ${
+                isSubmitting ? "loading" : ""
+              }`}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? <span className="spinner-icon"></span> : "Submit"}
+            </button>
+          </div>
         </form>
       </div>
     </>

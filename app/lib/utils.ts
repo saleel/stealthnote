@@ -1,7 +1,11 @@
+import { uniqueNamesGenerator, Config, adjectives, animals } from 'unique-names-generator';
 import { type Noir, type CompiledCircuit } from "@noir-lang/noir_js";
 import { Message, SignedMessage, SignedMessageWithProof } from "./types";
 import { generatePartialSHA } from "@zk-email/helpers";
-import { UltraHonkBackend, UltraHonkVerifier } from "@noir-lang/backend_barretenberg";
+import {
+  UltraHonkBackend,
+  UltraHonkVerifier,
+} from "@noir-lang/backend_barretenberg";
 
 declare global {
   interface Window {
@@ -14,6 +18,47 @@ declare global {
       };
     };
   }
+}
+
+type ProverModules = {
+  Noir: typeof Noir;
+  UltraHonkBackend: typeof UltraHonkBackend;
+  circuit: object;
+};
+
+type VerifierModules = {
+  UltraHonkVerifier: typeof UltraHonkVerifier;
+  vkey: number[];
+};
+
+let proverPromise: Promise<ProverModules> | null = null;
+let verifierPromise: Promise<VerifierModules> | null = null;
+
+export async function initProver(): Promise<ProverModules> {
+  if (!proverPromise) {
+    proverPromise = (async () => {
+      const [{ Noir }, { UltraHonkBackend }] = await Promise.all([
+        import("@noir-lang/noir_js"),
+        import("@noir-lang/backend_barretenberg"),
+      ]);
+      const circuit = await import("../assets/circuit.json");
+      return { Noir, UltraHonkBackend, circuit: circuit.default };
+    })();
+  }
+  return proverPromise;
+}
+
+export async function initVerifier(): Promise<VerifierModules> {
+  if (!verifierPromise) {
+    verifierPromise = (async () => {
+      const { UltraHonkVerifier } = await import(
+        "@noir-lang/backend_barretenberg"
+      );
+      const vkey = await import("../assets/circuit-vkey.json");
+      return { UltraHonkVerifier, vkey: vkey.default };
+    })();
+  }
+  return verifierPromise;
 }
 
 export const LocalStorageKeys = {
@@ -359,48 +404,11 @@ export async function parseJWKPubkey(pubkey: object) {
   return { publicKey, modulusBigInt, redcParam };
 }
 
-type ProverModules = {
-  Noir: typeof Noir;
-  UltraHonkBackend: typeof UltraHonkBackend;
-  circuit: object;
-};
-
-type VerifierModules = {
-  UltraHonkVerifier: typeof UltraHonkVerifier;
-  vkey: number[];
-};
-
-let proverPromise: Promise<ProverModules> | null = null;
-let verifierPromise: Promise<VerifierModules> | null = null;
-
-export async function initProver(): Promise<ProverModules> {
-  if (!proverPromise) {
-    proverPromise = (async () => {
-      const [{ Noir }, { UltraHonkBackend }] = await Promise.all([
-        import("@noir-lang/noir_js"),
-        import("@noir-lang/backend_barretenberg")
-      ]);
-      const circuit = await import("../assets/circuit.json");
-      return { Noir, UltraHonkBackend, circuit: circuit.default };
-    })();
-  }
-  return proverPromise;
-}
-
-export async function initVerifier(): Promise<VerifierModules> {
-  if (!verifierPromise) {
-    verifierPromise = (async () => {
-      const { UltraHonkVerifier } = await import("@noir-lang/backend_barretenberg");
-      const vkey = await import("../assets/circuit-vkey.json");
-      return { UltraHonkVerifier, vkey: vkey.default };
-    })();
-  }
-  return verifierPromise;
-}
-
-export async function generateJWTProof(idToken: string): Promise<{ proof: Uint8Array; provingTime: number }> {
+export async function generateJWTProof(
+  idToken: string
+): Promise<{ proof: Uint8Array; provingTime: number }> {
   const { Noir, UltraHonkBackend, circuit } = await initProver();
-  
+
   // Parse token
   const [headerB64, payloadB64] = idToken.split(".");
   const header = JSON.parse(atob(headerB64));
@@ -597,7 +605,7 @@ async function getSigningKey() {
   return privateKey;
 }
 
-export async function getPubkeyString() {
+export function getPubkeyString() {
   try {
     const modulus = localStorage.getItem(LocalStorageKeys.PublicKeyModulus);
     return modulus;
@@ -618,7 +626,9 @@ export async function generateKeyPairAndRegister(
   );
   const domain = tokenPayload!.hd;
 
-  onStatusChange(`Generating ZK proof that you are part of ${domain}.\nThis will take about 40 seconds...`);
+  onStatusChange(
+    `Generating ZK proof. This will take about 40 seconds...`
+  );
   const { proof } = await generateJWTProof(idToken!);
 
   if (!domain) {
@@ -684,7 +694,7 @@ export async function verifyPubkeyZKProof(
   proof: Uint8Array
 ) {
   const { UltraHonkVerifier, vkey } = await initVerifier();
-  
+
   // Hash of the pubkey which is used as the nonce in JWT
   const pubkeyHash = await hashPublicKey(pubkey);
 
@@ -776,4 +786,29 @@ export async function verifyMessage(message: SignedMessageWithProof) {
     message.kid!,
     message.proof!
   );
+}
+
+function simpleHash(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash);
+}
+
+export function generateNameFromPubkey(pubkey: string): string {
+  // Generate a deterministic seed from the pubkey using a simple hash function
+  const seed = simpleHash(pubkey);
+
+  const customConfig: Config = {
+    dictionaries: [adjectives, animals],
+    separator: ' ',
+    length: 2,
+    seed: seed,
+    style: 'capital',
+  };
+  
+  return uniqueNamesGenerator(customConfig);
 }

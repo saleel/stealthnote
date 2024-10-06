@@ -1,9 +1,13 @@
 import React, { useState } from "react";
-import { Message, SignedMessageWithProof } from "../lib/types";
-import { verifyMessage, fetchMessage } from "../lib/utils";
+import { SignedMessage, SignedMessageWithProof } from "../lib/types";
+import {
+  verifyMessage,
+  fetchMessage,
+  generateNameFromPubkey,
+} from "../lib/utils";
 
 interface MessageCardProps {
-  message: Message;
+  message: SignedMessage;
 }
 
 const MessageCard: React.FC<MessageCardProps> = ({ message }) => {
@@ -32,10 +36,11 @@ const MessageCard: React.FC<MessageCardProps> = ({ message }) => {
   return (
     <div className="message-box">
       <div className="message-box-header">
-        <span className="message-box-header-text" style={{ flexGrow: 1 }}>
-          Someone from {message.domain} said:
+        <span className="message-box-header-name">
+          {generateNameFromPubkey(message.pubkey || '')}
         </span>
-        <span className="message-box-header-text">
+
+        <span className="message-box-header-timestamp">
           {timestamp.toLocaleDateString()} {timestamp.toLocaleTimeString()}
         </span>
 
@@ -48,16 +53,16 @@ const MessageCard: React.FC<MessageCardProps> = ({ message }) => {
         {verificationStatus !== "idle" && (
           <span className={`message-box-verify ${verificationStatus}`}>
             {verificationStatus === "verifying" && (
-            <span className="message-box-verify-icon spinner-icon small"></span>
-          )}
-          {verificationStatus === "valid" && (
-            <span className="message-box-verify-icon valid">✓</span>
-          )}
-          {verificationStatus === "invalid" && (
-            <span className="message-box-verify-icon invalid">+</span>
-          )}
-          {verificationStatus === "error" && (
-            <span className="message-box-verify-icon error">!</span>
+              <span className="message-box-verify-icon spinner-icon small"></span>
+            )}
+            {verificationStatus === "valid" && (
+              <span className="message-box-verify-icon valid">✓</span>
+            )}
+            {verificationStatus === "invalid" && (
+              <span className="message-box-verify-icon invalid">+</span>
+            )}
+            {verificationStatus === "error" && (
+              <span className="message-box-verify-icon error">!</span>
             )}
           </span>
         )}
