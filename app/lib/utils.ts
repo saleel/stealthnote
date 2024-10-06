@@ -367,7 +367,7 @@ type ProverModules = {
 
 type VerifierModules = {
   UltraHonkVerifier: typeof UltraHonkVerifier;
-  vkey: object;
+  vkey: number[];
 };
 
 let proverPromise: Promise<ProverModules> | null = null;
