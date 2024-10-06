@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   generateKeyPairAndRegister,
   getDomain,
@@ -13,14 +13,6 @@ import { useRouter } from "next/navigation";
 export default function HomePage() {
   const [status, setStatus] = useState("");
   const router = useRouter();
-  const [isLocalhost, setIsLocalhost] = useState(true);
-
-  useEffect(() => {
-    setIsLocalhost(
-      window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1"
-    );
-  }, []);
 
   async function onClick(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
@@ -39,22 +31,22 @@ export default function HomePage() {
     }
   }
 
-  if (!isLocalhost) {
-    return (
-      <>
-        <Head>
-          <title>StealthNote</title>
-        </Head>
+  // if (window.location.hostname !== "localhost") {
+  //   return (
+  //     <>
+  //       <Head>
+  //         <title>StealthNote</title>
+  //       </Head>
 
-        <div className="page">
-          <main className="intro">
-            <h1 className="intro-title">StealthNote is under maintenance</h1>
-            <p>Working on some improvements which will be ready soon.</p>
-          </main>
-        </div>
-      </>
-    );
-  }
+  //       <div className="page">
+  //         <main className="intro">
+  //           <h1 className="intro-title">StealthNote is under maintenance</h1>
+  //           <p>Working on some improvements which will be ready soon.</p>
+  //         </main>
+  //       </div>
+  //     </>
+  //   );
+  // }
 
   return (
     <>

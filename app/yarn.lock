@@ -2,9 +2,9 @@
 # yarn lockfile v1
 
 
-"@aztec/bb.js@portal:../../../aztec-packages/barretenberg/ts":
+"@aztec/bb.js@https://gitpkg.vercel.app/saleel/aztec-packages/barretenberg/ts?master", "@aztec/bb.js@portal:../../../aztec-packages/barretenberg/ts":
   version "0.56.0"
-  resolved "https://gitpkg.vercel.app/AztecProtocol/aztec-packages/barretenberg/ts?master#0099557ce297539287de9c0683bd14bf7d5eaee7"
+  resolved "https://gitpkg.vercel.app/saleel/aztec-packages/barretenberg/ts?master#7ac6b16d23ee2eef821ceedce1f70666ac4ae13e"
   dependencies:
     comlink "^4.4.1"
     commander "^10.0.1"

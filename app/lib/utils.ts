@@ -690,7 +690,6 @@ export async function verifyPubkeyZKProof(
     publicInputs,
   };
 
-  // @ts-expect-error crsPath is added but not yet released
   const verifier = new UltraHonkVerifier({ crsPath: process.env.TEMP_DIR });
   const result = await verifier.verifyProof(proofData, Uint8Array.from(vkey));
 
