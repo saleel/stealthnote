@@ -10,15 +10,16 @@
   },
   "dependencies": {
     "@aztec/bb.js": "https://gitpkg.vercel.app/saleel/aztec-packages/barretenberg/ts?master",
-    "@noir-lang/backend_barretenberg": "https://gitpkg.vercel.app/saleel/noir/tooling/noir_js_backend_barretenberg?master",
-    "@noir-lang/noir_js": "0.35.0",
+    "@noir-lang/backend_barretenberg": "0.35.0-999071b.nightly",
+    "@noir-lang/noir_js": "0.35.0-999071b.nightly",
     "@supabase/supabase-js": "^2.45.4",
     "@zk-email/helpers": "^6.1.6",
     "dotenv": "^16.4.5",
     "next": "14.2.11",
     "react": "^18",
     "react-dom": "^18",
-    "sass": "^1.79.4"
+    "sass": "^1.79.4",
+    "unique-names-generator": "^4.7.1"
   },
   "resolutions": {
     "@aztec/bb.js": "https://gitpkg.vercel.app/saleel/aztec-packages/barretenberg/ts?master"
