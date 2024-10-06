@@ -12,10 +12,12 @@
     "@noir-lang/backend_barretenberg": "0.35.0",
     "@noir-lang/noir_js": "0.35.0",
     "@supabase/supabase-js": "^2.45.4",
+    "@zk-email/helpers": "^6.1.6",
     "dotenv": "^16.4.5",
     "next": "14.2.11",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "sass": "^1.79.4"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -23,7 +25,8 @@
     "@types/react-dom": "^18",
     "eslint": "^8",
     "eslint-config-next": "14.2.11",
-    "typescript": "^5"
+    "typescript": "^5",
+    "webpack": "^5.95.0"
   },
   "eslintConfig": {
     "extends": [

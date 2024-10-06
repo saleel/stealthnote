@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import webpack from 'webpack';
 
 dotenv.config();
 
@@ -36,9 +37,15 @@ const nextConfig = {
       asyncWebAssembly: true,
       syncWebAssembly: true,
       layers: true,
-    }
+    };
+    config.plugins.push(
+      new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
+        resource.request = resource.request.replace(/^node:/, "");
+      })
+    );
     return config
   },
+  transpilePackages: ['@zk-email/helpers'],
 };
 
 export default nextConfig;

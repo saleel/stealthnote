@@ -236,6 +236,10 @@ body {
     color: #f44336;
     transform: rotate(45deg);
   }
+
+  &.error {
+    color: #d6750c;
+  }
 }
 
 .message-input-container {

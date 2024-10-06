@@ -6,6 +6,7 @@ import {
 import circuit from "../assets/circuit.json";
 import vkey from "../assets/circuit-vkey.json";
 import { Message, SignedMessage, SignedMessageWithProof } from "./types";
+import { generatePartialSHA } from "@zk-email/helpers/src";
 
 declare global {
   interface Window {
@@ -48,6 +49,8 @@ export async function fetchMessage(id: string) {
   if (response.ok) {
     const message = await response.json();
     message.timestamp = new Date(message.timestamp).getTime();
+    message.proof = Uint8Array.from(message.proof);
+
     return message;
   } else {
     throw new Error("Failed to fetch message");
@@ -333,6 +336,13 @@ export async function generateJWTProof(
   const [headerB64, payloadB64] = idToken.split(".");
   const header = JSON.parse(atob(headerB64));
   const payload = JSON.parse(atob(payloadB64));
+  const domain = payload.hd;
+
+  if (domain.length > 50) {
+    throw new Error(
+      "Only domain with length less than 50 is supported now. Please create an issue in Github."
+    );
+  }
 
   // Fetch Google's public keys and find the correct key based on the 'kid' in the JWT header
   const keys = await fetchGooglePublicKeys();
@@ -341,11 +351,10 @@ export async function generateJWTProof(
     throw new Error("No matching Google public key found");
   }
 
-  const { publicKey, modulusBigInt, redcParam } = await parseJWKPubkey(key);
+  const { modulusBigInt, redcParam} = await parseJWKPubkey(key);
 
-  const signedData = new TextEncoder().encode(
-    idToken.split(".").slice(0, 2).join(".")
-  );
+  const signedDataString = idToken.split(".").slice(0, 2).join("."); // $header.$payload
+  const signedData = new TextEncoder().encode(signedDataString);
 
   const signatureBase64Url = idToken.split(".")[2];
   const signatureBase64 = signatureBase64Url
@@ -358,56 +367,104 @@ export async function generateJWTProof(
   );
   const signatureBigInt = BigInt("0x" + Buffer.from(signature).toString("hex"));
 
-  // Verify signature locally
-  const isValid = await crypto.subtle.verify(
-    "RSASSA-PKCS1-v1_5",
-    publicKey,
-    signature,
-    signedData
-  );
+  // Precompute SHA256 of the signed data
+  // SHA256 is done in 64 byte chunks, so we can hash upto certain portion outside of circuit to save constraints
+  // Signed data is $headerB64.$payloadB64
+  // We need to find the index in B64 payload corresponding to min(hdIndex, nonceIndex) when decoded
+  // Then we find the 64 byte boundary before this index and precompute the SHA256 upto that
+  const payloadString = atob(payloadB64);
+  const hdIndex = payloadString.indexOf(`"hd"`);
+  const nonceIndex = payloadString.indexOf(`"nonce"`);
+  const smallerIndex = Math.min(hdIndex, nonceIndex);
+  const smallerIndexInB64 = Math.floor(smallerIndex * 4 / 3); // 4 B64 chars = 3 bytes
 
-  if (!isValid) {
-    throw new Error("Invalid token signature");
-  }
+  const sliceStart = headerB64.length + smallerIndexInB64 + 1; // +1 for the '.' 
+  const precomputeSelector = signedDataString.slice(sliceStart, sliceStart + 12); // 12 is a random slice length
 
-  // Initialize Noir JS
-  const backend = new UltraHonkBackend(circuit as CompiledCircuit);
-  const noir = new Noir(circuit as CompiledCircuit);
+  // generatePartialSHA expects padded input - Noir SHA lib doesn't need padded input; so we simply pad to 64x bytes
+  const dataPadded = new Uint8Array(Math.ceil(signedData.length / 64) * 64);
+  dataPadded.set(signedData);
 
-  // Pad data to 1024 bytes
-  const paddedData = new Uint8Array(1024);
-  paddedData.set(signedData);
+  // Precompute the SHA256 hash
+  const { precomputedSha, bodyRemaining: bodyRemainingSHAPadded } = generatePartialSHA({
+    body: dataPadded,
+    bodyLength: dataPadded.length,
+    selectorString: precomputeSelector,
+    maxRemainingBodyLength: 640, // Max length configured in the circuit
+  });
+
+  // generatePartialSHA returns the remaining data after the precomputed SHA256 hash including padding
+  // We don't need this padding so can we trim to it nearest 64x
+  const shaCutoffIndex = Math.floor(sliceStart / 64) * 64; // Index up to which we precomputed SHA256
+  const remainingDataLength = signedData.length - shaCutoffIndex;
+  const bodyRemaining = bodyRemainingSHAPadded.slice(0, remainingDataLength);
+  // Pad to 640 bytes - this is the max length configured in the circuit
+  const bodyRemainingPadded = new Uint8Array(640);
+  bodyRemainingPadded.set(bodyRemaining);
+
+  // B64 encoding happens serially, so we can decode a portion as long as the indices of the slice is a multiple of 4
+  // Since we only pass the data after partial SHA to the circuit, the B64 slice might not be parse-able
+  // This is because the first index of partial_data might not be a 4th multiple of original payload B64
+  // So we also pass in an offset after which the data in partial_data is a 4th multiple of original payload B64
+  // An attacker giving wrong index will fail as incorrectly decoded bytes wont contain "hd" or "nonce"
+  const payloadLengthInRemainingData = shaCutoffIndex - headerB64.length - 1; // -1 for the separator '.'
+  const b64Offset = 4 - payloadLengthInRemainingData % 4;
 
   // Pad domain to 50 bytes
   const domainBytes = new Uint8Array(50);
-  domainBytes.set(
-    Uint8Array.from(new TextEncoder().encode("aztecprotocol.com"))
-  );
+  domainBytes.set(Uint8Array.from(new TextEncoder().encode(domain)));
+
+  // Function to convert u8 array to u32 array - partial_hash expects u32[8] array
+  // new Uint32Array(input.buffer) does not work due to difference in endianness
+  // Copied from https://github.com/zkemail/zkemail.nr/blob/main/js/src/utils.ts#L9
+  // TODO: Import Mach34 npm package instead when zkemail.nr is ready
+  function u8ToU32(input: Uint8Array): Uint32Array {
+    const out = new Uint32Array(input.length / 4);
+    for (let i = 0; i < out.length; i++) {
+      out[i] =
+        (input[i * 4 + 0] << 24) |
+        (input[i * 4 + 1] << 16) |
+        (input[i * 4 + 2] << 8) |
+        (input[i * 4 + 3] << 0);
+    }
+    return out;
+  }
 
   const input = {
+    partial_data: Array.from(bodyRemainingPadded).map((s) => s.toString()),
+    partial_data_length: remainingDataLength,
+    partial_hash: Array.from(u8ToU32(precomputedSha)).map((s) => s.toString()),
+    data_length: signedData.length,
+    b64_offset: b64Offset,
     pubkey_modulus_limbs: splitBigIntToChunks(modulusBigInt, 120, 18).map((s) =>
       s.toString()
     ),
     redc_params_limbs: splitBigIntToChunks(redcParam, 120, 18).map((s) =>
       s.toString()
     ),
-    data: Array.from(paddedData).map((s) => s.toString()),
-    data_length: signedData.length,
     signature_limbs: splitBigIntToChunks(signatureBigInt, 120, 18).map((s) =>
       s.toString()
     ),
     domain_name: Array.from(domainBytes).map((s) => s.toString()),
-    domain_name_length: "aztecprotocol.com".length,
+    domain_name_length: domain.length,
     nonce: Array.from(new TextEncoder().encode(payload.nonce)).map((s) =>
       s.toString()
     ),
   };
+
+  console.log("Generated inputs", input);
+
+  // Initialize Noir JS
+  const backend = new UltraHonkBackend(circuit as CompiledCircuit);
+  const noir = new Noir(circuit as CompiledCircuit);
 
   // Generate witness and prove
   const startTime = performance.now();
   const { witness } = await noir.execute(input);
   const proof = await backend.generateProof(witness);
   const provingTime = performance.now() - startTime;
+
+  console.log(`Proof generated in ${provingTime}ms`, proof);
 
   return { proof: proof.proof, provingTime };
 }
@@ -534,7 +591,11 @@ export async function signMessage(message: Message) {
   const pubkey = await getPubkeyString();
   const messageHash = await hashMessage(message);
 
-  const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", privateKey, messageHash);
+  const signature = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    privateKey,
+    messageHash
+  );
 
   const signatureHex = Array.from(new Uint8Array(signature))
     .map((s) => s.toString(16).padStart(2, "0"))
@@ -549,11 +610,6 @@ export async function verifyPubkeyZKProof(
   kid: string,
   proof: Uint8Array
 ) {
-  // We need to generate the vkey when circuit is modified. Generated one is saved to vkey.json
-  // const backend = new UltraHonkBackend(circuit as CompiledCircuit);
-  // const newVkey = await backend.getVerificationKey();
-  // console.log(JSON.stringify(Array.from(newVkey)));
-
   // Hash of the pubkey which is used as the nonce in JWT
   const pubkeyHash = await hashPublicKey(pubkey);
 
@@ -601,7 +657,7 @@ export async function verifyPubkeyZKProof(
   return result;
 }
 
-export async function verifyMessage(message: SignedMessageWithProof) {
+export async function verifyMessageSignature(message: SignedMessage) {
   const pubkey = await crypto.subtle.importKey(
     "jwk",
     {
@@ -628,6 +684,15 @@ export async function verifyMessage(message: SignedMessageWithProof) {
 
   if (!isValid) {
     console.error("Signature verification failed for the message");
+  }
+
+  return isValid;
+}
+
+
+export async function verifyMessage(message: SignedMessageWithProof) {
+  const isValid = await verifyMessageSignature(message);
+  if (!isValid) {
     return false;
   }
 

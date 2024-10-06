@@ -38,8 +38,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       domain: data.domain,
       signature: data.signature,
       pubkey: data.pubkey,
-      proof: data.pubkeys[0].proof,
-      kid: data.pubkeys[0].kid,
+      // @ts-expect-error pubkeys is not an array
+      proof: JSON.parse(data.pubkeys.proof),
+      // @ts-expect-error pubkeys is not an array
+      kid: data.pubkeys.kid,
     }
 
     return res.json(message);

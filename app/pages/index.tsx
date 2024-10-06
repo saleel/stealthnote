@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { generateKeyPairAndRegister, getDomain, isRegistered } from "../lib/utils";
+import {
+  generateKeyPairAndRegister,
+  getDomain,
+  isRegistered,
+} from "../lib/utils";
 import Head from "next/head";
 import SignInButton from "../components/siwg";
 import { useRouter } from "next/navigation";
@@ -12,6 +16,7 @@ export default function HomePage() {
 
   async function onClick(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
+
     try {
       if (!isRegistered()) {
         await generateKeyPairAndRegister(setStatus);

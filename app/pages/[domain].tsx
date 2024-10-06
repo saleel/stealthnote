@@ -23,7 +23,7 @@ export default function DomainChatPage() {
   const [newMessage, setNewMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<{
-    [key: string]: "idle" | "verifying" | "valid" | "invalid";
+    [key: string]: "idle" | "verifying" | "valid" | "invalid" | "error";
   }>({});
 
   const [messages, { isFetching, error, reFetch, fetchedAt }] = usePromise<
@@ -105,7 +105,7 @@ export default function DomainChatPage() {
       }));
     } catch (error) {
       console.error("Verification failed:", error);
-      setVerificationStatus((prev) => ({ ...prev, [messageId]: "invalid" }));
+      setVerificationStatus((prev) => ({ ...prev, [messageId]: "error" }));
     }
   }
 
@@ -142,6 +142,9 @@ export default function DomainChatPage() {
               )}
               {status === "invalid" && (
                 <span className="message-box-verify-icon invalid">+</span>
+              )}
+              {status === "error" && (
+                <span className="message-box-verify-icon error">!</span>
               )}
             </span>
           </span>

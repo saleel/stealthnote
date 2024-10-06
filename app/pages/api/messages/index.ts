@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
-import { verifyMessage } from "../../../lib/utils";
-import { SignedMessage, SignedMessageWithProof } from "../../../lib/types";
+import { verifyMessageSignature } from "../../../lib/utils";
+import { SignedMessage } from "../../../lib/types";
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -46,15 +46,13 @@ export async function postMessage(
       throw error;
     }
 
-    const signedMessageWithProof: SignedMessageWithProof = {
-      ...signedMessage,
-      proof: data?.proof,
-      kid: data?.kid,
-    };
+    if (!data.pubkey) {
+      throw new Error("Pubkey not registered");
+    }
 
-    const isValid = await verifyMessage(signedMessageWithProof);
+    const isValid = await verifyMessageSignature(signedMessage);
     if (!isValid) {
-      throw new Error("Message verification failed");
+      throw new Error("Message signature check failed");
     }
 
     console.log("Message is valid");

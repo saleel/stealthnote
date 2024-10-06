@@ -19,9 +19,17 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@zk-email/helpers/*": ["./node_modules/@zk-email/helpers/src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "./node_modules/@zk-email/helpers/src/**/*.ts",
+    "types/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }
