@@ -4,8 +4,7 @@
 
 "@aztec/bb.js@portal:../../../aztec-packages/barretenberg/ts":
   version "0.56.0"
-  resolved "https://registry.yarnpkg.com/@aztec/bb.js/-/bb.js-0.56.0.tgz#c1946f7fb23d6c3f2f2b8d6af1b1a3c1ea290122"
-  integrity sha512-NRuIH9kub99o7Ddx4wLIW1x0Ow0hemP036fL9vBhqTBeNGi6BusMlSVygrUPKAjQrVGihJJPqdndwblypZY2ew==
+  resolved "https://gitpkg.vercel.app/AztecProtocol/aztec-packages/barretenberg/ts?master#0099557ce297539287de9c0683bd14bf7d5eaee7"
   dependencies:
     comlink "^4.4.1"
     commander "^10.0.1"
