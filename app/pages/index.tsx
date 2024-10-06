@@ -5,15 +5,29 @@ import {
   generateKeyPairAndRegister,
   getDomain,
   isRegistered,
+  // fetchMessages,
+  // verifyMessage,
+  // fetchMessage,
 } from "../lib/utils";
 import Head from "next/head";
 import SignInButton from "../components/siwg";
 import { useRouter } from "next/navigation";
+// import MessageCard from "../components/message-card";
+// import { Message } from "../lib/types";
+// import usePromise from "../hooks/use-promise";
 
 export default function HomePage() {
   const [status, setStatus] = useState("");
   const router = useRouter();
 
+  // const [messages, { isFetching, error, reFetch, fetchedAt }] = usePromise<
+  //   Message[]
+  // >(() => fetchMessages(domain, true), {
+  //   defaultValue: [],
+  //   dependencies: [domain],
+  //   conditions: [domain],
+  // });
+  
   async function onClick(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
 
@@ -57,6 +71,15 @@ export default function HomePage() {
           <SignInButton onClick={onClick} />
 
           <p>{status}</p>
+
+          {/* <div className="message-list">
+            {messages.map((message) => (
+              <MessageCard
+                key={message.id}
+                message={message}
+              />
+            ))}
+          </div> */}
         </main>
       </div>
     </>

@@ -29,23 +29,58 @@ export const LocalStorageKeys = {
   GoogleOAuthNonce: "googleOAuthNonce",
 };
 
-export async function fetchMessages(domain: string) {
-  const response = await fetch(`/api/messages?domain=${domain}`);
-  if (response.ok) {
-    const res = await response.json();
-    const messages = res.map((message: Message) => {
-      message.timestamp = new Date(message.timestamp).getTime();
-      return message;
-    });
+export async function fetchMessages(
+  domain: string,
+  isInternal: boolean = false,
+  limit: number = 50,
+  afterTimestamp?: number | null,
+  beforeTimestamp?: number | null
+) {
+  const publicKey = localStorage.getItem(LocalStorageKeys.PublicKeyModulus);
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
 
-    return messages;
+  if (isInternal) {
+    if (domain !== getDomain()) {
+      throw new Error("Not registered for this domain");
+    }
+    if (!publicKey) {
+      throw new Error("No public key found");
+    }
+    headers["Authorization"] = `Bearer ${publicKey}`;
+  }
+
+  let url = `/api/messages?domain=${domain}&isInternal=${isInternal}&limit=${limit}`;
+  if (afterTimestamp) url += `&afterTimestamp=${afterTimestamp}`;
+  if (beforeTimestamp) url += `&beforeTimestamp=${beforeTimestamp}`;
+
+  const response = await fetch(url, { headers });
+  if (response.ok) {
+    const messages = await response.json();
+    return messages.map((message: Message) => ({
+      ...message,
+      timestamp: new Date(message.timestamp).getTime(),
+    }));
   } else {
     throw new Error("Failed to fetch messages");
   }
 }
 
-export async function fetchMessage(id: string) {
-  const response = await fetch(`/api/messages/${id}`);
+export async function fetchMessage(id: string, isInternal: boolean = false) {
+  const publicKey = localStorage.getItem(LocalStorageKeys.PublicKeyModulus);
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+
+  if (isInternal) {
+    if (!publicKey) {
+      throw new Error("No public key found");
+    }
+    headers["Authorization"] = `Bearer ${publicKey}`;
+  }
+
+  const response = await fetch(`/api/messages/${id}`, { headers });
   if (response.ok) {
     const message = await response.json();
     message.timestamp = new Date(message.timestamp).getTime();
@@ -351,7 +386,7 @@ export async function generateJWTProof(
     throw new Error("No matching Google public key found");
   }
 
-  const { modulusBigInt, redcParam} = await parseJWKPubkey(key);
+  const { modulusBigInt, redcParam } = await parseJWKPubkey(key);
 
   const signedDataString = idToken.split(".").slice(0, 2).join("."); // $header.$payload
   const signedData = new TextEncoder().encode(signedDataString);
@@ -376,22 +411,26 @@ export async function generateJWTProof(
   const hdIndex = payloadString.indexOf(`"hd"`);
   const nonceIndex = payloadString.indexOf(`"nonce"`);
   const smallerIndex = Math.min(hdIndex, nonceIndex);
-  const smallerIndexInB64 = Math.floor(smallerIndex * 4 / 3); // 4 B64 chars = 3 bytes
+  const smallerIndexInB64 = Math.floor((smallerIndex * 4) / 3); // 4 B64 chars = 3 bytes
 
-  const sliceStart = headerB64.length + smallerIndexInB64 + 1; // +1 for the '.' 
-  const precomputeSelector = signedDataString.slice(sliceStart, sliceStart + 12); // 12 is a random slice length
+  const sliceStart = headerB64.length + smallerIndexInB64 + 1; // +1 for the '.'
+  const precomputeSelector = signedDataString.slice(
+    sliceStart,
+    sliceStart + 12
+  ); // 12 is a random slice length
 
   // generatePartialSHA expects padded input - Noir SHA lib doesn't need padded input; so we simply pad to 64x bytes
   const dataPadded = new Uint8Array(Math.ceil(signedData.length / 64) * 64);
   dataPadded.set(signedData);
 
   // Precompute the SHA256 hash
-  const { precomputedSha, bodyRemaining: bodyRemainingSHAPadded } = generatePartialSHA({
-    body: dataPadded,
-    bodyLength: dataPadded.length,
-    selectorString: precomputeSelector,
-    maxRemainingBodyLength: 640, // Max length configured in the circuit
-  });
+  const { precomputedSha, bodyRemaining: bodyRemainingSHAPadded } =
+    generatePartialSHA({
+      body: dataPadded,
+      bodyLength: dataPadded.length,
+      selectorString: precomputeSelector,
+      maxRemainingBodyLength: 640, // Max length configured in the circuit
+    });
 
   // generatePartialSHA returns the remaining data after the precomputed SHA256 hash including padding
   // We don't need this padding so can we trim to it nearest 64x
@@ -408,7 +447,7 @@ export async function generateJWTProof(
   // So we also pass in an offset after which the data in partial_data is a 4th multiple of original payload B64
   // An attacker giving wrong index will fail as incorrectly decoded bytes wont contain "hd" or "nonce"
   const payloadLengthInRemainingData = shaCutoffIndex - headerB64.length - 1; // -1 for the separator '.'
-  const b64Offset = 4 - payloadLengthInRemainingData % 4;
+  const b64Offset = 4 - (payloadLengthInRemainingData % 4);
 
   // Pad domain to 50 bytes
   const domainBytes = new Uint8Array(50);
@@ -651,7 +690,8 @@ export async function verifyPubkeyZKProof(
     publicInputs,
   };
 
-  const verifier = new UltraHonkVerifier();
+  // @ts-expect-error crsPath is added but not yet released
+  const verifier = new UltraHonkVerifier({ crsPath: process.env.TEMP_DIR });
   const result = await verifier.verifyProof(proofData, Uint8Array.from(vkey));
 
   return result;
@@ -688,7 +728,6 @@ export async function verifyMessageSignature(message: SignedMessage) {
 
   return isValid;
 }
-
 
 export async function verifyMessage(message: SignedMessageWithProof) {
   const isValid = await verifyMessageSignature(message);

@@ -17,7 +17,7 @@ export default async function handler(
   res: NextApiResponse
 ) {
   if (req.method === "GET") {
-    getMessage(req, res);
+    fetchMessages(req, res);
   } else if (req.method === "POST") {
     postMessage(req, res);
   } else {
@@ -32,7 +32,7 @@ export async function postMessage(
 ) {
   try {
     const signedMessage = (await request.body) as SignedMessage;
-    const { id, text, timestamp, domain, signature, pubkey } = signedMessage;
+    const { id, text, timestamp, domain, signature, pubkey, internal } = signedMessage;
 
     // Verify pubkey is registered
     const { data, error } = await supabase
@@ -64,6 +64,7 @@ export async function postMessage(
         domain,
         signature,
         pubkey,
+        internal,
       },
     ]);
 
@@ -79,25 +80,59 @@ export async function postMessage(
   }
 }
 
-export async function getMessage(
+export async function fetchMessages(
   request: NextApiRequest,
   res: NextApiResponse
 ) {
-  const domain = request.query?.domain;
+  const domain = request.query?.domain as string;
+  const isInternal = request.query?.isInternal === 'true';
+  const limit = parseInt(request.query?.limit as string) || 50;
+  const afterTimestamp = request.query?.afterTimestamp as string;
+  const beforeTimestamp = request.query?.beforeTimestamp as string;
 
-  if (!domain) {
-    res.status(400).json({ error: "Domain is required" });
-    res.end();
-    return;
+  let query = supabase
+    .from("messages")
+    .select("id, text, timestamp, domain, signature, pubkey, internal")
+    .eq("internal", isInternal)
+    .order("timestamp", { ascending: false })
+    .limit(limit);
+
+  if (domain) {
+    query = query.eq("domain", domain);
   }
 
-  const { data, error } = await supabase
-    .from("messages")
-    .select(
-      "id, text, timestamp, domain, signature, pubkey"
-    )
-    .eq("domain", domain)
-    .order("timestamp", { ascending: true });
+  if (afterTimestamp) {
+    query = query.gt("timestamp", new Date(Number(afterTimestamp)).toISOString());
+  }
+
+  if (beforeTimestamp) {
+    query = query.lt("timestamp", new Date(Number(beforeTimestamp)).toISOString());
+  }
+
+  if (isInternal) {
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({ error: "Authorization required for internal messages" });
+      res.end();
+      return;
+    }
+
+    const publicKey = authHeader.split(' ')[1];
+    const { data: pubkeyData, error: pubkeyError } = await supabase
+      .from("pubkeys")
+      .select("*")
+      .eq("pubkey", publicKey)
+      .eq("domain", domain)
+      .single();
+
+    if (pubkeyError || !pubkeyData) {
+      res.status(401).json({ error: "Invalid public key for this domain" });
+      res.end();
+      return;
+    }
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     res.status(500).json({ error: error.message });

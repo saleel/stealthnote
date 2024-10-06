@@ -1,51 +1,138 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { Message, SignedMessage, SignedMessageWithProof } from "../lib/types";
+import { Message } from "../lib/types";
 import {
-  fetchMessage,
   fetchMessages,
   generateKeyPairAndRegister,
   isRegistered,
   signMessage,
   submitMessage,
-  verifyMessage,
 } from "../lib/utils";
-import usePromise from "../hooks/use-promise";
 import Head from "next/head";
+import MessageCard from "../components/message-card";
 
 export default function DomainChatPage() {
   const params = useParams();
   const domain = params?.domain as string;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesStartRef = useRef<HTMLDivElement>(null);
+  const messageListRef = useRef<HTMLDivElement>(null);
 
   const [newMessage, setNewMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [verificationStatus, setVerificationStatus] = useState<{
-    [key: string]: "idle" | "verifying" | "valid" | "invalid" | "error";
-  }>({});
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [isAtBottom, setIsAtBottom] = useState(true);
 
-  const [messages, { isFetching, error, reFetch, fetchedAt }] = usePromise<
-    Message[]
-  >(() => fetchMessages(domain), {
-    defaultValue: [],
-    dependencies: [domain],
-  });
+  const fetchInitialMessages = useCallback(async () => {
+    if (!domain) return;
 
-  // Automatically call refetch every 10 seconds
+    setIsLoading(true);
+    try {
+      const fetchedMessages = await fetchMessages(domain, true, 50);
+      setMessages(fetchedMessages.reverse()); // Reverse the order
+      setHasMore(fetchedMessages.length === 50);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [domain]);
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      reFetch();
-    }, 10_000);
+    fetchInitialMessages();
+  }, [fetchInitialMessages]);
 
+  const fetchNewMessages = useCallback(async () => {
+    if (messages.length === 0 || !isAtBottom) return;
+    const latestTimestamp = messages[messages.length - 1].timestamp; // Get the latest timestamp
+    try {
+      const newMessages = await fetchMessages(
+        domain,
+        true,
+        50,
+        latestTimestamp
+      );
+      if (newMessages.length > 0) {
+        setMessages((prevMessages) => [...prevMessages, ...newMessages.reverse()]); // Append new messages to the end
+      }
+    } catch (error) {
+      console.error("Error fetching new messages:", error);
+    }
+  }, [domain, messages, isAtBottom]);
+
+  useEffect(() => {
+    const interval = setInterval(fetchNewMessages, 10000);
     return () => clearInterval(interval);
-  }, [reFetch]);
+  }, [fetchNewMessages]);
 
-  // // Auto scroll to bottom when new messages arrive
-  // useEffect(() => {
-  //   messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  // }, [messages]);
+  const fetchPreviousMessages = useCallback(async () => {
+    if (!hasMore || messages.length === 0) return;
+    const oldestTimestamp = messages[0].timestamp; // Get the oldest timestamp
+    setIsLoading(true);
+    try {
+      const olderMessages = await fetchMessages(
+        domain,
+        true,
+        50,
+        null,
+        oldestTimestamp
+      );
+      if (olderMessages.length > 0) {
+        setMessages((prevMessages) => [...olderMessages.reverse(), ...prevMessages]); // Prepend older messages
+        setHasMore(olderMessages.length === 50);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error("Error fetching previous messages:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [domain, hasMore, messages]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoading) {
+          fetchPreviousMessages();
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (messagesStartRef.current) {
+      observer.observe(messagesStartRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [fetchPreviousMessages, isLoading]);
+
+  // Check if user is at bottom of message list
+  const handleScroll = useCallback(() => {
+    if (messageListRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messageListRef.current;
+      setIsAtBottom(scrollTop + clientHeight >= scrollHeight - 10);
+    }
+  }, []);
+
+  useEffect(() => {
+    const messageList = messageListRef.current;
+    if (messageList) {
+      messageList.addEventListener('scroll', handleScroll);
+      return () => messageList.removeEventListener('scroll', handleScroll);
+    }
+  }, [handleScroll]);
+
+  // Auto scroll to bottom when new messages arrive and user is at bottom
+  useEffect(() => {
+    if (isAtBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isAtBottom]);
 
   async function handleMessageSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -55,7 +142,6 @@ export default function DomainChatPage() {
     }
 
     if (!isRegistered()) {
-      console.log("Not registered. Generating key pair and registering.");
       await generateKeyPairAndRegister();
     }
 
@@ -66,92 +152,28 @@ export default function DomainChatPage() {
       timestamp: new Date().getTime(),
       text: newMessage,
       domain: domain,
+      internal: true,
     };
 
     try {
-      console.log("Signing message", message);
       const { signatureHex, pubkey } = await signMessage(message);
-      const signedMessage: SignedMessage = {
+      const signedMessage = {
         ...message,
         signature: signatureHex,
         pubkey: pubkey as string,
       };
 
-      console.log("Submitting message", signedMessage);
       await submitMessage(signedMessage);
 
       // Update message list
-      reFetch();
+      setMessages((prevMessages) => [...prevMessages, message]);
       setNewMessage("");
+      setIsAtBottom(true); // Force scroll to bottom after sending a message
     } catch (error) {
       console.error(`Failed to submit message: ${(error as Error).stack}`);
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  async function onVerifyClick(messageId: string) {
-    setVerificationStatus((prev) => ({ ...prev, [messageId]: "verifying" }));
-
-    try {
-      const message = (await fetchMessage(messageId)) as SignedMessageWithProof;
-
-      console.log("Verifying message", message);
-      const isValid = await verifyMessage(message);
-
-      setVerificationStatus((prev) => ({
-        ...prev,
-        [messageId]: isValid ? "valid" : "invalid",
-      }));
-    } catch (error) {
-      console.error("Verification failed:", error);
-      setVerificationStatus((prev) => ({ ...prev, [messageId]: "error" }));
-    }
-  }
-
-  function renderMessage(message: Message, index: number) {
-    const timestamp = new Date(message.timestamp);
-    const status = verificationStatus[message.id] || "idle";
-
-    return (
-      <div key={message.timestamp} className="message-box">
-        <div className="message-box-header">
-          <span className="message-box-header-text">
-            {`#${(index + 1).toString()} `}
-          </span>
-          <span className="message-box-header-text">
-            <span>
-              {timestamp.toLocaleDateString()} {timestamp.toLocaleTimeString()}
-            </span>
-
-            <span className={`message-box-verify ${status}`}>
-              <button
-                className={"message-box-verify-button"}
-                onClick={() => onVerifyClick(message.id)}
-                disabled={status === "verifying"}
-                style={{ display: status === "idle" ? "inline" : "none" }}
-              >
-                {status === "idle" && "Verify"}
-              </button>
-
-              {status === "verifying" && (
-                <span className="message-box-verify-icon spinner-icon small"></span>
-              )}
-              {status === "valid" && (
-                <span className="message-box-verify-icon valid">✓</span>
-              )}
-              {status === "invalid" && (
-                <span className="message-box-verify-icon invalid">+</span>
-              )}
-              {status === "error" && (
-                <span className="message-box-verify-icon error">!</span>
-              )}
-            </span>
-          </span>
-        </div>
-        {message.text}
-      </div>
-    );
   }
 
   function renderLoading() {
@@ -193,14 +215,20 @@ export default function DomainChatPage() {
           <span className="messages-container-title-domain">{domain}</span>
         </h1>
 
-        <div className="message-list">
-          {isFetching && !fetchedAt && renderLoading()}
-          {fetchedAt && messages.length === 0 && renderNoMessages()}
-          {!fetchedAt && error && <div>Error: {error.message}</div>}
+        <div className="message-list" ref={messageListRef}>
+          {isLoading && messages.length === 0 && renderLoading()}
+          {!isLoading && messages.length === 0 && renderNoMessages()}
 
-          {messages.map(renderMessage)}
+          <div ref={messagesStartRef} />
+          {messages.map((message) => (
+            <MessageCard key={message.id} message={message} />
+          ))}
           <div ref={messagesEndRef} />
         </div>
+
+        {isLoading && (
+          <div className="loading-indicator">Loading more messages...</div>
+        )}
 
         <form
           className="message-input-container"

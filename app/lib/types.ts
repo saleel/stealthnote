@@ -1,16 +1,17 @@
-export type Message = {
+export interface Message {
   id: string;
-  text: string;
   timestamp: number;
+  text: string;
   domain: string;
+  internal: boolean;
 }
 
-export type SignedMessage = Message & {
+export interface SignedMessage extends Message {
   signature: string;
   pubkey: string; // Pubkey modulus (n) - exp is 65537
 }
 
-export type SignedMessageWithProof = SignedMessage & {
+export interface SignedMessageWithProof extends SignedMessage {
   proof: Uint8Array; // ZK proof that pubkey is signed using JWT circuit
   kid: string;  // kid of the public key that was used to sign the JWT
 }

@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@aztec/bb.js@0.56.0":
+"@aztec/bb.js@portal:../../../aztec-packages/barretenberg/ts":
   version "0.56.0"
   resolved "https://registry.yarnpkg.com/@aztec/bb.js/-/bb.js-0.56.0.tgz#c1946f7fb23d6c3f2f2b8d6af1b1a3c1ea290122"
   integrity sha512-NRuIH9kub99o7Ddx4wLIW1x0Ow0hemP036fL9vBhqTBeNGi6BusMlSVygrUPKAjQrVGihJJPqdndwblypZY2ew==
@@ -553,13 +553,12 @@
   resolved "https://registry.yarnpkg.com/@noir-lang/acvm_js/-/acvm_js-0.51.0.tgz#0519b9581f78a37d9a12c85599c853c805716bca"
   integrity sha512-yz57N4g27Vm4qdVpaMDIlTdBff4dAGrH7+GD5+QMr84CTeDgx0WQKfK0BYuZLnfesnFqLA/sFvR+eHJUp8n+hQ==
 
-"@noir-lang/backend_barretenberg@0.35.0":
+"@noir-lang/backend_barretenberg@https://gitpkg.vercel.app/saleel/noir/tooling/noir_js_backend_barretenberg?master":
   version "0.35.0"
-  resolved "https://registry.yarnpkg.com/@noir-lang/backend_barretenberg/-/backend_barretenberg-0.35.0.tgz#7845a61fb6c0fae988e4c584aed769ecd24188f1"
-  integrity sha512-cKTM2PJRc1RRtbHhza9ZRPVSbIh2G5kt3vXJn20qKoaROebE6rI0rLWB/6YmmWyMk03aZbVx7t7wI1IBY5kqUg==
+  resolved "https://gitpkg.vercel.app/saleel/noir/tooling/noir_js_backend_barretenberg?master#13b7d57053e9737b4f3fb5b34ad4eed9191a73f6"
   dependencies:
-    "@aztec/bb.js" "0.56.0"
-    "@noir-lang/types" "0.35.0"
+    "@aztec/bb.js" "portal:../../../aztec-packages/barretenberg/ts"
+    "@noir-lang/types" "workspace:*"
     fflate "^0.8.0"
 
 "@noir-lang/noir_js@0.35.0":
@@ -578,7 +577,7 @@
   dependencies:
     "@noir-lang/types" "0.35.0"
 
-"@noir-lang/types@0.35.0":
+"@noir-lang/types@0.35.0", "@noir-lang/types@workspace:*":
   version "0.35.0"
   resolved "https://registry.yarnpkg.com/@noir-lang/types/-/types-0.35.0.tgz#47e73db1c545b0a68a7b1c4d551843ed71e47291"
   integrity sha512-m4zzTuWVeYI/lgAKU4XwS61lfU/vr8laal8mLm2YEym8GTyVfezjjVrzQd0/mOZtpZ6hO7r3rbd3W2Vs9IkMrg==
