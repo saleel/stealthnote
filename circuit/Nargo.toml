@@ -1,11 +1,11 @@
 [package]
 name = "stealthnote"
 type = "bin"
-authors = [""]
+authors = ["saleel"]
 compiler_version = ">=0.34.0"
 
 [dependencies]
-# noir_rsa = { tag = "v0.3.0", git = "https://github.com/noir-lang/noir_rsa", directory="lib" }
-noir_rsa = { path = "../../noir_rsa/lib" } # TODO: Change to git once https://github.com/noir-lang/noir_string_search/pull/4 is merged
-string_search = { path = "../../noir_string_search" } # TODO: Change to git once https://github.com/noir-lang/noir_string_search/pull/4 is merged
+noir_rsa = { tag = "v0.3.1", git = "https://github.com/noir-lang/noir_rsa", directory="lib" }
+string_search = { tag = "v0.2.0", git = "https://github.com/noir-lang/noir_string_search" }
 noir_base64 = { path = "../../noir_base64" }
+zkemail = { tag = "v0.3.1", git = "https://github.com/zkemail/zkemail.nr", directory="lib" } # for partial SHA
