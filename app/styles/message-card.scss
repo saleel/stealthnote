@@ -1,0 +1,119 @@
+.message-list {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow-y: scroll;
+  max-width: 800px;
+}
+
+.message-card {
+  border: 1px solid var(--shade-200);
+  box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  padding: 1rem;
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.message-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  height: 3rem;
+}
+
+.message-card-header-text {
+  font-size: 0.8rem;
+  color: #666;
+  margin: 0;
+}
+
+.message-card-header-sender {
+  display: flex;
+  align-items: center;
+}
+
+.message-card-header-sender-text {
+  @extend .message-card-header-text;
+  font-size: 0.7rem;
+  line-height: 0.7rem;
+  opacity: 0.8;
+}
+
+.message-card-header-sender-name {
+  font-weight: 500;
+  font-size: 1.0rem;
+  line-height: 1.2rem;
+  font-size: 1rem;
+}
+
+.message-card-header-timestamp {
+  @extend .message-card-header-text;
+  font-size: 0.7rem;
+  display: inline;
+  margin-left: 1rem;
+}
+
+.message-card-header-logo {
+  width: 30px;
+  height: 30px;
+  margin-right: 0.8rem;
+  margin-top: 2px;
+  border-radius: 3px;
+  object-fit: cover;
+  opacity: 0.9;
+}
+
+.message-card-verify-button {
+  @extend .message-card-header-text;
+
+  width: 50px;
+  cursor: pointer;
+  text-align: center;
+  margin-left: 1rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.message-card-verify-status {
+  width: 50px;
+  height: 20px;
+  overflow: hidden;
+  text-align: right;
+  margin-left: 1rem;
+  margin-top: -3px;
+  position: relative;
+}
+
+.message-card-verify-icon {
+  display: inline-block;
+  font-weight: bold;
+
+  &.verifying {
+    cursor: wait;
+  }
+    
+  &.valid {
+    font-size: 1.2rem;
+    color: #4caf50;
+  }
+
+  &.invalid {
+    color: #f44336;
+    font-size: 1.2rem;
+    transform: rotate(45deg);
+  }
+
+  &.error {
+    font-size: 0.9rem;
+    color: #d6750c;
+  }
+}
+
+.message-card-skeleton {
+  @extend .message-card;
+  height: 50px;
+}

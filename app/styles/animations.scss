@@ -1,0 +1,54 @@
+@keyframes skeleton-loading {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+.skeleton-loader {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.skeleton-text {
+  background-color: #e0e0e0;
+  height: 1rem;
+  border-radius: 4px;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+.skeleton-short {
+  width: 20%;
+}
+
+.skeleton-medium {
+  width: 60%;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner-icon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.spinner-icon.small {
+  width: 11px;
+  height: 11px;
+  border-width: 1px;
+}

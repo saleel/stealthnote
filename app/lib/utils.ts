@@ -70,12 +70,14 @@ export const LocalStorageKeys = {
 };
 
 export async function fetchMessages(
-  domain: string,
+  domain: string = '',
   isInternal: boolean = false,
   limit: number = 50,
   afterTimestamp?: number | null,
   beforeTimestamp?: number | null
 ) {
+  return import('../data/sampleMessages.json').then((data) => data.messages as Message[]);
+
   const pubkey = localStorage.getItem(LocalStorageKeys.PublicKeyModulus);
   const headers: HeadersInit = {
     "Content-Type": "application/json",

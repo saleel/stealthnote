@@ -27,6 +27,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'developers.google.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'img.logo.dev',
+      },
     ],
   },
   env: {

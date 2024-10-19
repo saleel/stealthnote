@@ -1,0 +1,94 @@
+{
+  "messages": [
+    {
+      "id": "1",
+      "domain": "ethereum.org",
+      "company": "Ethereum Foundation",
+      "text": "Excited to announce our latest research on sharding and scalability solutions!",
+      "timestamp": "2023-05-03T14:30:00Z",
+      "signature": "0x1234567890abcdef...",
+      "verified": true
+    },
+    {
+      "id": "2",
+      "domain": "polygon.technology",
+      "company": "Polygon",
+      "text": "Join us for a deep dive into zk-rollups and their impact on Ethereum scaling.",
+      "timestamp": "2023-05-04T09:15:00Z",
+      "signature": "0xabcdef1234567890...",
+      "verified": true
+    },
+    {
+      "id": "3",
+      "domain": "chain.link",
+      "company": "Chainlink",
+      "text": "Our new off-chain reporting protocol is live, enhancing oracle network efficiency.",
+      "timestamp": "2023-05-05T11:45:00Z",
+      "signature": "0x9876543210fedcba...",
+      "verified": true
+    },
+    {
+      "id": "4",
+      "domain": "aleo.org",
+      "company": "Aleo",
+      "text": "Introducing Aleo Studio: A powerful IDE for zero-knowledge application development.",
+      "timestamp": "2023-05-06T16:20:00Z",
+      "signature": "0xfedcba9876543210...",
+      "verified": true
+    },
+    {
+      "id": "5",
+      "domain": "starkware.co",
+      "company": "StarkWare",
+      "text": "StarkNet Alpha is now open for developers. Start building scalable dApps today!",
+      "timestamp": "2023-05-07T10:00:00Z",
+      "signature": "0x2468ace02468ace0...",
+      "verified": true
+    },
+    {
+      "id": "6",
+      "domain": "z.cash",
+      "company": "Zcash",
+      "text": "Halo 2 upgrade successfully activated, improving privacy and reducing proof sizes.",
+      "timestamp": "2023-05-08T13:30:00Z",
+      "signature": "0x1357924680bdf135...",
+      "verified": true
+    },
+    {
+      "id": "7",
+      "domain": "minaprotocol.com",
+      "company": "Mina Protocol",
+      "text": "Experience the world's lightest blockchain with our new mobile-friendly wallet.",
+      "timestamp": "2023-05-09T15:45:00Z",
+      "signature": "0xaceg13579bdf2468...",
+      "verified": true
+    },
+    {
+      "id": "8",
+      "domain": "aztec.network",
+      "company": "Aztec Protocol",
+      "text": "Aztec Connect is live, bringing private DeFi to Ethereum mainnet.",
+      "timestamp": "2023-05-09T08:00:00Z",
+      "signature": "0x0123456789abcdef...",
+      "verified": true
+    },
+    {
+      "id": "9",
+      "domain": "zksync.io",
+      "company": "Matter Labs",
+      "text": "zkSync 2.0 testnet is now available. Dive into the future of Ethereum scaling!",
+      "timestamp": "2023-05-09T12:15:00Z",
+      "signature": "0xfedcba9876543210...",
+      "verified": true
+    },
+    {
+      "id": "10",
+      "domain": "o1labs.org",
+      "company": "O(1) Labs",
+      "text": "Mina's zkApps are revolutionizing blockchain applications. Learn how to build with them!",
+      "timestamp": "2023-05-09T14:00:00Z",
+      "signature": "0x13579ace02468bdf...",
+      "verified": true
+    }
+  ]
+}

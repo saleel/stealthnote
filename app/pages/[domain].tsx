@@ -205,10 +205,10 @@ export default function DomainChatPage() {
       <Head>
         <title>{title}</title>
       </Head>
-      <div className="messages-container">
-        <h1 className="messages-container-title">
+      <div>
+        <h1>
           Anonymous messages from members of{" "}
-          <span className="messages-container-title-domain">{domain}</span>
+          <span>{domain}</span>
         </h1>
 
         <div className="message-list" ref={messageListRef}>

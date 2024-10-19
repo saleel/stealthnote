@@ -1,34 +1,47 @@
 import React from "react";
 import Link from "next/link";
 
-function Header() {
+function Sidebar() {
   return (
-    <header className="navbar">
+    <header className="sidebar">
       <div className="logo">
         <Link href="/">StealthNote</Link>
       </div>
-      <nav>
-        <Link href="/how-it-works" className="nav-link">
-          How It Works
+      <nav className="sidebar-nav">
+        <Link href="/" className="sidebar-nav-item">
+          Home
         </Link>
-        <a
-          className="nav-link"
-          target="_blank"
-          rel="noopener noreferrer"
-          href="https://github.com/saleel/stealthnote"
-        >
-          Github
-        </a>
+        <Link href="/aztecprotocol.com" className="sidebar-nav-item">
+          My Company
+        </Link>
+
+        <div className="sidebar-nav-footer">
+          <Link href="/how-it-works" className="sidebar-nav-item">
+            How It Works
+          </Link>
+          <Link
+            className="sidebar-nav-item"
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://github.com/saleel/stealthnote"
+          >
+            Github
+          </Link>
+        </div>
       </nav>
     </header>
   );
 }
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+const Layout: React.FC = ({ children }) => {
   return (
-    <>
-      <Header />
-      <div className="container">{children}</div>
-    </>
-  )
-}
+    <div className="page">
+      <Sidebar />
+      <main className="container">
+        <div className="content">{children}</div>
+      </main>
+    </div>
+  );
+};
+
+export default Layout;
