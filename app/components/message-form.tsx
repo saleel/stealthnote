@@ -1,12 +1,43 @@
 import React, { useState } from "react";
-import { isRegistered, submitMessage, getDomain } from "../lib/utils";
+import {
+  submitMessage,
+  getDomain,
+  isRegistered as isRegisteredFn,
+  generateKeyPairAndRegister,
+} from "../lib/utils";
 import dynamic from "next/dynamic";
+import SignInButton from "./siwg";
 
-const PostMessageForm: React.FC = () => {
+const MessageForm: React.FC = () => {
   const [message, setMessage] = useState("");
+  const [isRegistered, setIsRegistered] = useState(isRegisteredFn());
+  const [userDomain, setUserDomain] = useState<string | null>(getDomain());
   const [isPosting, setIsPosting] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [status, setStatus] = useState(
+    isRegistered
+      ? `Posting as "Someone from ${userDomain}"`
+      : `Sign in with your Google work account to anonymously post as "Someone from your company"`
+  );
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSignIn() {
+    try {
+      setIsSigningIn(true);
+      await generateKeyPairAndRegister(setStatus);
+      const newDomain = getDomain();
+
+      setIsRegistered(true);
+      setUserDomain(newDomain);
+      setStatus(`Posting as "Someone from ${newDomain}"`);
+    } catch (error) {
+      console.error("Error:", error);
+      setStatus(`Error: ${(error as Error).message}`);
+    } finally {
+      setIsSigningIn(false);
+    }
+  }
+
+  async function onSubmitMessage(e: React.FormEvent) {
     e.preventDefault();
     if (!message.trim()) return;
 
@@ -16,56 +47,56 @@ const PostMessageForm: React.FC = () => {
       const domain = getDomain();
       if (!domain) throw new Error("Domain not found");
 
-      await submitMessage({
-        domain,
-        text: message,
-        timestamp: Date.now(),
-      });
-
+      await submitMessage(message, domain, false);
       setMessage("");
     } catch (err) {
       console.error(err);
-      window.alert("Failed to post message. Please try again.");
+      setStatus(`Error: ${(err as Error).message}`);
     } finally {
       setIsPosting(false);
     }
-  };
-
-  const handleSignIn = () => {
-    // Implement Google Sign-In logic here
-    console.log("Sign in with Google");
-  };
-
-  const isReg = isRegistered();
+  }
 
   return (
     <div className="message-form">
       <textarea
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        placeholder="What's happening?"
+        placeholder={
+          isRegistered
+            ? `What is happening at ${userDomain}?`
+            : `What is happening at your company?`
+        }
         maxLength={280}
-        disabled={isPosting}
+        disabled={!isRegistered || isPosting}
       />
       <div className="message-form-footer">
-        <span className="character-count">{message.length}/280</span>
-        
-        {isReg ? (
+        {isRegistered && (
+          <span className="message-form-character-count">
+            {message.length}/280
+          </span>
+        )}
+
+        <span className="message-form-footer-message">{status}</span>
+
+        {isRegistered && (
           <button
             className="message-form-footer-button"
-            onClick={handleSubmit}
+            onClick={onSubmitMessage}
             disabled={isPosting || message.length === 0}
           >
-            {isPosting ? "Posting..." : "Post"}
+            {isPosting ? <span className="spinner-icon small" /> : "Post"}
           </button>
-        ) : (
-          <button onClick={handleSignIn}>Sign in with Google</button>
+        )}
+
+        {!isRegistered && (
+          <SignInButton onClick={handleSignIn} isLoading={isSigningIn} />
         )}
       </div>
     </div>
   );
 };
 
-export default dynamic(() => Promise.resolve(PostMessageForm), {
+export default dynamic(() => Promise.resolve(MessageForm), {
   ssr: false,
 });

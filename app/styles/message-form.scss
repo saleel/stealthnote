@@ -1,21 +1,26 @@
 .message-form {
-  border: 1px solid var(--shade-200);
+  border: 1px solid var(--shade-400);
   box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);
   border-radius: 5px;
   margin-bottom: 1.5rem;
 
   textarea {
     width: 100%;
-    min-height: 80px;
+    min-height: 100px;
     border: none;
     resize: vertical;
     font-size: 16px;
-    margin-bottom: 10px;
     padding: 1rem;
     background-color: transparent;
+    margin-bottom: 0;
 
     &:focus {
       outline: none;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      background-color: var(--shade-100);
     }
   }
 }
@@ -25,13 +30,20 @@
   justify-content: space-between;
   align-items: center;
   border-top: 1px solid var(--shade-200);
-  padding: 0.5rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.8rem;
+}
 
-  .character-count {
-    color: var(--shade-600);
-    font-size: 0.9rem;
-    margin-left: 0.5rem;
-  }
+.message-form-character-count {
+  color: var(--shade-600);
+  font-size: 0.9rem;
+  flex-grow: 1;
+}
+
+.message-form-footer-message {
+  font-size: 0.85rem;
+  color: var(--shade-700);
+  font-style: italic;
+  margin-right: 1rem;
 }
 
 .message-form-footer-button {
@@ -43,6 +55,7 @@
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.2s;
+  min-width: 70px;
 
   &:hover {
     background-color: var(--shade-950);
@@ -56,14 +69,17 @@
 
 .google-sign-in-button {
   background-color: white;
-  border: 1px solid #c3c3c4;
+  border: 1px solid var(--shade-400);
   border-radius: 0px;
-  padding: 12px 20px;
+  padding: 0.6rem 0.5rem;
   display: flex;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 0.9rem;
   transition: all 0.3s ease;
+  min-width: 180px;
+  height: 40px;
 
   img {
     margin-right: 12px;

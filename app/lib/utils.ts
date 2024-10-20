@@ -1,4 +1,9 @@
-import { uniqueNamesGenerator, Config, adjectives, animals } from 'unique-names-generator';
+import {
+  uniqueNamesGenerator,
+  Config,
+  adjectives,
+  animals,
+} from "unique-names-generator";
 import { type Noir, type CompiledCircuit } from "@noir-lang/noir_js";
 import { Message, SignedMessage, SignedMessageWithProof } from "./types";
 import { generatePartialSHA } from "@zk-email/helpers";
@@ -70,14 +75,12 @@ export const LocalStorageKeys = {
 };
 
 export async function fetchMessages(
-  domain: string = '',
+  domain: string = "",
   isInternal: boolean = false,
   limit: number = 50,
   afterTimestamp?: number | null,
   beforeTimestamp?: number | null
 ) {
-  return import('../data/sampleMessages.json').then((data) => data.messages as Message[]);
-
   const pubkey = localStorage.getItem(LocalStorageKeys.PublicKeyModulus);
   const headers: HeadersInit = {
     "Content-Type": "application/json",
@@ -134,13 +137,32 @@ export async function fetchMessage(id: string, isInternal: boolean = false) {
   }
 }
 
-export async function submitMessage(message: SignedMessage) {
+export async function submitMessage(
+  messageText: string,
+  domain: string,
+  isInternal: boolean
+) {
+  const message: Message = {
+    id: crypto.randomUUID(),
+    timestamp: new Date().getTime(),
+    text: messageText,
+    domain: domain,
+    internal: isInternal,
+  };
+
+  const { signatureHex, pubkey } = await signMessage(message);
+  const signedMessage = {
+    ...message,
+    signature: signatureHex,
+    pubkey: pubkey as string,
+  };
+
   const response = await fetch("/api/messages", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(message),
+    body: JSON.stringify(signedMessage),
   });
 
   if (response.ok) {
@@ -619,17 +641,14 @@ export function getPubkeyString() {
 export async function generateKeyPairAndRegister(
   onStatusChange: (status: string) => void = console.log
 ) {
-  onStatusChange("Generating key...");
   const { publicKeyModulus } = await generateSigningKey();
-
-  onStatusChange("Signing with Google...");
   const { idToken, headers, tokenPayload } = await signPubKeyWithGoogle(
     publicKeyModulus as string
   );
   const domain = tokenPayload!.hd;
 
   onStatusChange(
-    `Generating ZK proof. This will take about 40 seconds...`
+    `Generating ZK proof that you are part of ${domain}. This will take about 40 seconds...`
   );
   const { proof } = await generateJWTProof(idToken!);
 
@@ -656,7 +675,6 @@ export async function generateKeyPairAndRegister(
   }
 
   window.localStorage.setItem(LocalStorageKeys.Domain, domain);
-  onStatusChange("Done!");
 }
 
 export function isRegistered() {
@@ -794,7 +812,7 @@ function simpleHash(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
   return Math.abs(hash);
@@ -806,11 +824,11 @@ export function generateNameFromPubkey(pubkey: string): string {
 
   const customConfig: Config = {
     dictionaries: [adjectives, animals],
-    separator: ' ',
+    separator: " ",
     length: 2,
     seed: seed,
-    style: 'capital',
+    style: "capital",
   };
-  
+
   return uniqueNamesGenerator(customConfig);
 }

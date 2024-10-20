@@ -143,23 +143,8 @@ export default function DomainChatPage() {
 
     setIsSubmitting(true);
 
-    const message: Message = {
-      id: crypto.randomUUID(),
-      timestamp: new Date().getTime(),
-      text: newMessage,
-      domain: domain,
-      internal: true,
-    };
-
     try {
-      const { signatureHex, pubkey } = await signMessage(message);
-      const signedMessage = {
-        ...message,
-        signature: signatureHex,
-        pubkey: pubkey as string,
-      };
-
-      await submitMessage(signedMessage);
+      await submitMessage(newMessage, domain, true);
       await fetchNewMessages();
 
       // Update message list
