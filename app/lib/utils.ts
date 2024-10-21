@@ -645,7 +645,8 @@ export async function generateKeyPairAndRegister(
   const domain = tokenPayload!.hd;
 
   onStatusChange(
-    `Generating ZK proof that you are part of ${domain}. This will take about 40 seconds...`
+    `Generating cryptographic proof that you are part of ${domain} without revealing your identity.
+    This will take about 40 seconds...`
   );
   const { proof } = await generateJWTProof(idToken!);
 

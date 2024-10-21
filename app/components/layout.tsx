@@ -26,7 +26,7 @@ function Sidebar() {
             href={`/internal/${currentDomain}`}
             className="sidebar-nav-item"
           >
-            My Company
+            {currentDomain} Internal
           </Link>
         )}
 

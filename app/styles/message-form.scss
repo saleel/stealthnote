@@ -43,11 +43,40 @@
   font-size: 0.85rem;
   color: var(--shade-700);
   font-style: italic;
-  margin-right: 1rem;
 }
 
-.message-form-footer-button {
-  background-color: var(--shade-800);
+.message-form-refresh-button {
+  margin-left: 0.5rem;
+  margin-right: 2rem;
+  background-color: transparent;
+  color: var(--shade-800);
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  height: 2rem;
+  width: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+
+  &:hover {
+    color: var(--shade-950);
+    transform: rotate(90deg);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.message-form-refresh-icon {
+  font-size: 1.5rem;
+  margin-bottom: 3px;
+}
+
+.message-form-post-button {
+  background-color: var(--primary-900);
   color: white;
   border: none;
   border-radius: 3px;
@@ -56,6 +85,7 @@
   cursor: pointer;
   transition: background-color 0.2s;
   min-width: 70px;
+  height: 2rem;
 
   &:hover {
     background-color: var(--shade-950);

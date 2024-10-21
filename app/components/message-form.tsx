@@ -16,7 +16,7 @@ const MessageForm: React.FC<{ isInternal?: boolean }> = ({ isInternal }) => {
   );
   const isRegistered = !!currentDomain;
   const senderName = isInternal
-    ? generateNameFromPubkey(getPubkeyString() as string)
+    ? generateNameFromPubkey(getPubkeyString() || "")
     : `Someone from ${currentDomain}`;
 
   const [message, setMessage] = useState("");
@@ -71,25 +71,40 @@ const MessageForm: React.FC<{ isInternal?: boolean }> = ({ isInternal }) => {
             : `What is happening at your company?`
         }
         maxLength={280}
-        disabled={!isRegistered || isPosting}
+        disabled={isSigningIn || isPosting || !isRegistered}
       />
       <div className="message-form-footer">
-        {isRegistered && (
-          <span className="message-form-character-count">
-            {message.length}/280
-          </span>
-        )}
+        <span className="message-form-character-count">
+          {!isSigningIn && isRegistered && <span>{message.length}/280</span>}
+        </span>
 
         <span className="message-form-footer-message">{status}</span>
 
         {isRegistered && (
-          <button
-            className="message-form-footer-button"
-            onClick={onSubmitMessage}
-            disabled={isPosting || message.length === 0}
-          >
-            {isPosting ? <span className="spinner-icon small" /> : "Post"}
-          </button>
+          <>
+            <button
+              className="message-form-refresh-button"
+              title={
+                "Multiple messages sent by one identity can be linked." +
+                " Refresh your identity by generating a new proof."
+              }
+              onClick={handleSignIn}
+              disabled={isSigningIn}
+            >
+              {isSigningIn ? (
+                <span className="spinner-icon small" />
+              ) : (
+                <span className="message-form-refresh-icon">⟳</span>
+              )}
+            </button>
+            <button
+              className="message-form-post-button"
+              onClick={onSubmitMessage}
+              disabled={isSigningIn || isPosting || message.length === 0}
+            >
+              {isPosting ? <span className="spinner-icon small" /> : "Post"}
+            </button>
+          </>
         )}
 
         {!isRegistered && (

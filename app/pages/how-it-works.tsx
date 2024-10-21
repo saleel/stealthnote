@@ -32,7 +32,6 @@ export default function HowItWorks() {
           </a>
           , which contains some information about your account, and a signature
           from Google.
-          <p></p>
           Here is an example of what the data in the JWT token looks like:
           <code>
             {`
@@ -73,9 +72,9 @@ export default function HowItWorks() {
         <h3>Signing arbitrary messages</h3>
         <p>
           We can send a random value called{" "}
-          <span className="article-inline-code">nonce</span> to Google during the sign
-          in process, and Google will include that in the signed JWT token
-          payload.
+          <span className="article-inline-code">nonce</span> to Google during
+          the sign in process, and Google will include that in the signed JWT
+          token payload.
         </p>
         <p>
           This way we can have Google sign to arbitrary information along with
@@ -118,9 +117,9 @@ export default function HowItWorks() {
           (program/code) itself is not private.
         </p>
         <p>
-          Anyone can verify the ZK proof along with the &quot;public inputs&quot; to
-          convince themselves that you have run the program correctly with valid
-          inputs.
+          Anyone can verify the ZK proof along with the &quot;public
+          inputs&quot; to convince themselves that you have run the program
+          correctly with valid inputs.
         </p>
         <p>
           For StealthNote, we have built a ZK circuit that verifies the digital
