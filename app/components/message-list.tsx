@@ -8,6 +8,8 @@ import Link from "next/link";
 import MessageForm from "./message-form";
 
 const MESSAGES_PER_PAGE = 30;
+const INITIAL_POLL_INTERVAL = 10000; // 10 seconds
+const MAX_POLL_INTERVAL = 100000; // 100 seconds
 
 const MessageList: React.FC<{
   domain?: string;
@@ -17,7 +19,9 @@ const MessageList: React.FC<{
   const [messages, setMessages] = useState<SignedMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [pollInterval, setPollInterval] = useState(INITIAL_POLL_INTERVAL);
   const observer = useRef<IntersectionObserver | null>(null);
+  const messageListRef = useRef<HTMLDivElement>(null);
 
   const loadMessages = useCallback(
     async (beforeTimestamp: number | null = null) => {
@@ -71,6 +75,49 @@ const MessageList: React.FC<{
     setMessages((prevMessages) => [signedMessage, ...prevMessages]);
   }
 
+  const checkForNewMessages = useCallback(async () => {
+    if (isInternal && !domain) return;
+
+    try {
+      const newMessages = await fetchMessages(
+        domain,
+        isInternal,
+        MESSAGES_PER_PAGE,
+        null,
+        messages[0].timestamp
+      );
+
+      if (newMessages.length > 0) {
+        setMessages((prevMessages) => [...newMessages, ...prevMessages]);
+        setPollInterval(INITIAL_POLL_INTERVAL);
+      } else {
+        setPollInterval((prevInterval) =>
+          Math.min(prevInterval + 10000, MAX_POLL_INTERVAL)
+        );
+      }
+    } catch (error) {
+      console.error("Error checking for new messages:", error);
+    }
+  }, [domain, isInternal, messages]);
+
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    const startPolling = () => {
+      intervalId = setInterval(() => {
+        if (messageListRef.current && messageListRef.current.scrollTop === 0) {
+          checkForNewMessages();
+        }
+      }, pollInterval);
+    };
+
+    startPolling();
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [pollInterval, checkForNewMessages]);
+
   useEffect(() => {
     loadMessages();
   }, [loadMessages]);
@@ -121,7 +168,7 @@ const MessageList: React.FC<{
         <MessageForm isInternal={isInternal} onSubmit={onNewMessageSubmit} />
       )}
 
-      <div className="message-list">
+      <div className="message-list" ref={messageListRef}>
         {messages.map((message, index) => (
         <div
           key={message.id || index}
