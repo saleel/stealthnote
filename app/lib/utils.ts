@@ -832,3 +832,7 @@ export function generateNameFromPubkey(pubkey: string): string {
 
   return uniqueNamesGenerator(customConfig);
 }
+
+export function getLogoUrl(domain: string) {
+  return `https://img.logo.dev/${domain}?token=pk_SqdEexoxR3akcyJz7PneXg`;
+}

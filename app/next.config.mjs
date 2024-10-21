@@ -17,7 +17,7 @@ const nextConfig = {
       ],
     },
   },
-  reactStrictMode: true,
+  reactStrictMode: false,
   sassOptions: {
     includePaths: ['./'],
   },

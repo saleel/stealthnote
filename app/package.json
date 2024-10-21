@@ -15,6 +15,7 @@
     "@supabase/supabase-js": "^2.45.4",
     "@zk-email/helpers": "^6.1.6",
     "dotenv": "^16.4.5",
+    "javascript-time-ago": "^2.5.11",
     "next": "14.2.11",
     "react": "^18",
     "react-dom": "^18",

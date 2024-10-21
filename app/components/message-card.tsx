@@ -7,16 +7,24 @@ import {
   verifyMessage,
   fetchMessage,
   generateNameFromPubkey,
+  getLogoUrl,
 } from "../lib/utils";
+import Link from "next/link";
 
 interface MessageCardProps {
   message: SignedMessage;
+  isInternal?: boolean;
+  isCurrentDomain?: boolean;
 }
 
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo("en-US");
 
-const MessageCard: React.FC<MessageCardProps> = ({ message }) => {
+const MessageCard: React.FC<MessageCardProps> = ({
+  message,
+  isInternal,
+  isCurrentDomain,
+}) => {
   const [verificationStatus, setVerificationStatus] = useState<
     "idle" | "verifying" | "valid" | "invalid" | "error"
   >("idle");
@@ -38,40 +46,78 @@ const MessageCard: React.FC<MessageCardProps> = ({ message }) => {
   };
 
   const timestamp = new Date(message.timestamp);
-  const logoUrl = `https://img.logo.dev/${message.domain}?token=pk_SqdEexoxR3akcyJz7PneXg`;
+  const logoUrl = getLogoUrl(message.domain);
 
-  let sender = "";
-  if (message.internal) {
-    sender = generateNameFromPubkey(message.pubkey || "");
-  } else {
-    sender = message.domain;
+  function renderLogo() {
+    if (!isCurrentDomain) {
+      return (
+        <Link href={`/${message.domain}`} className="message-card-header-logo">
+          <Image
+            src={logoUrl}
+            alt={`${message.domain} logo`}
+            width={40}
+            height={40}
+          />
+        </Link>
+      );
+    }
+
+    return (
+      <div className="message-card-header-logo">
+        <Image
+          src={logoUrl}
+          alt={`${message.domain} logo`}
+          className="message-card-header-logo"
+          width={40}
+          height={40}
+        />
+      </div>
+    );
+  }
+
+  function renderSender() {
+    if (isInternal) {
+      return (
+        <div className="message-card-header-sender-name">
+          <span>{generateNameFromPubkey(message.pubkey || "")}</span>
+          <span
+            className="message-card-header-timestamp"
+            title={timestamp.toLocaleString()}
+          >
+            {timeAgo.format(timestamp)}
+          </span>
+        </div>
+      );
+    }
+
+    return (
+      <span>
+        <div className="message-card-header-sender-text">
+          <span>Someone from</span>
+        </div>
+        <div className="message-card-header-sender-name">
+          {isCurrentDomain ? (
+            <span>{message.domain}</span>
+          ) : (
+            <Link href={`/${message.domain}`}>{message.domain}</Link>
+          )}
+          <span
+            className="message-card-header-timestamp"
+            title={timestamp.toLocaleString()}
+          >
+            {timeAgo.format(timestamp)}
+          </span>
+        </div>
+      </span>
+    );
   }
 
   return (
     <div className="message-card">
       <header className="message-card-header">
         <div className="message-card-header-sender">
-          <Image
-            src={logoUrl}
-            alt={`${message.domain} logo`}
-            className="message-card-header-logo"
-            width={40}
-            height={40}
-          />
-          <span>
-            <div className="message-card-header-sender-text">
-              <span>Someone from</span>
-            </div>
-            <div className="message-card-header-sender-name">
-              {sender}
-              <span
-                className="message-card-header-timestamp"
-                title={timestamp.toLocaleString()}
-              >
-                {timeAgo.format(timestamp)}
-              </span>
-            </div>
-          </span>
+          {renderLogo()}
+          {renderSender()}
         </div>
 
         {verificationStatus === "idle" && (

@@ -6,10 +6,10 @@
 @import "./animations.scss";
 @import "./utils.scss";
 @import "./typography.scss";
-
+@import "./domain-page.scss";
 
 :root {
-  // shadcn slate colors
+  // tailwind slate colors
   --shade-950: #0f172a;
   --shade-900: #1e293b;
   --shade-800: #334155;
@@ -21,6 +21,19 @@
   --shade-200: #e2e8f0;
   --shade-100: #f8fafc;
   --shade-50: #f8fafc;
+
+  // purple color
+  --primary-50: #faf5ff;
+  --primary-100: #f3e8ff;
+  --primary-200: #e9d5ff;
+  --primary-300: #d8b4fe;
+  --primary-400: #c026d3;
+  --primary-500: #a21caf;
+  --primary-600: #86198f;
+  --primary-700: #701a75;
+  --primary-800: #5b176b;
+  --primary-900: #461359;
+  --primary-950: #2b0d3d;
 }
 
 *, *:before, *:after {

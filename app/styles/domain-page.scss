@@ -1,0 +1,32 @@
+.domain-page {
+
+  .company-info {
+    display: flex;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--shade-200);
+    margin-bottom: 1rem;
+    justify-content: flex-start;
+    align-items: flex-start;
+  }
+
+  .company-logo {
+    width: 50px;
+    height: 50px;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-right: 1rem;
+    background-color: var(--shade-100);
+  }
+
+  .company-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    // color: var(--primary-600);
+  }
+
+  .company-description {
+    font-size: 1rem;
+    color: var(--shade-700);
+  }
+
+}
