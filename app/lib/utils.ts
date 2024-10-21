@@ -78,8 +78,8 @@ export async function fetchMessages(
   domain: string = "",
   isInternal: boolean = false,
   limit: number = 50,
-  afterTimestamp?: number | null,
-  beforeTimestamp?: number | null
+  beforeTimestamp?: number | null,
+  afterTimestamp?: number | null
 ) {
   const pubkey = localStorage.getItem(LocalStorageKeys.PublicKeyModulus);
   const headers: HeadersInit = {

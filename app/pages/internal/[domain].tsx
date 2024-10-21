@@ -14,7 +14,11 @@ export default function InternalMessagesPage() {
 
   const [currentDomain] = useLocalStorage("currentDomain",null);
 
-  if (domain && domain !== currentDomain) {
+  if (!domain) {
+    return null;
+  }
+
+  if (domain !== currentDomain) {
     router.push(`/`);
   }
 
@@ -42,8 +46,7 @@ export default function InternalMessagesPage() {
           </div>
         </div>
 
-        <MessageForm isInternal />
-        <MessageList domain={domain} isInternal={true} />
+        <MessageList domain={domain} isInternal showMessageForm />
       </div>
     </>
   );

@@ -14,17 +14,12 @@ import Link from "next/link";
 interface MessageCardProps {
   message: SignedMessage;
   isInternal?: boolean;
-  isCurrentDomain?: boolean;
 }
 
 TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo("en-US");
 
-const MessageCard: React.FC<MessageCardProps> = ({
-  message,
-  isInternal,
-  isCurrentDomain,
-}) => {
+const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {
   const [verificationStatus, setVerificationStatus] = useState<
     "idle" | "verifying" | "valid" | "invalid" | "error"
   >("idle");
@@ -47,13 +42,14 @@ const MessageCard: React.FC<MessageCardProps> = ({
 
   const timestamp = new Date(message.timestamp);
   const logoUrl = getLogoUrl(message.domain);
+  const shouldRedirect = window.location.pathname !== `/${message.domain}`;
 
   function renderLogo() {
     if (isInternal) {
       return null;
     }
-    
-    if (!isCurrentDomain) {
+
+    if (shouldRedirect) {
       return (
         <Link href={`/${message.domain}`} className="message-card-header-logo">
           <Image
@@ -100,10 +96,10 @@ const MessageCard: React.FC<MessageCardProps> = ({
           <span>Someone from</span>
         </div>
         <div className="message-card-header-sender-name">
-          {isCurrentDomain ? (
-            <span>{message.domain}</span>
-          ) : (
+          {shouldRedirect ? (
             <Link href={`/${message.domain}`}>{message.domain}</Link>
+          ) : (
+            <span>{message.domain}</span>
           )}
           <span
             className="message-card-header-timestamp"

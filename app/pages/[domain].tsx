@@ -11,6 +11,10 @@ import { useRouter } from "next/router";
 export default function DomainPage() {
   const domain = useRouter().query.domain as string;
 
+  if (!domain) {
+    return null;
+  }
+
   return (
     <>
       <Head>
@@ -35,7 +39,7 @@ export default function DomainPage() {
           </div>
         </div>
 
-        <MessageList domain={domain} isCurrentDomain={true} />
+        <MessageList domain={domain} showMessageForm={false} />
       </div>
     </>
   );
