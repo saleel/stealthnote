@@ -48,7 +48,7 @@ function Sidebar() {
   );
 }
 
-const Layout: React.FC = ({ children }) => {
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="page">
       <Sidebar />

@@ -163,7 +163,7 @@ export async function submitMessage(
   });
 
   if (response.ok) {
-    return response.json();
+    return signedMessage;
   } else {
     let errorMessage = response.statusText;
 

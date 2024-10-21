@@ -4,12 +4,18 @@ import {
   generateKeyPairAndRegister,
   generateNameFromPubkey,
   getPubkeyString,
+  initProver,
+  initVerifier,
 } from "../lib/utils";
 import dynamic from "next/dynamic";
 import SignInButton from "./siwg";
 import { useLocalStorage } from "@uidotdev/usehooks";
+import { SignedMessageWithProof } from "../lib/types";
 
-const MessageForm: React.FC<{ isInternal?: boolean }> = ({ isInternal }) => {
+const MessageForm: React.FC<{
+  isInternal?: boolean;
+  onSubmit: (message: SignedMessageWithProof) => void;
+}> = ({ isInternal, onSubmit }) => {
   const [currentDomain, setCurrentDomain] = useLocalStorage<string | null>(
     "currentDomain",
     null
@@ -28,13 +34,22 @@ const MessageForm: React.FC<{ isInternal?: boolean }> = ({ isInternal }) => {
       : `Sign in with your Google work account to anonymously post as "Someone from your company"`
   );
 
+  React.useEffect(() => {
+    initProver();
+    initVerifier();
+  }, []);
+
   async function handleSignIn() {
     try {
       setIsSigningIn(true);
       const { domain } = await generateKeyPairAndRegister(setStatus);
 
       setCurrentDomain(domain);
-      setStatus(`Posting as "Someone from ${domain}"`);
+
+      const newName = isInternal
+        ? generateNameFromPubkey(getPubkeyString() || "")
+        : `Someone from ${currentDomain}`;
+      setStatus(`Posting as "${newName}"`);
     } catch (error) {
       console.error("Error:", error);
       setStatus(`Error: ${(error as Error).message}`);
@@ -50,8 +65,13 @@ const MessageForm: React.FC<{ isInternal?: boolean }> = ({ isInternal }) => {
     setIsPosting(true);
 
     try {
-      await submitMessage(message, currentDomain as string, !!isInternal);
+      const signedMessage = (await submitMessage(
+        message,
+        currentDomain as string,
+        !!isInternal
+      )) as SignedMessageWithProof;
       setMessage("");
+      onSubmit(signedMessage);
     } catch (err) {
       console.error(err);
       setStatus(`Error: ${(err as Error).message}`);
@@ -90,6 +110,7 @@ const MessageForm: React.FC<{ isInternal?: boolean }> = ({ isInternal }) => {
               }
               onClick={handleSignIn}
               disabled={isSigningIn}
+              tabIndex={-1}
             >
               {isSigningIn ? (
                 <span className="spinner-icon small" />

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { fetchMessages } from "../lib/utils";
 import MessageCard from "./message-card";
-import { SignedMessage } from "../lib/types";
+import { SignedMessage, SignedMessageWithProof } from "../lib/types";
 import Link from "next/link";
 import MessageForm from "./message-form";
 
@@ -67,6 +67,10 @@ const MessageList: React.FC<{
     [messages, loading, hasMore]
   );
 
+  function onNewMessageSubmit(signedMessage: SignedMessageWithProof) {
+    setMessages((prevMessages) => [signedMessage, ...prevMessages]);
+  }
+
   useEffect(() => {
     loadMessages();
   }, [loadMessages]);
@@ -113,7 +117,9 @@ const MessageList: React.FC<{
 
   return (
     <>
-      {showMessageForm && <MessageForm isInternal={isInternal} />}
+      {showMessageForm && (
+        <MessageForm isInternal={isInternal} onSubmit={onNewMessageSubmit} />
+      )}
 
       <div className="message-list">
         {messages.map((message, index) => (
