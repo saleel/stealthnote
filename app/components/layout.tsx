@@ -1,7 +1,16 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+import { useLocalStorage } from "@uidotdev/usehooks";
 
 function Sidebar() {
+  const [currentDomain] = useLocalStorage<string | null>(
+    "currentDomain",
+    null
+  );
+
   return (
     <header className="sidebar">
       <div className="logo">
@@ -11,9 +20,15 @@ function Sidebar() {
         <Link href="/" className="sidebar-nav-item">
           Home
         </Link>
-        <Link href="/aztecprotocol.com" className="sidebar-nav-item">
-          My Company
-        </Link>
+
+        {currentDomain && (
+          <Link
+            href={`/internal/${currentDomain}`}
+            className="sidebar-nav-item"
+          >
+            My Company
+          </Link>
+        )}
 
         <div className="sidebar-nav-footer">
           <Link href="/how-it-works" className="sidebar-nav-item">
@@ -44,4 +59,8 @@ const Layout: React.FC = ({ children }) => {
   );
 };
 
-export default Layout;
+const LayoutClient = dynamic(() => Promise.resolve(Layout), {
+  ssr: false,
+});
+
+export default LayoutClient;

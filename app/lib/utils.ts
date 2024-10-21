@@ -87,9 +87,6 @@ export async function fetchMessages(
   };
 
   if (isInternal) {
-    if (domain !== getDomain()) {
-      throw new Error("Not registered for this domain");
-    }
     if (!pubkey) {
       throw new Error("No public key found");
     }
@@ -674,19 +671,7 @@ export async function generateKeyPairAndRegister(
     throw new Error("Call to /pubkeys API failed");
   }
 
-  window.localStorage.setItem(LocalStorageKeys.Domain, domain);
-}
-
-export function isRegistered() {
-  return (
-    window.localStorage.getItem(LocalStorageKeys.Domain) !== null &&
-    window.localStorage.getItem(LocalStorageKeys.PublicKeyModulus) !== null &&
-    window.localStorage.getItem(LocalStorageKeys.PrivateKey) !== null
-  );
-}
-
-export function getDomain() {
-  return window.localStorage.getItem(LocalStorageKeys.Domain);
+  return { domain };
 }
 
 export async function signMessage(message: Message) {

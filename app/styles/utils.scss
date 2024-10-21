@@ -1,3 +1,9 @@
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
 .flex-center {
   display: flex;
   justify-content: center;
@@ -17,6 +23,22 @@
   margin-top: 1rem !important;
 }
 
+.mt-05 {
+  margin-top: 0.5rem !important;
+}
+
 .mt-3 {
   margin-top: 3rem !important;
+}
+
+.mb-05 {
+  margin-bottom: 0.5rem !important;
+}
+
+.mb-1 {
+  margin-bottom: 1rem !important;
+}
+
+.mb-2 {
+  margin-bottom: 2rem !important;
 }

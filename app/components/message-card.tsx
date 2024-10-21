@@ -49,6 +49,10 @@ const MessageCard: React.FC<MessageCardProps> = ({
   const logoUrl = getLogoUrl(message.domain);
 
   function renderLogo() {
+    if (isInternal) {
+      return null;
+    }
+    
     if (!isCurrentDomain) {
       return (
         <Link href={`/${message.domain}`} className="message-card-header-logo">
@@ -78,7 +82,7 @@ const MessageCard: React.FC<MessageCardProps> = ({
   function renderSender() {
     if (isInternal) {
       return (
-        <div className="message-card-header-sender-name">
+        <div className="message-card-header-sender-name internal">
           <span>{generateNameFromPubkey(message.pubkey || "")}</span>
           <span
             className="message-card-header-timestamp"

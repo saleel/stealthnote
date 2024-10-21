@@ -3,13 +3,13 @@
 import React from "react";
 import Head from "next/head";
 import MessageList from "../components/message-list";
-import { useParams } from "next/navigation";
 import { getLogoUrl } from "../lib/utils";
 import Image from "next/image";
+import { useRouter } from "next/router";
 
 // See messages from one domain
 export default function DomainPage() {
-  const { domain } = useParams() || {};
+  const domain = useRouter().query.domain as string;
 
   return (
     <>
@@ -21,8 +21,8 @@ export default function DomainPage() {
         <div className="company-info">
           <div className="company-logo">
             <Image
-              src={getLogoUrl(domain as string)}
-              alt={domain as string}
+              src={getLogoUrl(domain)}
+              alt={domain}
               width={50}
               height={50}
             />
@@ -35,7 +35,7 @@ export default function DomainPage() {
           </div>
         </div>
 
-        <MessageList domain={domain as string} isCurrentDomain={true} />
+        <MessageList domain={domain} isCurrentDomain={true} />
       </div>
     </>
   );

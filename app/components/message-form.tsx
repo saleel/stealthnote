@@ -1,34 +1,40 @@
 import React, { useState } from "react";
 import {
   submitMessage,
-  getDomain,
-  isRegistered as isRegisteredFn,
   generateKeyPairAndRegister,
+  generateNameFromPubkey,
+  getPubkeyString,
 } from "../lib/utils";
 import dynamic from "next/dynamic";
 import SignInButton from "./siwg";
+import { useLocalStorage } from "@uidotdev/usehooks";
 
-const MessageForm: React.FC = () => {
+const MessageForm: React.FC<{ isInternal?: boolean }> = ({ isInternal }) => {
+  const [currentDomain, setCurrentDomain] = useLocalStorage<string | null>(
+    "currentDomain",
+    null
+  );
+  const isRegistered = !!currentDomain;
+  const senderName = isInternal
+    ? generateNameFromPubkey(getPubkeyString() as string)
+    : `Someone from ${currentDomain}`;
+
   const [message, setMessage] = useState("");
-  const [isRegistered, setIsRegistered] = useState(isRegisteredFn());
-  const [userDomain, setUserDomain] = useState<string | null>(getDomain());
   const [isPosting, setIsPosting] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [status, setStatus] = useState(
     isRegistered
-      ? `Posting as "Someone from ${userDomain}"`
+      ? `Posting as "${senderName}"`
       : `Sign in with your Google work account to anonymously post as "Someone from your company"`
   );
 
   async function handleSignIn() {
     try {
       setIsSigningIn(true);
-      await generateKeyPairAndRegister(setStatus);
-      const newDomain = getDomain();
+      const { domain } = await generateKeyPairAndRegister(setStatus);
 
-      setIsRegistered(true);
-      setUserDomain(newDomain);
-      setStatus(`Posting as "Someone from ${newDomain}"`);
+      setCurrentDomain(domain);
+      setStatus(`Posting as "Someone from ${domain}"`);
     } catch (error) {
       console.error("Error:", error);
       setStatus(`Error: ${(error as Error).message}`);
@@ -44,10 +50,7 @@ const MessageForm: React.FC = () => {
     setIsPosting(true);
 
     try {
-      const domain = getDomain();
-      if (!domain) throw new Error("Domain not found");
-
-      await submitMessage(message, domain, false);
+      await submitMessage(message, currentDomain as string, !!isInternal);
       setMessage("");
     } catch (err) {
       console.error(err);
@@ -64,7 +67,7 @@ const MessageForm: React.FC = () => {
         onChange={(e) => setMessage(e.target.value)}
         placeholder={
           isRegistered
-            ? `What is happening at ${userDomain}?`
+            ? `What is happening at ${currentDomain}?`
             : `What is happening at your company?`
         }
         maxLength={280}
