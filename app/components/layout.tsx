@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useLocalStorage } from "@uidotdev/usehooks";
@@ -12,7 +12,7 @@ function Sidebar() {
   );
 
   return (
-    <header className="sidebar">
+    <>
       <div className="logo">
         <Link href="/">StealthNote</Link>
       </div>
@@ -44,14 +44,33 @@ function Sidebar() {
           </Link>
         </div>
       </nav>
-    </header>
+    </>
   );
 }
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   return (
     <div className="page">
-      <Sidebar />
+      <div className="mobile-header">
+        <button className={`sidebar-toggle ${isSidebarOpen ? 'open' : ''}`} onClick={toggleSidebar}>
+          ☰
+        </button>
+        <div
+          className="mobile-header-logo"
+          style={isSidebarOpen ? { display: "none" } : {}}
+        >
+          <Link href="/">StealthNote</Link>
+        </div>
+      </div>
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+        <Sidebar />
+      </aside>
       <main className="container">
         <div className="content">{children}</div>
       </main>

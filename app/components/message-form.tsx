@@ -98,10 +98,9 @@ const MessageForm: React.FC<{
           {!isSigningIn && isRegistered && <span>{message.length}/280</span>}
         </span>
 
-        <span className="message-form-footer-message">{status}</span>
-
-        {isRegistered && (
-          <>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <span className="message-form-footer-message">{status}</span>
+          {isRegistered && (
             <button
               className="message-form-refresh-button"
               title={
@@ -118,6 +117,11 @@ const MessageForm: React.FC<{
                 <span className="message-form-refresh-icon">⟳</span>
               )}
             </button>
+          )}
+        </div>
+
+        {isRegistered && (
+          <>
             <button
               className="message-form-post-button"
               onClick={onSubmitMessage}

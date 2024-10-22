@@ -1,6 +1,6 @@
 .page {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   height: 100vh;
   width: 100vw;
   justify-content: center;
@@ -24,6 +24,7 @@
   width: 100%;
   height: 100%;
   max-width: 800px;
+  padding: 0 1rem;
 }
 
 .sidebar {
@@ -73,11 +74,95 @@
   color: var(--shade-800);
   margin-bottom: 1rem;
 
-  &:hover, .active {
+  &:hover,
+  .active {
     background-color: var(--shade-200);
   }
 
   &:last-child {
     margin-bottom: 0;
+  }
+}
+
+.sidebar-toggle {
+  display: none;
+  width: 2rem;
+  height: 2rem;
+  background-color: var(--shade-100);
+  border: 1px solid var(--shade-300);
+  border-radius: 3px;
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.mobile-header {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    padding: 1rem;
+  }
+
+  .container {
+    padding-top: 0;
+  }
+
+  .mobile-header-logo {
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: var(--primary-950);
+    padding-left: 0.5rem;
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+  }
+
+  .sidebar {
+    position: normal;
+    left: 0;
+    max-width: 90%;
+    background-color: var(--shade-100);
+    padding: 1rem;
+    display: none;
+
+    &.open {
+      display: block;
+    }
+  }
+
+  .sidebar-nav-item {
+    background-color: var(--shade-300);
+  }
+
+  .sidebar-toggle {
+    display: block;
+
+    &.open {
+      background-color: var(--shade-200);
+      margin-left: 15rem;
+      text-align: right;
+      z-index: 2;
+    }
+  }
+
+  .sidebar {
+    position: fixed;
+    left: -100%;
+    width: 80%;
+    max-width: 300px;
+    transition: left 0.3s ease-in-out;
+    z-index: 1001;
+
+    &.open {
+      left: 0;
+      z-index: 1;
+    }
   }
 }

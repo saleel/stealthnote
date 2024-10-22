@@ -125,3 +125,23 @@
     background-color: #f8f9fa;
   }
 }
+
+@media (max-width: 768px) {
+  .message-form-footer {
+    flex-direction: column;
+  }
+
+  .message-form-character-count {
+    display: none;
+  }
+
+  .message-form-refresh-button {
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+  }
+
+  .message-form-footer-message {
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+  }
+}
