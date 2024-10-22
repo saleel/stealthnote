@@ -30,7 +30,7 @@
 
 .message-card-header-sender {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .message-card-header-sender-text {
@@ -142,4 +142,15 @@ a.message-card-header-logo:hover {
 .message-card-skeleton {
   @extend .message-card;
   height: 100px;
+}
+
+@media (max-width: 768px) {
+  .message-card-header-sender-name {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .message-card-header-timestamp {
+    margin-left: 0;
+  }
 }
