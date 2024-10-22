@@ -7,7 +7,6 @@ import { getLogoUrl } from "../../lib/utils";
 import Image from "next/image";
 import router, { useRouter } from "next/router";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import MessageForm from "../../components/message-form";
 
 export default function InternalMessagesPage() {
   const domain = useRouter().query.domain as string;

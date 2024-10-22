@@ -6,9 +6,12 @@ import MessageList from "../components/message-list";
 import { getLogoUrl } from "../lib/utils";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import { useLocalStorage } from "@uidotdev/usehooks";
 
 // See messages from one domain
 export default function DomainPage() {
+  const [currentDomain] = useLocalStorage("currentDomain", null);
+
   const domain = useRouter().query.domain as string;
 
   if (!domain) {
@@ -39,7 +42,10 @@ export default function DomainPage() {
           </div>
         </div>
 
-        <MessageList domain={domain} showMessageForm={false} />
+        <MessageList
+          domain={domain}
+          showMessageForm={currentDomain == domain}
+        />
       </div>
     </>
   );
