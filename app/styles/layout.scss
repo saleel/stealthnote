@@ -65,24 +65,31 @@
 .sidebar-nav-footer {
   display: flex;
   flex-direction: column;
-  align-items: space-between;
+  // align-items: space-between;
   flex-direction: row;
-  gap: 1rem;
 }
 
 .sidebar-nav-footer-item {
-  justify-content: center;
-  align-items: center;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-end;
   height: 2rem;
   background-color: transparent;
   padding: 0;
   font-size: 1.5rem;
-  color: var(--shade-700);
+  color: var(--shade-600);
   transition: color 0.2s ease-in-out;
+  margin-right: 1rem;
+  cursor: pointer;
 
   &:hover {
     color: var(--shade-900);
   }
+}
+
+button.sidebar-nav-footer-item {
+  border: 0;
+  flex-grow: 1;
 }
 
 .sidebar-nav-item {

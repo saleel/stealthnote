@@ -1,19 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import IonIcon from "@reacticons/ionicons";
+import { isDarkMode, setDarkMode } from "../lib/utils";
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentDomain] = useLocalStorage<string | null>("currentDomain", null);
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDark, setIsDark] = React.useState(isDarkMode());
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
+
+  const toggleDarkMode = () => {
+    setIsDark(!isDark);
+    setDarkMode(!isDark);
+  };
+
+  React.useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDark);
+  }, [isDark]);
 
   return (
     <div className="page">
@@ -53,6 +64,19 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </div>
 
           <div className="sidebar-nav-footer">
+            <button
+              onClick={() => {
+                toggleSidebar();
+                toggleDarkMode();
+              }}
+              className="sidebar-nav-footer-item"
+            >
+              {isDark ? (
+                <IonIcon name="moon" />
+              ) : (
+                <IonIcon name="sunny" />
+              )}
+            </button>
             <Link
               onClick={toggleSidebar}
               href="https://saleel.xyz/blog/stealthnote"

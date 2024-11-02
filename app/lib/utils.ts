@@ -72,6 +72,7 @@ export const LocalStorageKeys = {
   PublicKeyModulus: "publicKey",
   GoogleOAuthState: "googleOAuthState",
   GoogleOAuthNonce: "googleOAuthNonce",
+  DarkMode: "darkMode",
 };
 
 export async function fetchMessages(
@@ -864,3 +865,10 @@ export function setMessageLiked(messageId: string, liked: boolean) {
   }
 }
 
+export function isDarkMode() {
+  return window.localStorage.getItem(LocalStorageKeys.DarkMode) === "true";
+}
+
+export function setDarkMode(darkMode: boolean) {
+  window.localStorage.setItem(LocalStorageKeys.DarkMode, darkMode.toString());
+}
