@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Layout from '../components/layout';
-import crypto from 'crypto';
 
 interface DecodedJWT {
   [key: string]: unknown;
 }
 
-const SLACK_CLIENT_ID = "295069689904.7901115482438";
-const REDIRECT_URI = "https://wild-chefs-jam.loca.lt/slack";
+const MS_CLIENT_ID = "YOUR_MICROSOFT_CLIENT_ID"; // Replace with your actual client ID
+const REDIRECT_URI = "https://wild-chefs-jam.loca.lt/microsoft";
 
 function decodeJWT(token: string): DecodedJWT {
   try {
@@ -49,7 +48,7 @@ async function generateCodeChallenge(verifier: string) {
   return base64URLEncode(hash);
 }
 
-export default function SlackPage() {
+export default function MicrosoftPage() {
   const [decodedJWT, setDecodedJWT] = useState<DecodedJWT | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -62,13 +61,14 @@ export default function SlackPage() {
       setIsLoading(true);
       
       // Exchange code using PKCE
-      fetch('https://slack.com/api/openid.connect.token', {
+      fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-          client_id: SLACK_CLIENT_ID,
+          client_id: MS_CLIENT_ID,
+          scope: 'openid profile email',
           code: code,
           redirect_uri: REDIRECT_URI,
           grant_type: 'authorization_code',
@@ -89,7 +89,7 @@ export default function SlackPage() {
     }
   }, []);
 
-  const handleSlackSignIn = async () => {
+  const handleMicrosoftSignIn = async () => {
     // Generate PKCE values
     const codeVerifier = generateCodeVerifier();
     const codeChallenge = await generateCodeChallenge(codeVerifier);
@@ -98,27 +98,29 @@ export default function SlackPage() {
     sessionStorage.setItem('code_verifier', codeVerifier);
 
     // Build authorization URL with PKCE
-    const slackAuthUrl = new URL('https://slack.com/openid/connect/authorize');
-    slackAuthUrl.searchParams.append('response_type', 'code');
-    slackAuthUrl.searchParams.append('client_id', SLACK_CLIENT_ID);
-    slackAuthUrl.searchParams.append('scope', 'openid profile email');
-    slackAuthUrl.searchParams.append('redirect_uri', REDIRECT_URI);
-    slackAuthUrl.searchParams.append('code_challenge', codeChallenge);
-    slackAuthUrl.searchParams.append('code_challenge_method', 'S256');
+    const msAuthUrl = new URL('https://login.microsoftonline.com/common/oauth2/v2.0/authorize');
+    msAuthUrl.searchParams.append('response_type', 'code');
+    msAuthUrl.searchParams.append('client_id', MS_CLIENT_ID);
+    msAuthUrl.searchParams.append('scope', 'openid profile email');
+    msAuthUrl.searchParams.append('redirect_uri', REDIRECT_URI);
+    msAuthUrl.searchParams.append('code_challenge', codeChallenge);
+    msAuthUrl.searchParams.append('code_challenge_method', 'S256');
+    msAuthUrl.searchParams.append('response_mode', 'query');
     
-    window.location.href = slackAuthUrl.toString();
+    window.location.href = msAuthUrl.toString();
   };
 
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Slack Sign-In</h1>
-        {!decodedJWT && (
+        <h1 className="text-3xl font-bold mb-6">Microsoft Sign-In</h1>
+        {isLoading && <p>Loading...</p>}
+        {!decodedJWT && !isLoading && (
           <button
-            onClick={handleSlackSignIn}
+            onClick={handleMicrosoftSignIn}
             className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
           >
-            Sign in with Slack
+            Sign in with Microsoft
           </button>
         )}
         {decodedJWT && (
@@ -132,4 +134,4 @@ export default function SlackPage() {
       </div>
     </Layout>
   );
-}
+} 
