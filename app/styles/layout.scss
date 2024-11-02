@@ -58,11 +58,31 @@
   height: 100%;
 }
 
-.sidebar-nav-footer {
+.sidebar-nav-header {
   flex-grow: 1;
+}
+
+.sidebar-nav-footer {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  align-items: space-between;
+  flex-direction: row;
+  gap: 1rem;
+}
+
+.sidebar-nav-footer-item {
+  justify-content: center;
+  align-items: center;
+  height: 2rem;
+  background-color: transparent;
+  padding: 0;
+  font-size: 1.5rem;
+  color: var(--shade-700);
+  transition: color 0.2s ease-in-out;
+
+  &:hover {
+    color: var(--shade-900);
+  }
 }
 
 .sidebar-nav-item {
