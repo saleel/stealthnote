@@ -118,7 +118,7 @@ const MessageForm: React.FC<{
               tabIndex={-1}
             >
               {isSigningIn ? (
-                <span className="spinner-icon small" />
+                <span className="spinner-icon" />
               ) : (
                 <span className="message-form-refresh-icon">⟳</span>
               )}

@@ -140,11 +140,12 @@ export async function submitMessage(
   isInternal: boolean
 ) {
   const message: Message = {
-    id: crypto.randomUUID(),
+    id: crypto.randomUUID().split("-").slice(0, 2).join(""),
     timestamp: new Date().getTime(),
     text: messageText,
     domain: domain,
     internal: isInternal,
+    likes: 0,
   };
 
   const { signatureHex, pubkey } = await signMessage(message);
@@ -706,9 +707,10 @@ export async function verifyPubkeyZKProof(
 
   // Find the correct key based on the 'kid' in the message
   const keys = await fetchGooglePublicKeys();
+  console.log(keys, kid);
   const key = keys.find((k: { kid: string }) => k.kid === kid);
   if (!key) {
-    throw new Error("No matching key not found");
+    throw new Error("No matching Google public key not found");
   }
 
   const { modulusBigInt } = await parseJWKPubkey(key);
@@ -821,4 +823,43 @@ export function generateNameFromPubkey(pubkey: string): string {
 
 export function getLogoUrl(domain: string) {
   return `https://img.logo.dev/${domain}?token=pk_SqdEexoxR3akcyJz7PneXg`;
+}
+
+export async function toggleLike(messageId: string, like: boolean) {
+  try {
+    const pubkey = getPubkeyString();
+    const response = await fetch('/api/likes', {
+      method: 'POST',
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${pubkey}`,
+      },
+      body: JSON.stringify({
+        messageId,
+        like,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to toggle like');
+    }
+
+    const data = await response.json();
+    return data.liked;
+  } catch (error) {
+    console.error('Error toggling like:', error);
+    throw error;
+  }
+}
+
+export function isMessageLiked(messageId: string) {
+  return window.localStorage.getItem(`liked-${messageId}`) === "T";
+}
+
+export function setMessageLiked(messageId: string, liked: boolean) {
+  if (!liked) {
+    window.localStorage.removeItem(`liked-${messageId}`);
+  } else {
+    window.localStorage.setItem(`liked-${messageId}`, "T");
+  }
 }

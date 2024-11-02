@@ -92,7 +92,7 @@ export async function fetchMessages(
 
   let query = supabase
     .from("messages")
-    .select("id, text, timestamp, domain, signature, pubkey, internal")
+    .select("id, text, timestamp, domain, signature, pubkey, internal, likes")
     .eq("internal", isInternal)
     .order("timestamp", { ascending: false })
     .limit(limit);

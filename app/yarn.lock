@@ -592,6 +592,11 @@
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
+"@reacticons/ionicons@^7.1.0":
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/@reacticons/ionicons/-/ionicons-7.1.0.tgz#b8d9ebfe68c77d8feb0d484f19f07438a4b36606"
+  integrity sha512-hun4aeMnEyQ2qwmCB8TwNoseHLS1uj3EYuxJhEWkKaxBnyFtQ8HPqqS+HmNYiVBZu6/IeIFESScccdFcb34iqQ==
+
 "@rtsao/scc@^1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@rtsao/scc/-/scc-1.1.0.tgz#927dd2fae9bc3361403ac2c7a00c32ddce9ad7e8"

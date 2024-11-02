@@ -12,6 +12,7 @@
     "@aztec/bb.js": "https://gitpkg.vercel.app/saleel/aztec-packages/barretenberg/ts?master",
     "@noir-lang/backend_barretenberg": "0.35.0-999071b.nightly",
     "@noir-lang/noir_js": "0.35.0-999071b.nightly",
+    "@reacticons/ionicons": "^7.1.0",
     "@supabase/supabase-js": "^2.45.4",
     "@uidotdev/usehooks": "^2.4.1",
     "@zk-email/helpers": "^6.1.6",

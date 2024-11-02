@@ -27,7 +27,8 @@ async function getSingleMessage(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { id } = req.query;
+  try {
+    const { id } = req.query;
 
   if (!id) {
     res.status(400).json({ error: "Message ID is required" });
@@ -37,14 +38,12 @@ async function getSingleMessage(
 
   const { data, error } = await supabase
     .from("messages")
-    .select("id, text, timestamp, domain, signature, pubkey, internal, pubkeys(kid, proof)")
+    .select("id, text, timestamp, domain, signature, pubkey, internal, likes, pubkeys(kid, proof)")
     .eq("id", id)
     .single();
 
   if (error) {
-    res.status(500).json({ error: error.message });
-    res.end();
-    return;
+    throw error;
   }
 
   if (!data) {
@@ -84,6 +83,7 @@ async function getSingleMessage(
     signature: data.signature,
     pubkey: data.pubkey,
     internal: data.internal,
+    likes: data.likes,
     // @ts-expect-error pubkeys is not array
     proof: JSON.parse(data.pubkeys.proof),
     // @ts-expect-error pubkeys is not array
@@ -91,5 +91,10 @@ async function getSingleMessage(
   }
 
   res.json(message);
-  res.end();
+    res.end();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+    res.end();
+  }
 }

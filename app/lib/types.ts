@@ -5,6 +5,7 @@ export interface Message {
   domain: string;
   internal: boolean;
   displayName?: string;
+  likes: number;
 }
 
 export interface SignedMessage extends Message {

@@ -2,14 +2,19 @@ import React, { useState } from "react";
 import Image from "next/image";
 import TimeAgo from "javascript-time-ago";
 import en from "javascript-time-ago/locale/en.json";
+import Link from "next/link";
+import IonIcon from "@reacticons/ionicons";
 import { SignedMessage, SignedMessageWithProof } from "../lib/types";
 import {
   verifyMessage,
   fetchMessage,
   generateNameFromPubkey,
   getLogoUrl,
+  toggleLike,
+  setMessageLiked,
+  isMessageLiked,
+  getPubkeyString,
 } from "../lib/utils";
-import Link from "next/link";
 
 interface MessageCardProps {
   message: SignedMessage;
@@ -23,6 +28,8 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {
   const [verificationStatus, setVerificationStatus] = useState<
     "idle" | "verifying" | "valid" | "invalid" | "error"
   >("idle");
+  const [likeCount, setLikeCount] = useState(message.likes || 0);
+  const [isLiked, setIsLiked] = useState(isMessageLiked(message.id));
 
   const onVerify = async () => {
     setVerificationStatus("verifying");
@@ -43,6 +50,20 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {
   const timestamp = new Date(message.timestamp);
   const logoUrl = getLogoUrl(message.domain);
   const shouldRedirect = window.location.pathname !== `/${message.domain}`;
+
+  async function onLikeClick() {
+    try {
+      const newIsLiked = !isLiked;
+      setIsLiked(newIsLiked);
+      setLikeCount((prev: number) => (newIsLiked ? prev + 1 : prev - 1));
+      setMessageLiked(message.id, newIsLiked);
+      await toggleLike(message.id, newIsLiked);
+    } catch (error) {
+      setIsLiked(isLiked);
+      setLikeCount(likeCount);
+      setMessageLiked(message.id, isLiked);
+    }
+  }
 
   function renderLogo() {
     if (isInternal) {
@@ -134,19 +155,38 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {
               <span className="message-card-verify-icon spinner-icon small"></span>
             )}
             {verificationStatus === "valid" && (
-              <span className="message-card-verify-icon valid">✓</span>
+              <span className="message-card-verify-icon valid">
+                <IonIcon name="checkmark-outline" />
+              </span>
             )}
             {verificationStatus === "invalid" && (
-              <span className="message-card-verify-icon invalid">+</span>
+              <span className="message-card-verify-icon invalid">
+                <IonIcon name="close-outline" />
+              </span>
             )}
             {verificationStatus === "error" && (
-              <span className="message-card-verify-icon error">!</span>
+              <span className="message-card-verify-icon error">
+                <IonIcon name="alert-outline" />
+              </span>
             )}
           </span>
         )}
       </header>
 
       <main className="message-card-content">{message.text}</main>
+
+      <div className="message-card-footer">
+        <div className="like-button-container">
+          <button
+            onClick={onLikeClick}
+            disabled={!getPubkeyString()}
+            className={`like-button ${isLiked ? "liked" : ""}`}
+          >
+            <IonIcon name={isLiked ? "heart" : "heart-outline"} />
+            <span className="like-count">{likeCount}</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
