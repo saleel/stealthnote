@@ -80,24 +80,30 @@ const MessageForm: React.FC<{
     }
   }
 
+  const isTextAreaDisabled = isSigningIn || isPosting || !isRegistered;
+
   return (
     <div className="message-form">
-      <textarea
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        placeholder={
-          isRegistered
-            ? `What is happening at ${currentDomain}?`
-            : `What is happening at your company?`
-        }
-        maxLength={280}
-        disabled={isSigningIn || isPosting || !isRegistered}
-      />
-      <div className="message-form-footer">
-        <span className="message-form-character-count">
-          {!isSigningIn && isRegistered && <span>{message.length}/280</span>}
-        </span>
+      <div style={{ position: "relative" }}>
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder={
+            isRegistered
+              ? `What is happening at ${currentDomain}?`
+              : `What is happening at your company?`
+          }
+          maxLength={280}
+          disabled={isTextAreaDisabled}
+        />
+        {!isTextAreaDisabled && message.length > 0 && (
+          <span className="message-form-character-count">
+            {message.length}/280
+          </span>
+        )}
+      </div>
 
+      <div className="message-form-footer">
         <div style={{ display: "flex", alignItems: "center" }}>
           <span className="message-form-footer-message">{status}</span>
           {isRegistered && (

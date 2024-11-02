@@ -19,7 +19,9 @@ const MessageList: React.FC<{
   const [messages, setMessages] = useState<SignedMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState("");
   const [pollInterval, setPollInterval] = useState(INITIAL_POLL_INTERVAL);
+
   const observer = useRef<IntersectionObserver | null>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
 
@@ -47,7 +49,7 @@ const MessageList: React.FC<{
         setMessages((prevMessages) => [...prevMessages, ...cleanedMessages]);
         setHasMore(fetchedMessages.length === MESSAGES_PER_PAGE);
       } catch (error) {
-        console.error("Error fetching messages:", error);
+        setError((error as Error)?.message);
       } finally {
         setLoading(false);
       }
@@ -181,8 +183,14 @@ const MessageList: React.FC<{
         </div>
       ))}
       {loading && renderLoading()}
-        {!loading && messages.length === 0 && renderNoMessages()}
+        {!loading && !error && messages.length === 0 && renderNoMessages()}
       </div>
+
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
     </>
   );
 };

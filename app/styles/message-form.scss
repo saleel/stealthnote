@@ -3,6 +3,7 @@
   box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);
   border-radius: 5px;
   margin-bottom: 1.5rem;
+  overflow: hidden;
 
   textarea {
     width: 100%;
@@ -34,6 +35,9 @@
 }
 
 .message-form-character-count {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
   color: var(--shade-600);
   font-size: 0.9rem;
   flex-grow: 1;
@@ -43,6 +47,7 @@
   font-size: 0.85rem;
   color: var(--shade-700);
   font-style: italic;
+  padding-right: 0.5rem;
 }
 
 .message-form-refresh-button {

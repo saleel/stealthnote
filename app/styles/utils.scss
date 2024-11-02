@@ -4,6 +4,13 @@
   margin-bottom: 1rem;
 }
 
+.error-message {
+  width: 100%;
+  padding: 1rem;
+  background-color: rgb(255, 179, 179);
+  border-radius: 3px;
+}
+
 .flex-center {
   display: flex;
   justify-content: center;
