@@ -49,7 +49,10 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {
 
   const timestamp = new Date(message.timestamp);
   const logoUrl = getLogoUrl(message.domain);
-  const shouldRedirect = window.location.pathname !== `/${message.domain}`;
+  const shouldRedirectToDomain =
+    window.location.pathname !== `/${message.domain}`;
+  const shouldRedirectToMessage =
+    window.location.pathname !== `/messages/${message.id}`;
 
   async function onLikeClick() {
     try {
@@ -70,7 +73,7 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {
       return null;
     }
 
-    if (shouldRedirect) {
+    if (shouldRedirectToDomain) {
       return (
         <Link href={`/${message.domain}`} className="message-card-header-logo">
           <Image
@@ -117,17 +120,29 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {
           <span>Someone from</span>
         </div>
         <div className="message-card-header-sender-name">
-          {shouldRedirect ? (
+          {shouldRedirectToDomain ? (
             <Link href={`/${message.domain}`}>{message.domain}</Link>
           ) : (
             <span>{message.domain}</span>
           )}
-          <span
-            className="message-card-header-timestamp"
-            title={timestamp.toLocaleString()}
-          >
-            {timeAgo.format(timestamp)}
-          </span>
+
+          {shouldRedirectToMessage ? (
+            <Link href={`/messages/${message.id}`}>
+              <span
+                className="message-card-header-timestamp"
+                title={timestamp.toLocaleString()}
+              >
+                {timeAgo.format(timestamp)}
+              </span>
+            </Link>
+          ) : (
+            <span
+              className="message-card-header-timestamp"
+              title={timestamp.toLocaleString()}
+            >
+              {timeAgo.format(timestamp)}
+            </span>
+          )}
         </div>
       </span>
     );

@@ -647,7 +647,7 @@ export async function generateKeyPairAndRegister(
 
   onStatusChange(
     `Generating cryptographic proof that you are part of ${domain} without revealing your identity.
-    This will take about 40 seconds...`
+    This will take about 30 seconds...`
   );
   const { proof } = await generateJWTProof(idToken!);
 
@@ -863,3 +863,4 @@ export function setMessageLiked(messageId: string, liked: boolean) {
     window.localStorage.setItem(`liked-${messageId}`, "T");
   }
 }
+
