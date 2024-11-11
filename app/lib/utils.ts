@@ -5,12 +5,9 @@ import {
   animals,
 } from "unique-names-generator";
 import { type Noir, type CompiledCircuit } from "@noir-lang/noir_js";
-import { Message, SignedMessage, SignedMessageWithProof } from "./types";
 import { generatePartialSHA } from "@zk-email/helpers";
-import {
-  UltraHonkBackend,
-  UltraHonkVerifier,
-} from "@noir-lang/backend_barretenberg";
+import { UltraHonkBackend, BarretenbergVerifier } from "@aztec/bb.js";
+import { Message, SignedMessage, SignedMessageWithProof } from "./types";
 
 declare global {
   interface Window {
@@ -28,12 +25,10 @@ declare global {
 type ProverModules = {
   Noir: typeof Noir;
   UltraHonkBackend: typeof UltraHonkBackend;
-  circuit: object;
 };
 
 type VerifierModules = {
-  UltraHonkVerifier: typeof UltraHonkVerifier;
-  vkey: number[];
+  BarretenbergVerifier: typeof BarretenbergVerifier;
 };
 
 let proverPromise: Promise<ProverModules> | null = null;
@@ -44,10 +39,12 @@ export async function initProver(): Promise<ProverModules> {
     proverPromise = (async () => {
       const [{ Noir }, { UltraHonkBackend }] = await Promise.all([
         import("@noir-lang/noir_js"),
-        import("@noir-lang/backend_barretenberg"),
+        import("@aztec/bb.js"),
       ]);
-      const circuit = await import("../assets/circuit.json");
-      return { Noir, UltraHonkBackend, circuit: circuit.default };
+      return {
+        Noir,
+        UltraHonkBackend,
+      };
     })();
   }
   return proverPromise;
@@ -56,11 +53,8 @@ export async function initProver(): Promise<ProverModules> {
 export async function initVerifier(): Promise<VerifierModules> {
   if (!verifierPromise) {
     verifierPromise = (async () => {
-      const { UltraHonkVerifier } = await import(
-        "@noir-lang/backend_barretenberg"
-      );
-      const vkey = await import("../assets/circuit-vkey.json");
-      return { UltraHonkVerifier, vkey: vkey.default };
+      const { BarretenbergVerifier } = await import("@aztec/bb.js");
+      return { BarretenbergVerifier };
     })();
   }
   return verifierPromise;
@@ -422,15 +416,16 @@ export async function parseJWKPubkey(pubkey: object) {
   const modulusBigInt = BigInt(
     "0x" + Buffer.from(publicKeyJWK.n as string, "base64").toString("hex")
   );
-  const redcParam = (1n << (2n * 2048n)) / modulusBigInt;
+  const redcParam = (1n << (2n * 2048n + 4n)) / modulusBigInt;
 
   return { publicKey, modulusBigInt, redcParam };
 }
 
-export async function generateJWTProof(
-  idToken: string
-): Promise<{ proof: Uint8Array; provingTime: number }> {
-  const { Noir, UltraHonkBackend, circuit } = await initProver();
+export async function generateJWTProof(idToken: string) {
+  const { Noir, UltraHonkBackend } = await initProver();
+
+  const circuit = "0.2.0"; // always use the latest version
+  const circuitArtifact = await import(`../assets/${circuit}/circuit.json`);
 
   // Parse token
   const [headerB64, payloadB64] = idToken.split(".");
@@ -535,10 +530,12 @@ export async function generateJWTProof(
   }
 
   const input = {
-    partial_data: Array.from(bodyRemainingPadded).map((s) => s.toString()),
-    partial_data_length: remainingDataLength,
+    partial_data: {
+      storage: Array.from(bodyRemainingPadded).map((s) => s.toString()),
+      len: remainingDataLength,
+    },
     partial_hash: Array.from(u8ToU32(precomputedSha)).map((s) => s.toString()),
-    data_length: signedData.length,
+    full_data_length: signedData.length,
     b64_offset: b64Offset,
     pubkey_modulus_limbs: splitBigIntToChunks(modulusBigInt, 120, 18).map((s) =>
       s.toString()
@@ -549,18 +546,23 @@ export async function generateJWTProof(
     signature_limbs: splitBigIntToChunks(signatureBigInt, 120, 18).map((s) =>
       s.toString()
     ),
-    domain_name: Array.from(domainBytes).map((s) => s.toString()),
-    domain_name_length: domain.length,
-    nonce: Array.from(new TextEncoder().encode(payload.nonce)).map((s) =>
-      s.toString()
-    ),
+    domain: {
+      storage: Array.from(domainBytes).map((s) => s.toString()),
+      len: domain.length,
+    },
+    nonce: {
+      storage: Array.from(new TextEncoder().encode(payload.nonce)).map((s) =>
+        s.toString()
+      ),
+      len: payload.nonce.length,
+    },
   };
 
   console.log("Generated inputs", input);
 
   // Initialize Noir JS
-  const backend = new UltraHonkBackend(circuit as CompiledCircuit);
-  const noir = new Noir(circuit as CompiledCircuit);
+  const backend = new UltraHonkBackend(circuitArtifact.bytecode);
+  const noir = new Noir(circuitArtifact);
 
   // Generate witness and prove
   const startTime = performance.now();
@@ -570,7 +572,7 @@ export async function generateJWTProof(
 
   console.log(`Proof generated in ${provingTime}ms`, proof);
 
-  return { proof: proof.proof, provingTime };
+  return { proof: proof.proof, circuit, provingTime };
 }
 
 export function splitBigIntToChunks(
@@ -650,7 +652,7 @@ export async function generateKeyPairAndRegister(
     `Generating cryptographic proof that you are part of ${domain} without revealing your identity.
     This will take about 30 seconds...`
   );
-  const { proof } = await generateJWTProof(idToken!);
+  const { proof, circuit } = await generateJWTProof(idToken!);
 
   if (!domain) {
     throw new Error(
@@ -666,6 +668,7 @@ export async function generateKeyPairAndRegister(
       domain,
       kid: headers!.kid,
       pubkey: publicKeyModulus as string,
+      circuit,
       proof: Array.from(proof),
     }),
   });
@@ -699,9 +702,12 @@ export async function verifyPubkeyZKProof(
   domain: string,
   pubkey: string,
   kid: string,
+  circuit: string,
   proof: Uint8Array
 ) {
-  const { UltraHonkVerifier, vkey } = await initVerifier();
+  const { BarretenbergVerifier } = await initVerifier();
+
+  const vkey = await import(`../assets/${circuit}/circuit-vkey.json`);
 
   // Hash of the pubkey which is used as the nonce in JWT
   const pubkeyHash = await hashPublicKey(pubkey);
@@ -745,8 +751,11 @@ export async function verifyPubkeyZKProof(
     publicInputs,
   };
 
-  const verifier = new UltraHonkVerifier({ crsPath: process.env.TEMP_DIR });
-  const result = await verifier.verifyProof(proofData, Uint8Array.from(vkey));
+  const verifier = new BarretenbergVerifier({ crsPath: process.env.TEMP_DIR });
+  const result = await verifier.verifyUltraHonkProof(
+    proofData,
+    Uint8Array.from(vkey)
+  );
 
   return result;
 }
@@ -793,6 +802,7 @@ export async function verifyMessage(message: SignedMessageWithProof) {
     message.domain,
     message.pubkey,
     message.kid!,
+    message.circuit!,
     message.proof!
   );
 }
@@ -829,8 +839,8 @@ export function getLogoUrl(domain: string) {
 export async function toggleLike(messageId: string, like: boolean) {
   try {
     const pubkey = getPubkeyString();
-    const response = await fetch('/api/likes', {
-      method: 'POST',
+    const response = await fetch("/api/likes", {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${pubkey}`,
@@ -842,13 +852,13 @@ export async function toggleLike(messageId: string, like: boolean) {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to toggle like');
+      throw new Error("Failed to toggle like");
     }
 
     const data = await response.json();
     return data.liked;
   } catch (error) {
-    console.error('Error toggling like:', error);
+    console.error("Error toggling like:", error);
     throw error;
   }
 }

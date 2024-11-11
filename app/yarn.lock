@@ -2,7 +2,18 @@
 # yarn lockfile v1
 
 
-"@aztec/bb.js@0.56.0", "@aztec/bb.js@https://gitpkg.vercel.app/saleel/aztec-packages/barretenberg/ts?master":
+"@aztec/bb.js@^0.60.0":
+  version "0.60.0"
+  resolved "https://registry.yarnpkg.com/@aztec/bb.js/-/bb.js-0.60.0.tgz#990a7f7368293df5e93ae5603fbab5081e43f29a"
+  integrity sha512-iZpbh0mUVo3wAdycNmhqHhi6hBVnNUz7PdQrV0Ao0UYt+1tVEuuK43DIzaYcOhWbhyT63Jov+EE6oPXycZZC8Q==
+  dependencies:
+    comlink "^4.4.1"
+    commander "^10.0.1"
+    debug "^4.3.4"
+    fflate "^0.8.0"
+    tslib "^2.4.0"
+
+"@aztec/bb.js@https://gitpkg.vercel.app/saleel/aztec-packages/barretenberg/ts?master":
   version "0.56.0"
   resolved "https://gitpkg.vercel.app/saleel/aztec-packages/barretenberg/ts?master#7ac6b16d23ee2eef821ceedce1f70666ac4ae13e"
   dependencies:
@@ -547,40 +558,31 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@noir-lang/acvm_js@0.51.0-999071b.nightly":
-  version "0.51.0-999071b.nightly"
-  resolved "https://registry.yarnpkg.com/@noir-lang/acvm_js/-/acvm_js-0.51.0-999071b.nightly.tgz#39be9eb84842972e0e53670d84e3c629923a3d08"
-  integrity sha512-NRQDxodNAUfUBbMyG8QHGo9dgnpSyAajIHLmxHbyjmqUwro2Z4OlrDifbTTPxuXTucFVfh1rX3/+Omn/vOzPTA==
+"@noir-lang/acvm_js@0.52.0":
+  version "0.52.0"
+  resolved "https://registry.yarnpkg.com/@noir-lang/acvm_js/-/acvm_js-0.52.0.tgz#7e028c1a1fdc01e37333e9e04bc2cf147db9448c"
+  integrity sha512-QEREOIbq+jK/Bqs9jk0+XAS/KYmQX7lBEUYhdFMxkNIQf3hDQ3hr9PcelOWQtoxiDn6IJ2sr7t7yeZFdRqCvhg==
 
-"@noir-lang/backend_barretenberg@0.35.0-999071b.nightly":
-  version "0.35.0-999071b.nightly"
-  resolved "https://registry.yarnpkg.com/@noir-lang/backend_barretenberg/-/backend_barretenberg-0.35.0-999071b.nightly.tgz#1562e65ae0ab77fd60c7f8c5898960f094d3b897"
-  integrity sha512-nyTeLM58CCHrvLFdyz36yY9MiUDf0Fwag9ZZhXe03k15OX1KAPeG5H+cWVHMSqojZ+1GjQIonkJX6N6pmthZQA==
+"@noir-lang/noir_js@0.36.0":
+  version "0.36.0"
+  resolved "https://registry.yarnpkg.com/@noir-lang/noir_js/-/noir_js-0.36.0.tgz#63ef02cb8635a8edf6b32243aefcb7fdd4c3ce46"
+  integrity sha512-qMAfqkcWfERxS1IOeAjTssZGVolNLVIQhHI/Ers7iIx3tZYhejHRe30cMFdhgdJ9nfpqJea+TvlsKLsXbEBMfw==
   dependencies:
-    "@aztec/bb.js" "0.56.0"
-    "@noir-lang/types" "0.35.0-999071b.nightly"
-    fflate "^0.8.0"
+    "@noir-lang/acvm_js" "0.52.0"
+    "@noir-lang/noirc_abi" "0.36.0"
+    "@noir-lang/types" "0.36.0"
 
-"@noir-lang/noir_js@0.35.0-999071b.nightly":
-  version "0.35.0-999071b.nightly"
-  resolved "https://registry.yarnpkg.com/@noir-lang/noir_js/-/noir_js-0.35.0-999071b.nightly.tgz#d64c272c3239a08896a87d117b423ed5908a4f99"
-  integrity sha512-H5Fh+9CPUynsItoSqrjL3XHJK/6Q2TuUBNOrZ7F8JwbX98wHR1g6FZ/La4M+nsmVEQScoCNw9SVFwptgy2LW1A==
+"@noir-lang/noirc_abi@0.36.0":
+  version "0.36.0"
+  resolved "https://registry.yarnpkg.com/@noir-lang/noirc_abi/-/noirc_abi-0.36.0.tgz#b4bb93897f2ce90e951000139810dc726206e234"
+  integrity sha512-xRs13RQArV+m4ehkWpbAB/67z7WBfB/EgFJTJtd2/QMdtJSDWJ+8zcf5oOjX+YpDt38c9qY9d/SRdIzws34m3w==
   dependencies:
-    "@noir-lang/acvm_js" "0.51.0-999071b.nightly"
-    "@noir-lang/noirc_abi" "0.35.0-999071b.nightly"
-    "@noir-lang/types" "0.35.0-999071b.nightly"
+    "@noir-lang/types" "0.36.0"
 
-"@noir-lang/noirc_abi@0.35.0-999071b.nightly":
-  version "0.35.0-999071b.nightly"
-  resolved "https://registry.yarnpkg.com/@noir-lang/noirc_abi/-/noirc_abi-0.35.0-999071b.nightly.tgz#cf8147bc64a8a29a6b9d1797efa75f863d7f85a3"
-  integrity sha512-ZoKmufxEMZ+1r1D7L26PTTShiuWWh7jVJrbR2BkHcp4/+5UGdgS73FnjlSXNFdi7pLvwrlDvxkbeHK5P29l5Iw==
-  dependencies:
-    "@noir-lang/types" "0.35.0-999071b.nightly"
-
-"@noir-lang/types@0.35.0-999071b.nightly":
-  version "0.35.0-999071b.nightly"
-  resolved "https://registry.yarnpkg.com/@noir-lang/types/-/types-0.35.0-999071b.nightly.tgz#8564a2c10df950a15d42725851774a455ce189a9"
-  integrity sha512-plMFgxkYkV/LcgUhGAM5ctXkxjsbLT6fPWdkWl6H+3hCzISFA3HIFNWpUUpHQ/Thb9KIfjqHO/oB5AMjWc+arA==
+"@noir-lang/types@0.36.0":
+  version "0.36.0"
+  resolved "https://registry.yarnpkg.com/@noir-lang/types/-/types-0.36.0.tgz#695f7ae552caf2d9033bdf6964d2d5ba6ac5db39"
+  integrity sha512-3A/yJtnbTsn0o3T/D3YPs5b0vPOxYwos6Y5Ko6NhZsE6V31rYPv2a2NYmbfJRYuriwwzFbdE8+ui3UiV5BmvWw==
 
 "@nolyfill/is-core-module@1.0.39":
   version "1.0.39"
