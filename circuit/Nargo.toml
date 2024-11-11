@@ -2,10 +2,8 @@
 name = "stealthnote"
 type = "bin"
 authors = ["saleel"]
-compiler_version = ">=0.34.0"
+compiler_version = ">=0.36.0"
+version = "0.2.0"
 
 [dependencies]
-noir_rsa = { tag = "v0.3.1", git = "https://github.com/noir-lang/noir_rsa", directory="lib" }
-string_search = { tag = "v0.2.0", git = "https://github.com/noir-lang/noir_string_search" }
-noir_base64 = { path = "../../noir_base64" }
-zkemail = { tag = "v0.3.1", git = "https://github.com/zkemail/zkemail.nr", directory="lib" } # for partial SHA
+jwt = { tag = "v0.1.0", git = "https://github.com/saleel/noir-jwt" }
