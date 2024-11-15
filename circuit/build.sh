@@ -3,7 +3,10 @@ VERSION=$(grep '^version = ' Nargo.toml | cut -d '"' -f 2)
 echo "Circuit version: $VERSION"
 
 echo "Compiling circuit..."
-nargo compile
+if ! nargo compile; then
+    echo "Compilation failed. Exiting..."
+    exit 1
+fi
 
 echo "Gate count:"
 bb gates -b target/stealthnote.json | jq  '.functions[0].circuit_size'

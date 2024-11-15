@@ -735,16 +735,21 @@ export async function verifyPubkeyZKProof(
   publicInputs.push(
     ...modulusLimbs.map((s) => "0x" + s.toString(16).padStart(64, "0"))
   );
+
   publicInputs.push(
     ...Array.from(domainUint8Array).map(
       (s) => "0x" + s.toString(16).padStart(64, "0")
     )
   );
+  // Push domain length (BoundedVec)
+  publicInputs.push( "0x" + domain.length.toString(16).padStart(64, "0"));
+
   publicInputs.push(
     ...Array.from(pubkeyHashUint8Array).map(
       (s) => "0x" + s.toString(16).padStart(64, "0")
     )
   );
+  publicInputs.push("0x" + (32).toString(16).padStart(64, "0"));
 
   const proofData = {
     proof: proof,

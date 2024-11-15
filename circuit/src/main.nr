@@ -43,8 +43,8 @@ fn main(
     );
 
     jwt.verify();
-    jwt.validate_key_value("hd".as_bytes(), domain); // Domain is under the hd key for Google Workspace tokens
-    jwt.validate_key_value("nonce".as_bytes(), nonce);
+    jwt.validate_key_value::<300, 2, MAX_DOMAIN_LENGTH>("hd".as_bytes(), domain); // Domain is under the hd key for Google Workspace tokens
+    jwt.validate_key_value::<300, 5, 32>("nonce".as_bytes(), nonce);
 
     // TODO: 
     // validate exp - is there a chance the token is expired? Do we care?
