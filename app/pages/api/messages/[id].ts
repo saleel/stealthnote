@@ -38,7 +38,7 @@ async function getSingleMessage(
 
   const { data, error } = await supabase
     .from("messages")
-    .select("id, text, timestamp, domain, signature, pubkey, internal, likes, pubkeys(kid, proof)")
+    .select("id, text, timestamp, domain, signature, pubkey, internal, likes, circuit, pubkeys(kid, proof)")
     .eq("id", id)
     .single();
 
@@ -84,6 +84,7 @@ async function getSingleMessage(
     pubkey: data.pubkey,
     internal: data.internal,
     likes: data.likes,
+    circuit: data.circuit,
     // @ts-expect-error pubkeys is not array
     proof: JSON.parse(data.pubkeys.proof),
     // @ts-expect-error pubkeys is not array

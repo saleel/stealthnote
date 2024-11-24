@@ -4,7 +4,7 @@ import {
   adjectives,
   animals,
 } from "unique-names-generator";
-import { type Noir, type CompiledCircuit } from "@noir-lang/noir_js";
+import { type Noir } from "@noir-lang/noir_js";
 import { generatePartialSHA } from "@zk-email/helpers";
 import { UltraHonkBackend, BarretenbergVerifier } from "@aztec/bb.js";
 import { Message, SignedMessage, SignedMessageWithProof } from "./types";
