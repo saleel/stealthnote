@@ -1,13 +1,19 @@
-import { Html, Head, Main, NextScript } from 'next/document'
+import { Html, Head } from "next/document";
 
 export default function Document() {
   return (
     <Html lang="en">
-      <Head />
+      <Head>
+        <meta http-equiv="refresh" content="0; url=https://stealthnote.xyz" />
+      </Head>
       <body>
-        <Main />
-        <NextScript />
+        <div>
+          Redirecting to{" "}
+          <a href="https://stealthnote.xyz" rel="noopener noreferrer">
+            https://stealthnote.xyz
+          </a>
+        </div>
       </body>
     </Html>
-  )
+  );
 }
