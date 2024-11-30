@@ -48,7 +48,7 @@ const MessageForm: React.FC<{
 
       const newName = isInternal
         ? generateNameFromPubkey(getPubkeyString() || "")
-        : `Someone from ${currentDomain}`;
+        : `Someone from ${domain}`;
       setStatus(`Posting as "${newName}"`);
     } catch (error) {
       console.error("Error:", error);

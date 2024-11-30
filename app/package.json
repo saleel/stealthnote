@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@aztec/bb.js": "^0.62.0",
+    "@aztec/bb.js": "^0.61.0",
     "@noir-lang/noir_js": "0.38.0",
     "@reacticons/ionicons": "^7.1.0",
     "@supabase/supabase-js": "^2.45.4",

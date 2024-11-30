@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import TimeAgo from "javascript-time-ago";
-import en from "javascript-time-ago/locale/en.json";
 import Link from "next/link";
 import IonIcon from "@reacticons/ionicons";
 import { SignedMessage, SignedMessageWithProof } from "../lib/types";
@@ -21,7 +20,6 @@ interface MessageCardProps {
   isInternal?: boolean;
 }
 
-TimeAgo.addDefaultLocale(en);
 const timeAgo = new TimeAgo("en-US");
 
 const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {

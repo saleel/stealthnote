@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@aztec/bb.js@^0.62.0":
-  version "0.62.0"
-  resolved "https://registry.yarnpkg.com/@aztec/bb.js/-/bb.js-0.62.0.tgz#5846be4c5e9eaecc0400d56f8f2778559d94e612"
-  integrity sha512-BQBDvuDl0GeEwA38P7eZoUMYARLNj4Knm+F8iENADeN0w96h3NLxy61apXjXRWXm1ykF6vJ19UdyyxlavNquag==
+"@aztec/bb.js@^0.61.0":
+  version "0.61.0"
+  resolved "https://registry.yarnpkg.com/@aztec/bb.js/-/bb.js-0.61.0.tgz#b6ff2bcd3a6a071959659fbab64170381c026917"
+  integrity sha512-F6Ps1RsxQj7KXo2EXMdkVJtvTnI+LuOfp1vs4pk9Kg/0Xet94Z7qy8XamgqstinCT+pe7FFCDWSvX+hJdupa0w==
   dependencies:
     comlink "^4.4.1"
     commander "^10.0.1"

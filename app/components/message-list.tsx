@@ -86,7 +86,7 @@ const MessageList: React.FC<{
         isInternal,
         MESSAGES_PER_PAGE,
         null,
-        messages[0].timestamp
+        messages[0]?.timestamp
       );
 
       if (newMessages.length > 0) {
