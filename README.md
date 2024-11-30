@@ -2,9 +2,11 @@
 
 StealthNote is an application for people in an organization to anonymously broadcast messages.
 
-we use Zero Knowledge Proofs to prove that you are part of an organization by verifying JWT token generated for your Google Workspace account.
+We use Zero Knowledge Proofs to prove that you are part of an organization by verifying JWT token generated for your Google Workspace account.
 
-## How to run
+Try it out at [stealthnote.xyz](https://stealthnote.xyz).
+
+## Run locally
 
 Set your environment variables:
 ```sh
@@ -34,14 +36,11 @@ bb version 0.61.0
 
 ```sh
 #PWD = circuits
-nargo compile
+./build.sh
 ```
-
-- Copy `circuits/target/circui.json` to `app/assets/circuit.json`
-- Uncomment [these lines](./app/lib/utils.ts#L13) to generate new vkey and save it to `app/assets/circuit-vkey.json`
 
 <br />
 
 Built with [Noir](https://www.noir-lang.org/). 
 
-Inspiration: [https://www.nozee.xyz/](https://www.nozee.xyz/)
+Inspired by [Blind](https://www.teamblind.com/), [Nozee](https://www.nozee.xyz/).
