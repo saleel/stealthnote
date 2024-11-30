@@ -27,6 +27,11 @@ yarn dev
 
 ## Building circuits
 
+```
+nargo version 0.38.0
+bb version 0.61.0
+```
+
 ```sh
 #PWD = circuits
 nargo compile
