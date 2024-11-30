@@ -717,7 +717,6 @@ export async function verifyPubkeyZKProof(
 
   // Find the correct key based on the 'kid' in the message
   const keys = await fetchGooglePublicKeys();
-  console.log(keys, kid);
   const key = keys.find((k: { kid: string }) => k.kid === kid);
   if (!key) {
     throw new Error("No matching Google public key not found");
