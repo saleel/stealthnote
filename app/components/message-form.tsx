@@ -4,8 +4,6 @@ import {
   generateKeyPairAndRegister,
   generateNameFromPubkey,
   getPubkeyString,
-  initProver,
-  initVerifier,
 } from "../lib/utils";
 import dynamic from "next/dynamic";
 import SignInButton from "./siwg";
@@ -33,11 +31,6 @@ const MessageForm: React.FC<{
       ? `Posting as "${senderName}"`
       : `Sign in with your Google work account to anonymously post as "Someone from your company"`
   );
-
-  React.useEffect(() => {
-    initProver();
-    initVerifier();
-  }, []);
 
   async function handleSignIn() {
     try {

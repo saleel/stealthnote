@@ -642,6 +642,9 @@ export function getPubkeyString() {
 export async function generateKeyPairAndRegister(
   onStatusChange: (status: string) => void = console.log
 ) {
+  // Initialize prover without await to preload aztec bundle
+  initProver();
+
   const { publicKeyModulus } = await generateSigningKey();
   const { idToken, headers, tokenPayload } = await signPubKeyWithGoogle(
     publicKeyModulus as string
