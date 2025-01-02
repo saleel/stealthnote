@@ -23,76 +23,77 @@ export default async function handler(
   }
 }
 
-async function getSingleMessage(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+async function getSingleMessage(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { id } = req.query;
 
-  if (!id) {
-    res.status(400).json({ error: "Message ID is required" });
-    res.end();
-    return;
-  }
-
-  const { data, error } = await supabase
-    .from("messages")
-    .select("id, text, timestamp, domain, signature, pubkey, internal, likes, pubkeys(kid, circuit, proof)")
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    throw error;
-  }
-
-  if (!data) {
-    res.status(404).json({ error: "Message not found" });
-    res.end();
-    return;
-  }
-
-  if (data.internal) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      res.status(401).json({ error: "Authorization required for internal messages" });
+    if (!id) {
+      res.status(400).json({ error: "Message ID is required" });
       res.end();
       return;
     }
 
-    const pubkey = authHeader.split(' ')[1];
-    const { data: pubkeyData, error: pubkeyError } = await supabase
-      .from("pubkeys")
-      .select("*")
-      .eq("pubkey", pubkey)
-      .eq("domain", data.domain)
+    const { data, error } = await supabase
+      .from("messages")
+      .select(
+        /* eslint-disable-next-line max-len */
+        "id, group_id, group_provider, text, timestamp, signature, pubkey, internal, likes, memberships(proof, proof_args)"
+      )
+      .eq("id", id)
       .single();
 
-    if (pubkeyError || !pubkeyData) {
-      res.status(401).json({ error: "Invalid public key for this domain" });
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      res.status(404).json({ error: "Message not found" });
       res.end();
       return;
     }
-  }
 
-  const message : SignedMessageWithProof = {
-    id: data.id,
-    text: data.text,
-    timestamp: data.timestamp,
-    domain: data.domain,
-    signature: data.signature,
-    pubkey: data.pubkey,
-    internal: data.internal,
-    likes: data.likes,
-    // @ts-expect-error pubkeys is not array
-    circuit: data.pubkeys.circuit,
-    // @ts-expect-error pubkeys is not array
-    proof: JSON.parse(data.pubkeys.proof),
-    // @ts-expect-error pubkeys is not array
-    kid: data.pubkeys.kid,
-  }
+    if (data.internal) {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res
+          .status(401)
+          .json({ error: "Authorization required for internal messages" });
+        res.end();
+        return;
+      }
 
-  res.json(message);
+      const pubkey = authHeader.split(" ")[1];
+      const { data: membershipData, error: membershipError } = await supabase
+        .from("memberships")
+        .select("*")
+        .eq("pubkey", pubkey)
+        .eq("group_id", data.group_id)
+        .single();
+
+      if (membershipError || !membershipData) {
+        res.status(401).json({ error: "Invalid public key for this group" });
+        res.end();
+        return;
+      }
+    }
+
+    const message: SignedMessageWithProof = {
+      id: data.id,
+      anonGroupId: data.group_id,
+      anonGroupProvider: data.group_provider,
+      text: data.text,
+      timestamp: data.timestamp,
+      signature: data.signature,
+      ephemeralPubkey: data.pubkey,
+      internal: data.internal,
+      likes: data.likes,
+      // @ts-expect-error memberships is not array
+      proof: JSON.parse(data.memberships.proof),
+      // @ts-expect-error memberships is not array
+      proofArgs: JSON.parse(data.memberships.proof_args),
+    };
+
+    res.json(message);
     res.end();
   } catch (error) {
     console.error(error);

@@ -3,61 +3,48 @@ import Image from "next/image";
 import TimeAgo from "javascript-time-ago";
 import Link from "next/link";
 import IonIcon from "@reacticons/ionicons";
-import { SignedMessage, SignedMessageWithProof } from "../lib/types";
-import {
-  verifyMessage,
-  fetchMessage,
-  generateNameFromPubkey,
-  getLogoUrl,
-  toggleLike,
-  setMessageLiked,
-  isMessageLiked,
-  getPubkeyString,
-} from "../lib/utils";
+import type { SignedMessageWithProof } from "../lib/types";
+import { generateNameFromPubkey } from "../lib/utils";
+import { setMessageLiked, isMessageLiked } from "../lib/store";
+import { fetchMessage, toggleLike } from "../lib/api";
+import { hasEphemeralKey } from "../lib/key";
+import { verifyMessage } from "../lib/core";
+import { Providers } from "../lib/providers";
 
 interface MessageCardProps {
-  message: SignedMessage;
+  message: SignedMessageWithProof;
   isInternal?: boolean;
 }
+
+type VerificationStatus = "idle" | "verifying" | "valid" | "invalid" | "error";
 
 const timeAgo = new TimeAgo("en-US");
 
 const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {
-  const [verificationStatus, setVerificationStatus] = useState<
-    "idle" | "verifying" | "valid" | "invalid" | "error"
-  >("idle");
+  const provider = Providers[message.anonGroupProvider];
+  const anonGroup = provider.getAnonGroup(message.anonGroupId);
+
+  // States
   const [likeCount, setLikeCount] = useState(message.likes || 0);
   const [isLiked, setIsLiked] = useState(isMessageLiked(message.id));
+  const [verificationStatus, setVerificationStatus] =
+    useState<VerificationStatus>("idle");
 
-  const onVerify = async () => {
-    setVerificationStatus("verifying");
-
-    try {
-      const fullMessage = (await fetchMessage(
-        message.id,
-        message.internal
-      )) as SignedMessageWithProof;
-      const isValid = await verifyMessage(fullMessage);
-      setVerificationStatus(isValid ? "valid" : "invalid");
-    } catch (error) {
-      console.error("Verification failed:", error);
-      setVerificationStatus("error");
-    }
-  };
-
+  // Data
   const timestamp = new Date(message.timestamp);
-  const logoUrl = getLogoUrl(message.domain);
-  const shouldRedirectToDomain =
-    window.location.pathname !== `/${message.domain}`;
-  const shouldRedirectToMessage =
-    window.location.pathname !== `/messages/${message.id}`;
 
+  const isGroupPage = window.location.pathname === `/${provider.getSlug()}/${message.anonGroupId}`;
+  const isMessagePage = window.location.pathname === `/messages/${message.id}`;
+
+  // Handlers
   async function onLikeClick() {
     try {
       const newIsLiked = !isLiked;
+
       setIsLiked(newIsLiked);
       setLikeCount((prev: number) => (newIsLiked ? prev + 1 : prev - 1));
       setMessageLiked(message.id, newIsLiked);
+
       await toggleLike(message.id, newIsLiked);
     } catch (error) {
       setIsLiked(isLiked);
@@ -66,48 +53,65 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {
     }
   }
 
+  async function onVerifyClick() {
+    setVerificationStatus("verifying");
+
+    try {
+      const fullMessage = await fetchMessage(message.id, message.internal);
+      const isValid = await verifyMessage(fullMessage);
+
+      setVerificationStatus(isValid ? "valid" : "invalid");
+    } catch (error) {
+      console.error("Verification failed:", error);
+      setVerificationStatus("error");
+    }
+  }
+
+  // Render Helpers
   function renderLogo() {
     if (isInternal) {
       return null;
     }
 
-    if (shouldRedirectToDomain) {
+    const logoImg = (
+      <Image
+        src={anonGroup.logoUrl}
+        alt={anonGroup.title}
+        width={40}
+        height={40}
+      />
+    );
+
+    // Redirect to group page on logo click if not already on it
+    if (!isGroupPage) {
       return (
-        <Link href={`/${message.domain}`} className="message-card-header-logo">
-          <Image
-            src={logoUrl}
-            alt={`${message.domain} logo`}
-            width={40}
-            height={40}
-          />
+        <Link
+          href={`/${provider.getSlug()}/${message.anonGroupId}`}
+          className="message-card-header-logo"
+        >
+          {logoImg}
         </Link>
       );
     }
 
-    return (
-      <div className="message-card-header-logo">
-        <Image
-          src={logoUrl}
-          alt={`${message.domain} logo`}
-          className="message-card-header-logo"
-          width={40}
-          height={40}
-        />
-      </div>
-    );
+    return <div className="message-card-header-logo">{logoImg}</div>;
   }
 
   function renderSender() {
+    const timestampComponent = (
+      <span
+        className="message-card-header-timestamp"
+        title={timestamp.toLocaleString()}
+      >
+        {timeAgo.format(timestamp)}
+      </span>
+    );
+
     if (isInternal) {
       return (
         <div className="message-card-header-sender-name internal">
-          <span>{generateNameFromPubkey(message.pubkey || "")}</span>
-          <span
-            className="message-card-header-timestamp"
-            title={timestamp.toLocaleString()}
-          >
-            {timeAgo.format(timestamp)}
-          </span>
+          <span>{generateNameFromPubkey(message.ephemeralPubkey)}</span>
+          {timestampComponent}
         </div>
       );
     }
@@ -118,34 +122,56 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {
           <span>Someone from</span>
         </div>
         <div className="message-card-header-sender-name">
-          {shouldRedirectToDomain ? (
-            <Link href={`/${message.domain}`}>{message.domain}</Link>
+          {isGroupPage ? (
+            <span>{anonGroup.title}</span>
           ) : (
-            <span>{message.domain}</span>
+            <Link href={`/sn/${message.anonGroupId}`}>{anonGroup.title}</Link>
           )}
 
-          {shouldRedirectToMessage ? (
-            <Link href={`/messages/${message.id}`}>
-              <span
-                className="message-card-header-timestamp"
-                title={timestamp.toLocaleString()}
-              >
-                {timeAgo.format(timestamp)}
-              </span>
-            </Link>
+          {isMessagePage ? (
+            timestampComponent
           ) : (
-            <span
-              className="message-card-header-timestamp"
-              title={timestamp.toLocaleString()}
-            >
-              {timeAgo.format(timestamp)}
-            </span>
+            <Link href={`/messages/${message.id}`}>{timestampComponent}</Link>
           )}
         </div>
       </span>
     );
   }
 
+  function renderVerificationStatus() {
+    if (verificationStatus === "idle") {
+      return (
+        <span className="message-card-verify-button" onClick={onVerifyClick}>
+          Verify
+        </span>
+      );
+    }
+
+    return (
+      <span className={`message-card-verify-status ${verificationStatus}`}>
+        {verificationStatus === "verifying" && (
+          <span className="message-card-verify-icon spinner-icon small"></span>
+        )}
+        {verificationStatus === "valid" && (
+          <span className="message-card-verify-icon valid">
+            <IonIcon name="checkmark-outline" />
+          </span>
+        )}
+        {verificationStatus === "invalid" && (
+          <span className="message-card-verify-icon invalid">
+            <IonIcon name="close-outline" />
+          </span>
+        )}
+        {verificationStatus === "error" && (
+          <span className="message-card-verify-icon error">
+            <IonIcon name="alert-outline" />
+          </span>
+        )}
+      </span>
+    );
+  }
+
+  // Render
   return (
     <div className="message-card">
       <header className="message-card-header">
@@ -154,36 +180,7 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {
           {renderSender()}
         </div>
 
-        {verificationStatus === "idle" && (
-          <div>
-            <span className="message-card-verify-button" onClick={onVerify}>
-              {verificationStatus === "idle" && "Verify"}
-            </span>
-          </div>
-        )}
-
-        {verificationStatus !== "idle" && (
-          <span className={`message-card-verify-status ${verificationStatus}`}>
-            {verificationStatus === "verifying" && (
-              <span className="message-card-verify-icon spinner-icon small"></span>
-            )}
-            {verificationStatus === "valid" && (
-              <span className="message-card-verify-icon valid">
-                <IonIcon name="checkmark-outline" />
-              </span>
-            )}
-            {verificationStatus === "invalid" && (
-              <span className="message-card-verify-icon invalid">
-                <IonIcon name="close-outline" />
-              </span>
-            )}
-            {verificationStatus === "error" && (
-              <span className="message-card-verify-icon error">
-                <IonIcon name="alert-outline" />
-              </span>
-            )}
-          </span>
-        )}
+        {renderVerificationStatus()}
       </header>
 
       <main className="message-card-content">{message.text}</main>
@@ -192,7 +189,7 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {
         <div className="like-button-container">
           <button
             onClick={onLikeClick}
-            disabled={!getPubkeyString()}
+            disabled={!hasEphemeralKey()}
             className={`like-button ${isLiked ? "liked" : ""}`}
           >
             <IonIcon name={isLiked ? "heart" : "heart-outline"} />

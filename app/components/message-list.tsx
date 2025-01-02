@@ -1,63 +1,39 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { fetchMessages } from "../lib/utils";
-import MessageCard from "./message-card";
-import { SignedMessage, SignedMessageWithProof } from "../lib/types";
 import Link from "next/link";
+import { fetchMessages } from "../lib/api";
+import MessageCard from "./message-card";
+import { SignedMessageWithProof } from "../lib/types";
 import MessageForm from "./message-form";
 
 const MESSAGES_PER_PAGE = 30;
 const INITIAL_POLL_INTERVAL = 10000; // 10 seconds
 const MAX_POLL_INTERVAL = 100000; // 100 seconds
 
-const MessageList: React.FC<{
-  domain?: string;
+type MessageListProps = {
   isInternal?: boolean;
   showMessageForm?: boolean;
-}> = ({ domain, isInternal, showMessageForm }) => {
-  const [messages, setMessages] = useState<SignedMessage[]>([]);
+  groupId?: string;
+};
+
+const MessageList: React.FC<MessageListProps> = ({
+  isInternal,
+  showMessageForm,
+  groupId,
+}) => {
+  // State
+  const [messages, setMessages] = useState<SignedMessageWithProof[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState("");
   const [pollInterval, setPollInterval] = useState(INITIAL_POLL_INTERVAL);
 
+  // Refs
   const observer = useRef<IntersectionObserver | null>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
 
-  const loadMessages = useCallback(
-    async (beforeTimestamp: number | null = null) => {
-      if (isInternal && !domain) return;
-      setLoading(true);
-
-      try {
-        const fetchedMessages = await fetchMessages(
-          domain,
-          isInternal,
-          MESSAGES_PER_PAGE,
-          beforeTimestamp
-        );
-
-        const existingMessageIds: Record<string, boolean> = {};
-        messages.forEach((m) => {
-          existingMessageIds[m.id] = true;
-        });
-        const cleanedMessages = fetchedMessages.filter(
-          (m: SignedMessage) => !existingMessageIds[m.id]
-        );
-
-        setMessages((prevMessages) => [...prevMessages, ...cleanedMessages]);
-        setHasMore(fetchedMessages.length === MESSAGES_PER_PAGE);
-      } catch (error) {
-        setError((error as Error)?.message);
-      } finally {
-        setLoading(false);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [domain, isInternal]
-  );
-
+  // Ref to keep track of the last message element (to load more messages on scroll)
   const lastMessageElementRef = useCallback(
     (node: HTMLDivElement | null) => {
       if (loading) return;
@@ -73,21 +49,50 @@ const MessageList: React.FC<{
     [messages, loading, hasMore]
   );
 
-  function onNewMessageSubmit(signedMessage: SignedMessageWithProof) {
-    setMessages((prevMessages) => [signedMessage, ...prevMessages]);
-  }
+  // Cached helpers
+  const loadMessages = useCallback(
+    async (beforeTimestamp: number | null = null) => {
+      if (isInternal && !groupId) return;
+      setLoading(true);
+
+      try {
+        const fetchedMessages = await fetchMessages({
+          isInternal: !!isInternal,
+          limit: MESSAGES_PER_PAGE,
+          beforeTimestamp,
+          groupId,
+        });
+
+        const existingMessageIds: Record<string, boolean> = {};
+        messages.forEach((m) => {
+          existingMessageIds[m.id!] = true;
+        });
+        const cleanedMessages = fetchedMessages.filter(
+          (m: SignedMessageWithProof) => !existingMessageIds[m.id!]
+        );
+
+        setMessages((prevMessages) => [...prevMessages, ...cleanedMessages]);
+        setHasMore(fetchedMessages.length === MESSAGES_PER_PAGE);
+      } catch (error) {
+        setError((error as Error)?.message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [groupId, isInternal]
+  );
 
   const checkForNewMessages = useCallback(async () => {
-    if (isInternal && !domain) return;
+    if (isInternal && !groupId) return;
 
     try {
-      const newMessages = await fetchMessages(
-        domain,
-        isInternal,
-        MESSAGES_PER_PAGE,
-        null,
-        messages[0]?.timestamp
-      );
+      const newMessages = await fetchMessages({
+        groupId,
+        isInternal: !!isInternal,
+        limit: MESSAGES_PER_PAGE,
+        afterTimestamp: messages[0]?.timestamp,
+      });
 
       if (newMessages.length > 0) {
         setMessages((prevMessages) => [...newMessages, ...prevMessages]);
@@ -100,8 +105,9 @@ const MessageList: React.FC<{
     } catch (error) {
       console.error("Error checking for new messages:", error);
     }
-  }, [domain, isInternal, messages]);
+  }, [groupId, isInternal, messages]);
 
+  // Effects
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
 
@@ -124,6 +130,12 @@ const MessageList: React.FC<{
     loadMessages();
   }, [loadMessages]);
 
+  // Handlers
+  function onNewMessageSubmit(signedMessage: SignedMessageWithProof) {
+    setMessages((prevMessages) => [signedMessage, ...prevMessages]);
+  }
+
+  // Render helpers
   function renderLoading() {
     return (
       <div className="skeleton-loader">
@@ -141,18 +153,18 @@ const MessageList: React.FC<{
   }
 
   function renderNoMessages() {
-    if (!domain) return null;
+    if (!groupId) return null;
 
     return (
       <div className="article text-center">
         <p className="title">No messages yet</p>
         <p className="mb-05">
-          Are you a member of <span>{domain}</span>?
+          Are you a member of <span>{groupId}</span>?
         </p>
         {!isInternal ? (
           <p>
             Head over to the <Link href="/">homepage</Link> to send an anonymous
-            message by proving you are a member of <span>{domain}</span>!
+            message by proving you are a member of <span>{groupId}</span>!
           </p>
         ) : (
           <p>
@@ -172,25 +184,21 @@ const MessageList: React.FC<{
 
       <div className="message-list" ref={messageListRef}>
         {messages.map((message, index) => (
-        <div
-          key={message.id || index}
-          ref={index === messages.length - 1 ? lastMessageElementRef : null}
-        >
-          <MessageCard
-            message={message}
-            isInternal={isInternal}
-          />
-        </div>
-      ))}
-      {loading && renderLoading()}
+          <div
+            key={message.id || index}
+            ref={index === messages.length - 1 ? lastMessageElementRef : null}
+          >
+            <MessageCard
+              message={message as SignedMessageWithProof}
+              isInternal={isInternal}
+            />
+          </div>
+        ))}
+        {loading && renderLoading()}
         {!loading && !error && messages.length === 0 && renderNoMessages()}
       </div>
 
-      {error && (
-        <div className="error-message">
-          {error}
-        </div>
-      )}
+      {error && <div className="error-message">{error}</div>}
     </>
   );
 };

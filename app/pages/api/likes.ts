@@ -42,13 +42,13 @@ async function postLike(req: NextApiRequest, res: NextApiResponse) {
     }
 
     // Validate pubkey
-    const { data: pubkeyData } = await supabase
-      .from("pubkeys")
+    const { data: membershipData } = await supabase
+      .from("memberships")
       .select()
       .eq("pubkey", pubkey)
       .single();
 
-    if (!pubkeyData || !pubkeyData.domain) {
+    if (!membershipData || !membershipData.pubkey) {
       return res.status(400).json({ error: "Invalid pubkey" });
     }
 
@@ -60,15 +60,12 @@ async function postLike(req: NextApiRequest, res: NextApiResponse) {
       .eq("pubkey", pubkey)
       .single();
 
-    console.log("existingLike", like, existingLike);
-
     if (like && !existingLike) {
       // Like
       await Promise.all([
         supabase.from("likes").insert({
           message_id: messageId,
           pubkey,
-          domain: pubkeyData.domain,
         }),
         supabase.rpc("increment_likes_count", {
           message_id: messageId,

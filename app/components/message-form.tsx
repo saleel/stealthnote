@@ -1,53 +1,61 @@
 import React, { useState } from "react";
-import {
-  submitMessage,
-  generateKeyPairAndRegister,
-  generateNameFromPubkey,
-  getPubkeyString,
-} from "../lib/utils";
 import dynamic from "next/dynamic";
-import SignInButton from "./siwg";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import { SignedMessageWithProof } from "../lib/types";
+import { Message, SignedMessageWithProof } from "../lib/types";
+import { getEphemeralPubkey } from "../lib/key";
+import { generateKeyPairAndRegister, postMessage } from "../lib/core";
+import { generateNameFromPubkey } from "../lib/utils";
+import { Providers } from "../lib/providers";
+import SignInButton from "./siwg";
 
-const MessageForm: React.FC<{
+type MessageFormProps = {
   isInternal?: boolean;
   onSubmit: (message: SignedMessageWithProof) => void;
-}> = ({ isInternal, onSubmit }) => {
-  const [currentDomain, setCurrentDomain] = useLocalStorage<string | null>(
-    "currentDomain",
+};
+
+const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
+  const [currentGroupId, setCurrentGroupId] = useLocalStorage<string | null>(
+    "currentGroupId",
     null
   );
-  const isRegistered = !!currentDomain;
-  const senderName = isInternal
-    ? generateNameFromPubkey(getPubkeyString() || "")
-    : `Someone from ${currentDomain}`;
-
-  const [message, setMessage] = useState("");
-  const [isPosting, setIsPosting] = useState(false);
-  const [isSigningIn, setIsSigningIn] = useState(false);
-  const [status, setStatus] = useState(
-    isRegistered
-      ? `Posting as "${senderName}"`
-      : `Sign in with your Google work account to anonymously post as "Someone from your company"`
+  const [currentProvider, setCurrentProvider] = useLocalStorage<string | null>(
+    "currentProvider",
+    null
   );
 
-  async function handleSignIn() {
+  const provider = currentProvider ? Providers[currentProvider] : null;
+  const anonGroup =
+    provider && currentGroupId ? provider.getAnonGroup(currentGroupId) : null;
+
+  const isRegistered = !!currentGroupId;
+  const senderName = isInternal
+    ? generateNameFromPubkey(getEphemeralPubkey() as string)
+    : `Someone from ${anonGroup?.title}`;
+
+  // State
+  const [message, setMessage] = useState("");
+  const [isPosting, setIsPosting] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [status, setStatus] = useState(
+    !isRegistered
+      ? `Sign in with your Google work account to anonymously post as "Someone from your company"`
+      : ""
+  );
+
+  // Handlers
+  async function handleSignIn(providerName: string) {
     try {
-      setIsSigningIn(true);
-      const { domain } = await generateKeyPairAndRegister(setStatus);
+      setIsRegistering(true);
 
-      setCurrentDomain(domain);
+      const { anonGroup } = await generateKeyPairAndRegister(providerName);
 
-      const newName = isInternal
-        ? generateNameFromPubkey(getPubkeyString() || "")
-        : `Someone from ${domain}`;
-      setStatus(`Posting as "${newName}"`);
+      setCurrentGroupId(anonGroup.id);
+      setCurrentProvider(providerName);
     } catch (error) {
       console.error("Error:", error);
       setStatus(`Error: ${(error as Error).message}`);
     } finally {
-      setIsSigningIn(false);
+      setIsRegistering(false);
     }
   }
 
@@ -58,13 +66,20 @@ const MessageForm: React.FC<{
     setIsPosting(true);
 
     try {
-      const signedMessage = (await submitMessage(
-        message,
-        currentDomain as string,
-        !!isInternal
-      )) as SignedMessageWithProof;
+      const messageObj: Message = {
+        id: crypto.randomUUID().split("-").slice(0, 2).join(""),
+        timestamp: new Date().getTime(),
+        text: message,
+        internal: !!isInternal,
+        likes: 0,
+        anonGroupId: currentGroupId as string,
+        anonGroupProvider: currentProvider as string,
+      };
+
+      const signedMessage = await postMessage(messageObj);
+
       setMessage("");
-      onSubmit(signedMessage);
+      onSubmit(signedMessage as SignedMessageWithProof);
     } catch (err) {
       console.error(err);
       setStatus(`Error: ${(err as Error).message}`);
@@ -73,7 +88,7 @@ const MessageForm: React.FC<{
     }
   }
 
-  const isTextAreaDisabled = isSigningIn || isPosting || !isRegistered;
+  const isTextAreaDisabled = isRegistering || isPosting || !isRegistered;
 
   return (
     <div className="message-form">
@@ -83,7 +98,7 @@ const MessageForm: React.FC<{
           onChange={(e) => setMessage(e.target.value)}
           placeholder={
             isRegistered
-              ? `What is happening at ${currentDomain}?`
+              ? `What is happening at ${currentGroupId}?`
               : `What is happening at your company?`
           }
           maxLength={280}
@@ -98,7 +113,10 @@ const MessageForm: React.FC<{
 
       <div className="message-form-footer">
         <div style={{ display: "flex", alignItems: "center" }}>
-          <span className="message-form-footer-message">{status}</span>
+          <span className="message-form-footer-message">
+            {status ? status : `Posting as "${senderName}"`}
+          </span>
+
           {isRegistered && (
             <button
               className="message-form-refresh-button"
@@ -106,11 +124,11 @@ const MessageForm: React.FC<{
                 "Multiple messages sent by one identity can be linked." +
                 " Refresh your identity by generating a new proof."
               }
-              onClick={handleSignIn}
-              disabled={isSigningIn}
+              onClick={() => handleSignIn("google-oauth")}
+              disabled={isRegistering}
               tabIndex={-1}
             >
-              {isSigningIn ? (
+              {isRegistering ? (
                 <span className="spinner-icon" />
               ) : (
                 <span className="message-form-refresh-icon">⟳</span>
@@ -124,7 +142,7 @@ const MessageForm: React.FC<{
             <button
               className="message-form-post-button"
               onClick={onSubmitMessage}
-              disabled={isSigningIn || isPosting || message.length === 0}
+              disabled={isRegistering || isPosting || message.length === 0}
             >
               {isPosting ? <span className="spinner-icon small" /> : "Post"}
             </button>
@@ -132,7 +150,10 @@ const MessageForm: React.FC<{
         )}
 
         {!isRegistered && (
-          <SignInButton onClick={handleSignIn} isLoading={isSigningIn} />
+          <SignInButton
+            onClick={() => handleSignIn("google-oauth")}
+            isLoading={isRegistering}
+          />
         )}
       </div>
     </div>

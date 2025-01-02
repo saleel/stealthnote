@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
-import { verifyMessageSignature } from "../../../lib/utils";
+import { verifyMessageSignature } from "../../../lib/key";
 import { SignedMessage } from "../../../lib/types";
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -31,15 +31,26 @@ export async function postMessage(
   res: NextApiResponse
 ) {
   try {
-    const signedMessage = (await request.body) as SignedMessage;
-    const { id, text, timestamp, domain, signature, pubkey, internal } = signedMessage;
+    const signedMessage = (await request.body);
+
+    const {
+      id,
+      anonGroupId,
+      anonGroupProvider,
+      text,
+      timestamp,
+      internal,
+      signature,
+      ephemeralPubkey,
+    } = signedMessage;
 
     // Verify pubkey is registered
     const { data, error } = await supabase
-      .from("pubkeys")
+      .from("memberships")
       .select("*")
-      .eq("pubkey", pubkey)
-      .eq("domain", domain)
+      .eq("pubkey", ephemeralPubkey)
+      .eq("group_id", anonGroupId)
+      .eq("provider", anonGroupProvider)
       .single();
 
     if (error) {
@@ -55,15 +66,15 @@ export async function postMessage(
       throw new Error("Message signature check failed");
     }
 
-    console.log("Message is valid");
     const { error: insertError } = await supabase.from("messages").insert([
       {
         id,
+        group_id: anonGroupId,
+        group_provider: anonGroupProvider,
         text,
         timestamp: new Date(timestamp).toISOString(),
-        domain,
         signature,
-        pubkey,
+        pubkey: ephemeralPubkey,
         internal,
       },
     ]);
@@ -84,49 +95,69 @@ export async function fetchMessages(
   request: NextApiRequest,
   res: NextApiResponse
 ) {
-  const domain = request.query?.domain as string;
-  const isInternal = request.query?.isInternal === 'true';
+  const groupId = request.query?.groupId as string;
+  const isInternal = request.query?.isInternal === "true";
   const limit = parseInt(request.query?.limit as string) || 50;
   const afterTimestamp = request.query?.afterTimestamp as string;
   const beforeTimestamp = request.query?.beforeTimestamp as string;
 
   let query = supabase
     .from("messages")
-    .select("id, text, timestamp, domain, signature, pubkey, internal, likes")
-    .eq("internal", isInternal)
+    .select(
+      "id, text, timestamp, signature, pubkey, internal, likes, group_id, group_provider"
+    )
     .order("timestamp", { ascending: false })
     .limit(limit);
 
-  if (domain) {
-    query = query.eq("domain", domain);
+  query = query.eq("internal", !!isInternal);
+
+  if (groupId) {
+    query = query.eq("group_id", groupId);
   }
 
   if (afterTimestamp) {
-    query = query.gt("timestamp", new Date(Number(afterTimestamp)).toISOString());
+    query = query.gt(
+      "timestamp",
+      new Date(Number(afterTimestamp)).toISOString()
+    );
   }
 
   if (beforeTimestamp) {
-    query = query.lt("timestamp", new Date(Number(beforeTimestamp)).toISOString());
+    query = query.lt(
+      "timestamp",
+      new Date(Number(beforeTimestamp)).toISOString()
+    );
   }
 
+  // Internal messages require a valid pubkey from the same group (as Authorization header)
   if (isInternal) {
-    const authHeader = request.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      res.status(401).json({ error: "Authorization required for internal messages" });
+    if (!groupId) {
+      res
+        .status(400)
+        .json({ error: "Group ID is required for internal messages" });
       res.end();
       return;
     }
 
-    const pubkey = authHeader.split(' ')[1];
-    const { data: pubkeyData, error: pubkeyError } = await supabase
-      .from("pubkeys")
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      res
+        .status(401)
+        .json({ error: "Authorization required for internal messages" });
+      res.end();
+      return;
+    }
+
+    const pubkey = authHeader.split(" ")[1];
+    const { data: membershipData, error: membershipError } = await supabase
+      .from("memberships")
       .select("*")
       .eq("pubkey", pubkey)
-      .eq("domain", domain)
+      .eq("group_id", groupId)
       .single();
 
-    if (pubkeyError || !pubkeyData) {
-      res.status(401).json({ error: "Invalid public key for this domain" });
+    if (membershipError || !membershipData) {
+      res.status(401).json({ error: "Invalid public key for this group" });
       res.end();
       return;
     }
@@ -140,6 +171,18 @@ export async function fetchMessages(
     return;
   }
 
-  res.json(data);
+  const messages: SignedMessage[] = data.map((message) => ({
+    id: message.id,
+    anonGroupId: message.group_id,
+    anonGroupProvider: message.group_provider,
+    text: message.text,
+    timestamp: message.timestamp,
+    signature: message.signature,
+    ephemeralPubkey: message.pubkey,
+    internal: message.internal,
+    likes: message.likes,
+  }));
+
+  res.json(messages);
   res.end();
 }

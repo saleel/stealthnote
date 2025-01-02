@@ -5,23 +5,25 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import IonIcon from "@reacticons/ionicons";
-import { isDarkMode, setDarkMode } from "../lib/utils";
+import { LocalStorageKeys } from "../lib/types";
+import { Providers } from "../lib/providers";
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentDomain] = useLocalStorage<string | null>("currentDomain", null);
-
-  const [isDark, setIsDark] = React.useState(isDarkMode());
+  const [isDark, setIsDark] = useLocalStorage<boolean>(
+    LocalStorageKeys.DarkMode,
+    false
+  );
+  const [currentGroupId] = useLocalStorage<string | null>("currentGroupId", null);
+  const [currentProvider] = useLocalStorage<string | null>("currentProvider", null);
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  let slug = null;
+  if (currentProvider && currentGroupId) {
+    const provider = Providers[currentProvider];
+    slug = provider.getSlug();
+  }
 
-  const toggleDarkMode = () => {
-    setIsDark(!isDark);
-    setDarkMode(!isDark);
-  };
-
+  // Set dark mode
   React.useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
@@ -31,7 +33,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <div className="mobile-header">
         <button
           className={`sidebar-toggle ${isSidebarOpen ? "open" : ""}`}
-          onClick={toggleSidebar}
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         >
           ☰
         </button>
@@ -48,17 +50,21 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </div>
         <nav className="sidebar-nav">
           <div className="sidebar-nav-header">
-            <Link onClick={toggleSidebar} href="/" className="sidebar-nav-item">
+            <Link
+              onClick={() => setIsSidebarOpen(false)}
+              href="/"
+              className="sidebar-nav-item"
+            >
               Home
             </Link>
 
-            {currentDomain && (
+            {slug && (
               <Link
-                onClick={toggleSidebar}
-                href={`/internal/${currentDomain}`}
+                onClick={() => setIsSidebarOpen(false)}
+                href={`/${slug}/${currentGroupId}/internal`}
                 className="sidebar-nav-item"
               >
-                {currentDomain} Internal
+                {currentGroupId} Internal
               </Link>
             )}
           </div>
@@ -66,19 +72,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           <div className="sidebar-nav-footer">
             <button
               onClick={() => {
-                toggleSidebar();
-                toggleDarkMode();
+                setIsDark(!isDark);
+                setIsSidebarOpen(false);
               }}
               className="sidebar-nav-footer-item"
             >
-              {isDark ? (
-                <IonIcon name="moon" />
-              ) : (
-                <IonIcon name="sunny" />
-              )}
+              {isDark ? <IonIcon name="moon" /> : <IonIcon name="sunny" />}
             </button>
             <Link
-              onClick={toggleSidebar}
+              onClick={() => setIsSidebarOpen(false)}
               href="https://saleel.xyz/blog/stealthnote"
               target="_blank"
               rel="noopener noreferrer"
@@ -88,7 +90,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <IonIcon name="reader" />
             </Link>
             <Link
-              onClick={toggleSidebar}
+              onClick={() => setIsSidebarOpen(false)}
               className="sidebar-nav-footer-item"
               target="_blank"
               title="Source Code"
@@ -98,7 +100,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <IonIcon name="logo-github" />
             </Link>
             <Link
-              onClick={toggleSidebar}
+              onClick={() => setIsSidebarOpen(false)}
               href="https://x.com/_saleel"
               target="_blank"
               rel="noopener noreferrer"

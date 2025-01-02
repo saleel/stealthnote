@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { generateCodeVerifier, generateCodeChallenge } from '../utils/pkce';
 
 export default function SlackAuth() {
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +22,7 @@ export default function SlackAuth() {
       authUrl.searchParams.append('scope', SLACK_SCOPE);
       authUrl.searchParams.append('response_type', 'code');
       authUrl.searchParams.append('state', state);
-      authUrl.searchParams.append('nonce', crypto.randomUUID());
+      authUrl.searchParams.append('nonce', crypto.randomUUID()); // Required for OpenID Connect
       
       // Redirect to Slack authorization page
       window.location.href = authUrl.toString();
