@@ -17,6 +17,13 @@ export const JWT_CIRCUIT_HELPER = {
     }
 
     const inputs = await generateCircuitInputs(idToken, jwtPubkey);
+    console.log({
+      ...inputs,
+      partial_data: inputs.partial_data.storage.map((s) => parseInt(s)),
+      partial_hash: inputs.partial_hash.map((s) => parseInt(s)),
+      domain: inputs.domain.storage.map((s) => parseInt(s)),
+      nonce: inputs.nonce.storage.map((s) => parseInt(s)),
+    });
 
     const { Noir, UltraHonkBackend } = await initProver();
     const circuitArtifact = await import(`../../assets/jwt-0.2.0/circuit.json`);

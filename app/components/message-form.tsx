@@ -150,10 +150,18 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
         )}
 
         {!isRegistered && (
-          <SignInButton
-            onClick={() => handleSignIn("google-oauth")}
-            isLoading={isRegistering}
-          />
+          <>
+            <SignInButton
+              onClick={() => handleSignIn("google-oauth")}
+              isLoading={isRegistering}
+            />
+            <button
+              onClick={() => handleSignIn("slack-oauth")}
+              // isLoading={isRegistering}
+            >
+              Sign in with Slack
+            </button>
+          </>
         )}
       </div>
     </div>
