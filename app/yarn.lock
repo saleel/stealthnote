@@ -2,15 +2,16 @@
 # yarn lockfile v1
 
 
-"@aztec/bb.js@^0.61.0":
-  version "0.61.0"
-  resolved "https://registry.yarnpkg.com/@aztec/bb.js/-/bb.js-0.61.0.tgz#b6ff2bcd3a6a071959659fbab64170381c026917"
-  integrity sha512-F6Ps1RsxQj7KXo2EXMdkVJtvTnI+LuOfp1vs4pk9Kg/0Xet94Z7qy8XamgqstinCT+pe7FFCDWSvX+hJdupa0w==
+"@aztec/bb.js@0.66.0":
+  version "0.66.0"
+  resolved "https://registry.yarnpkg.com/@aztec/bb.js/-/bb.js-0.66.0.tgz#011a2f6e7ab9f01c71d8e1cfadde34dcfd21b128"
+  integrity sha512-x6VXq2/9dI12HsCFe1nzTXISHkjJ2VxtT+r+OCT5rmNEreLiaSc5g0ll1hRC3wMXSCexLRmlrYnhkgWJWD3Zzw==
   dependencies:
     comlink "^4.4.1"
     commander "^10.0.1"
     debug "^4.3.4"
     fflate "^0.8.0"
+    pako "^2.1.0"
     tslib "^2.4.0"
 
 "@eslint-community/eslint-utils@^4.2.0", "@eslint-community/eslint-utils@^4.4.0":
@@ -549,31 +550,31 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@noir-lang/acvm_js@0.54.0":
-  version "0.54.0"
-  resolved "https://registry.yarnpkg.com/@noir-lang/acvm_js/-/acvm_js-0.54.0.tgz#0d209e56ed062c92ba540118ef50d66e094acba1"
-  integrity sha512-yUMHXPQ2tlMGhFfAuvkt6HgQwUjlGrpvLMIp4gkwu0/0z1ueoKIOgEsqMcmbjYR+16iEYzv9RVKmNmye1yjr0g==
+"@noir-lang/acvm_js@1.0.0-beta.1":
+  version "1.0.0-beta.1"
+  resolved "https://registry.yarnpkg.com/@noir-lang/acvm_js/-/acvm_js-1.0.0-beta.1.tgz#d10cda3232bdbc307266ab6efdcc51a9b700679b"
+  integrity sha512-4lWC543pScZ+NG8hqB0xOLfdgqCQJaclrdQ8GVIj7jwZ8mS982XV97IKfglqgE7Ovcik2j8QRHZq5FaVR/Bn9w==
 
-"@noir-lang/noir_js@0.38.0":
-  version "0.38.0"
-  resolved "https://registry.yarnpkg.com/@noir-lang/noir_js/-/noir_js-0.38.0.tgz#3940e34d2035e2369943caba272df878acf842af"
-  integrity sha512-9n1WeC9uAwCEkpSirwV+FtkZzCqO5vG8UFbkv1I1QValFWi+GlVKmlbEGTsCBA1HuJqPzOK0zdhagVi7K108vw==
+"@noir-lang/noir_js@^1.0.0-beta.1":
+  version "1.0.0-beta.1"
+  resolved "https://registry.yarnpkg.com/@noir-lang/noir_js/-/noir_js-1.0.0-beta.1.tgz#ae115dc07da38e8c8900d4a3c952642f5ec49811"
+  integrity sha512-QiRHYKkuHDPWdEhuU3SCUAuOZm0KR766S+Pd0nKpRfAcX1p5MDEDS9ij8me3CTAIhVb/VHNx25zUE/i4zs1sDg==
   dependencies:
-    "@noir-lang/acvm_js" "0.54.0"
-    "@noir-lang/noirc_abi" "0.38.0"
-    "@noir-lang/types" "0.38.0"
+    "@noir-lang/acvm_js" "1.0.0-beta.1"
+    "@noir-lang/noirc_abi" "1.0.0-beta.1"
+    "@noir-lang/types" "1.0.0-beta.1"
 
-"@noir-lang/noirc_abi@0.38.0":
-  version "0.38.0"
-  resolved "https://registry.yarnpkg.com/@noir-lang/noirc_abi/-/noirc_abi-0.38.0.tgz#66ac2b8a34d829d85c087e2b0dd58142a037a41d"
-  integrity sha512-LIE9kha5lv+VW8lbivh2nKyUD2UX0hHPCxmvRS7L/bNfyw6fuIhCs/4/n05Qli+1Ab7srHB+TcG1QIqaC9XO8g==
+"@noir-lang/noirc_abi@1.0.0-beta.1":
+  version "1.0.0-beta.1"
+  resolved "https://registry.yarnpkg.com/@noir-lang/noirc_abi/-/noirc_abi-1.0.0-beta.1.tgz#8ecd9a9408aafba275b889b845cba77386742148"
+  integrity sha512-Me2LrH57YZl47UvHnzPd02pw8H9snJLob6dv6clbFB7ac6Y8jZvH/YhNGOejgj1fudr/J/V6o+YZaf4oLpxtMg==
   dependencies:
-    "@noir-lang/types" "0.38.0"
+    "@noir-lang/types" "1.0.0-beta.1"
 
-"@noir-lang/types@0.38.0":
-  version "0.38.0"
-  resolved "https://registry.yarnpkg.com/@noir-lang/types/-/types-0.38.0.tgz#3baec5955094c62b7fb1ba59e57843e396615abf"
-  integrity sha512-mP2oQQ7iQ8W8ned4kG+oYa0Vg/+arrPzD38Mc1WG1y1uHHb+pXsqUZAer9dqxlv2O3YPyWM+dUNg2zLiY6Wa6w==
+"@noir-lang/types@1.0.0-beta.1":
+  version "1.0.0-beta.1"
+  resolved "https://registry.yarnpkg.com/@noir-lang/types/-/types-1.0.0-beta.1.tgz#4fe9062a8209c9e0987cc41c9506cc4423004b8f"
+  integrity sha512-rcisXDdKNLA7mh0Ll9j3MGG5BP3W52K3Owr0+opJhs+4jHoAx1Gb5vGNG9s6nYb2i21VZMgOzKVvBd25ck0b9w==
 
 "@nolyfill/is-core-module@1.0.39":
   version "1.0.39"

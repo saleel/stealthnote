@@ -110,6 +110,8 @@ async function generateCircuitInputs(idToken: string, jwtPubkey: bigint) {
   const payload = JSON.parse(atob(payloadB64));
   const domain = payload.hd;
 
+  console.log(idToken);
+
   if (domain.length > 50) {
     throw new Error(
       "Only domain with length less than 50 is supported now. Please create an issue in Github."
@@ -171,13 +173,6 @@ async function generateCircuitInputs(idToken: string, jwtPubkey: bigint) {
   const bodyRemainingPadded = new Uint8Array(640);
   bodyRemainingPadded.set(bodyRemaining);
 
-  // B64 encoding happens serially, so we can decode a portion as long as the indices of the slice is a multiple of 4
-  // Since we only pass the data after partial SHA to the circuit, the B64 slice might not be parse-able
-  // This is because the first index of partial_data might not be a 4th multiple of original payload B64
-  // So we also pass in an offset after which the data in partial_data is a 4th multiple of original payload B64
-  // An attacker giving wrong index will fail as incorrectly decoded bytes wont contain "hd" or "nonce"
-  const payloadLengthInRemainingData = shaCutoffIndex - headerB64.length - 1; // -1 for the separator '.'
-  const b64Offset = 4 - (payloadLengthInRemainingData % 4);
 
   // Pad domain to 50 bytes
   const domainBytes = new Uint8Array(50);
@@ -206,7 +201,6 @@ async function generateCircuitInputs(idToken: string, jwtPubkey: bigint) {
     },
     partial_hash: Array.from(u8ToU32(precomputedSha)).map((s) => s.toString()),
     full_data_length: signedData.length,
-    b64_offset: b64Offset,
     pubkey_modulus_limbs: splitBigIntToChunks(jwtPubkey, 120, 18).map((s) =>
       s.toString()
     ),
@@ -227,6 +221,8 @@ async function generateCircuitInputs(idToken: string, jwtPubkey: bigint) {
       len: payload.nonce.length,
     },
   };
+console.log(payload);
+  console.log(input);
 
   return input;
 }
