@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import { Message, SignedMessageWithProof } from "../lib/types";
-import { getEphemeralPubkey } from "../lib/key";
+import { LocalStorageKeys, Message, SignedMessageWithProof } from "../lib/types";
+import { getEphemeralPubkey } from "../lib/ephemeral-key";
 import { generateKeyPairAndRegister, postMessage } from "../lib/core";
 import { generateNameFromPubkey } from "../lib/utils";
 import { Providers } from "../lib/providers";
@@ -19,7 +19,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
     null
   );
   const [currentProvider, setCurrentProvider] = useLocalStorage<string | null>(
-    "currentProvider",
+    LocalStorageKeys.CurrentProvider,
     null
   );
 
@@ -29,7 +29,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
 
   const isRegistered = !!currentGroupId;
   const senderName = isInternal
-    ? generateNameFromPubkey(getEphemeralPubkey() as string)
+    ? generateNameFromPubkey(getEphemeralPubkey()?.toString() ?? "")
     : `Someone from ${anonGroup?.title}`;
 
   // State
@@ -51,6 +51,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
 
       setCurrentGroupId(anonGroup.id);
       setCurrentProvider(providerName);
+      setStatus("");
     } catch (error) {
       console.error("Error:", error);
       setStatus(`Error: ${(error as Error).message}`);
@@ -68,7 +69,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
     try {
       const messageObj: Message = {
         id: crypto.randomUUID().split("-").slice(0, 2).join(""),
-        timestamp: new Date().getTime(),
+        timestamp: new Date(),
         text: message,
         internal: !!isInternal,
         likes: 0,
@@ -155,12 +156,11 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
               onClick={() => handleSignIn("google-oauth")}
               isLoading={isRegistering}
             />
-            <button
+            {/* <button
               onClick={() => handleSignIn("slack-oauth")}
-              // isLoading={isRegistering}
             >
               Sign in with Slack
-            </button>
+            </button> */}
           </>
         )}
       </div>

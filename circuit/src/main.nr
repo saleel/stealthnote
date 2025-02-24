@@ -1,9 +1,10 @@
-use dep::jwt::JWT;
+use jwt::JWT;
+use std::hash::poseidon2::Poseidon2;
 
-global MAX_PARTIAL_DATA_LENGTH: u32 = 640; // Data after partial SHA
-global MAX_DOMAIN_LENGTH: u32 = 50;
-global MAX_EMAIL_LENGTH: u32 = 100;
-global NONCE_LENGTH: u32 = 32;
+global MAX_PARTIAL_DATA_LENGTH: u32 = 640; // signed data length after partial SHA
+global MAX_DOMAIN_LENGTH: u32 = 64;
+global MAX_EMAIL_LENGTH: u32 = 128;
+global NONCE_LENGTH: u32 = 77;
 
 /**
  * @brief Verify JWT signature (RSA/SHA256 only) and validate hd and nonce fields
@@ -27,46 +28,79 @@ fn main(
     partial_hash: [u32; 8],
     full_data_length: u32,
     base64_decode_offset: u32,
-    pubkey_modulus_limbs: pub [Field; 18],
-    redc_params_limbs: [Field; 18],
-    signature_limbs: [Field; 18],
-) -> pub (BoundedVec<u8, MAX_DOMAIN_LENGTH>, BoundedVec<u8, NONCE_LENGTH>) {
+    jwt_pubkey_modulus_limbs: pub [Field; 18],
+    jwt_pubkey_redc_params_limbs: [Field; 18],
+    jwt_signature_limbs: [Field; 18],
+    domain: pub BoundedVec<u8, MAX_DOMAIN_LENGTH>,
+    ephemeral_pubkey: pub Field,
+    ephemeral_pubkey_salt: Field,
+    ephemeral_pubkey_expiry: pub u32,
+) {
+    // Init JWT struct and verify signature
     let jwt = JWT::init_with_partial_hash(
         partial_data,
         partial_hash,
         full_data_length,
         base64_decode_offset,
-        pubkey_modulus_limbs,
-        redc_params_limbs,
-        signature_limbs,
+        jwt_pubkey_modulus_limbs,
+        jwt_pubkey_redc_params_limbs,
+        jwt_signature_limbs,
     );
-
     jwt.verify();
 
-    // Assert email_verified claims
-    jwt.assert_claim_bool::<300, 14>("email_verified".as_bytes(), true);
-
     // Get nonce claim
-    let nonce: BoundedVec<u8, NONCE_LENGTH> =
-        jwt.get_claim_string::<300, 5, NONCE_LENGTH>("nonce".as_bytes());
+    let nonce: BoundedVec<u8, NONCE_LENGTH> = jwt.get_claim_string("nonce".as_bytes());
+    let nonce_field: Field = decimal_string_to_field(nonce.storage());
+
+    // Verify nonce is the hash(ephemeral_pubkey, ephemeral_pubkey_salt, ephemeral_pubkey_expiry)
+    let ephemeral_pubkey_hash = Poseidon2::hash(
+        [ephemeral_pubkey, ephemeral_pubkey_salt, ephemeral_pubkey_expiry as Field],
+        3,
+    );
+
+    assert(nonce_field == ephemeral_pubkey_hash, "invalid nonce");
+
+    // Get jwt expiration claim
+    // let exp = jwt.get_claim_number("exp".as_bytes());
+
+    // Assert JWT expiration is greater than ephemeral_pubkey_expiry
+    // assert(exp > ephemeral_pubkey_expiry, "JWT expired");
+
+    // Assert email_verified claim
+    jwt.assert_claim_bool("email_verified".as_bytes(), true);
 
     // Get email claim
-    let email = jwt.get_claim_string::<420, 5, MAX_EMAIL_LENGTH>("email".as_bytes());
+    let email: BoundedVec<u8, MAX_EMAIL_LENGTH> = jwt.get_claim_string("email".as_bytes());
 
-    // Get domain from email claim - extract domain unconstrained and constrain afterwards
-    let (domain, domain_start_index) = unsafe { get_domain_from_email(email) };
+    // Get domain start_index from email claim - unconstrained, but we verify the domain bytes below
+    let domain_start_index = unsafe { get_domain_start_index_in_email(email) };
 
-    assert(email.storage()[domain_start_index - 1] == 64, "char before domain is not@");
+    // Verify domain passed is present in the email claim after the @
+    assert(email.storage()[domain_start_index - 1] == 64, "char before domain is not '@'");
     for i in 0..MAX_DOMAIN_LENGTH {
         assert(email.storage()[domain_start_index + i] == domain.storage()[i], "invalid domain");
     }
-
-    (domain, nonce)
 }
 
-unconstrained fn get_domain_from_email(
-    email: BoundedVec<u8, MAX_EMAIL_LENGTH>,
-) -> (BoundedVec<u8, MAX_DOMAIN_LENGTH>, u32) {
+fn decimal_string_to_field<let LEN: u32>(decimal_bytes: [u8; LEN]) -> Field {
+    assert(LEN <= 77);
+
+    let mut field: Field = 0;
+    let mut multiplier: Field = 1;
+
+    for i in 0..LEN {
+        let ascii_char = decimal_bytes[LEN - i - 1];
+        if ascii_char >= 48 & ascii_char <= 57 {
+            let digit = ascii_char as Field - 48;
+            field += digit * multiplier;
+            multiplier *= 10;
+        }
+    }
+
+    field
+}
+
+unconstrained fn get_domain_start_index_in_email(email: BoundedVec<u8, MAX_EMAIL_LENGTH>) -> u32 {
     let mut domain_start_index = 0;
     for i in 0..MAX_EMAIL_LENGTH {
         if email.storage()[i] == ("@".as_bytes())[0] {
@@ -75,14 +109,5 @@ unconstrained fn get_domain_from_email(
         }
     }
 
-    let mut domain = BoundedVec::new();
-    for i in 0..MAX_DOMAIN_LENGTH {
-        let c = email.storage()[domain_start_index + i];
-        if c == 0 {
-            break;
-        }
-        domain.push(c);
-    }
-
-    (domain, domain_start_index)
+    domain_start_index
 }

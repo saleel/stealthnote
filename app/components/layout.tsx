@@ -13,8 +13,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     LocalStorageKeys.DarkMode,
     false
   );
-  const [currentGroupId] = useLocalStorage<string | null>("currentGroupId", null);
-  const [currentProvider] = useLocalStorage<string | null>("currentProvider", null);
+  const [currentGroupId] = useLocalStorage<string | null>(
+    LocalStorageKeys.CurrentGroupId,
+    null
+  );
+  const [currentProvider] = useLocalStorage<string | null>(
+    LocalStorageKeys.CurrentProvider,
+    null
+  );
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
   let slug = null;

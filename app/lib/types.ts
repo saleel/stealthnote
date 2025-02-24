@@ -12,6 +12,18 @@ export interface AnonGroup {
 }
 
 /**
+ * Ephemeral key pair generated and stored in the browser's local storage
+ * This key is used to sign messages.
+ */
+export interface EphemeralKey {
+  privateKey: bigint;
+  publicKey: bigint;
+  salt: bigint;
+  expiry: Date;
+  ephemeralPubkeyHash: bigint;
+}
+
+/**
  * Provider interface for generating and verifying ZK proofs of AnonGroup membership
  * Example: Google, Slack (for "people in a company")
  */
@@ -24,10 +36,10 @@ export interface AnonGroupProvider {
 
   /**
    * Generate a ZK proof that the current user is a member of an AnonGroup
-   * @param ephemeralPubkey - Pubkey modulus of a ephemeral keypair that the user will use to sign messages later
+   * @param ephemeralPubkeyHash - Hash of the ephemeral pubkey, expiry and salt
    * @returns Returns the AnonGroup and membership proof, along with additional args that may be needed for verification
    */
-  generateProof(ephemeralPubkey: string): Promise<{
+  generateProof(ephemeralKey: EphemeralKey): Promise<{
     proof: Uint8Array;
     anonGroup: AnonGroup;
     proofArgs: object;
@@ -43,8 +55,9 @@ export interface AnonGroupProvider {
    */
   verifyProof(
     proof: Uint8Array,
-    ephemeralPubkey: string,
     anonGroupId: string,
+    ephemeralPubkey: bigint,
+    ephemeralPubkeyExpiry: Date,
     proofArgs: object
   ): Promise<boolean>;
 
@@ -69,7 +82,7 @@ export interface Message {
   /** Content of the message */
   text: string;
   /** Unix timestamp when the message was created */
-  timestamp: number;
+  timestamp: Date;
   /** Whether this message is only visible to other members of the same AnonGroup */
   internal: boolean;
   /** Number of likes message received */
@@ -77,10 +90,12 @@ export interface Message {
 }
 
 export interface SignedMessage extends Message {
-  /** RSA signature of the message - signed by the user's ephemeral private key (in hex format) */
-  signature: string;
-  /** RSA pubkey (modulus) that can verify the signature (in hex format) */
-  ephemeralPubkey: string;
+  /** Ed25519 signature of the message - signed by the user's ephemeral private key (in hex format) */
+  signature: bigint;
+  /** Ed25519 pubkey that can verify the signature */
+  ephemeralPubkey: bigint;
+  /** Expiry of the ephemeral pubkey */
+  ephemeralPubkeyExpiry: Date;
 }
 
 export interface SignedMessageWithProof extends SignedMessage {
@@ -91,8 +106,9 @@ export interface SignedMessageWithProof extends SignedMessage {
 }
 
 export const LocalStorageKeys = {
-  PrivateKey: "privateKey",
-  PublicKey: "publicKey",
+  EphemeralKey: "ephemeralKey",
+  CurrentGroupId: "currentGroupId",
+  CurrentProvider: "currentProvider",
   GoogleOAuthState: "googleOAuthState",
   GoogleOAuthNonce: "googleOAuthNonce",
   DarkMode: "darkMode",

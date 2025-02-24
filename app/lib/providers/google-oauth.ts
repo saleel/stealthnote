@@ -1,5 +1,5 @@
-import { JWT_CIRCUIT_HELPER } from "../circuits/jwt-0.2.0";
-import { AnonGroupProvider, LocalStorageKeys } from "../types";
+import { JWT_CIRCUIT_HELPER } from "../circuits/jwt-0.3.0";
+import { AnonGroupProvider, EphemeralKey, LocalStorageKeys } from "../types";
 import { pubkeyModulusFromJWK } from "../utils";
 
 /**
@@ -11,13 +11,15 @@ export const GoogleOAuthProvider: AnonGroupProvider = {
   //
   getSlug: () => "domain",
   //
-  generateProof: async (ephemeralPubkey: string) => {
+  generateProof: async (ephemeralKey: EphemeralKey) => {
     // Load Google OAuth script
     await loadGoogleOAuthScript();
 
     // Sign in with Google with ephemeralPubkey (hash) as nonce
-    const ephemeralPubkeyHash = await hashPublicKey(ephemeralPubkey); // need a small nonce
-    const idToken = await signInWithGoogle({ nonce: ephemeralPubkeyHash });
+
+    const idToken = await signInWithGoogle({
+      nonce: ephemeralKey.ephemeralPubkeyHash.toString(),
+    });
 
     const [headersB64, payloadB64] = idToken.split(".");
     const headers = JSON.parse(atob(headersB64));
@@ -33,12 +35,13 @@ export const GoogleOAuthProvider: AnonGroupProvider = {
     // Get Google pubkey
     const keyId = headers.kid;
     const googleJWTPubkey = await fetchGooglePublicKey(keyId);
-    const googleJWTPubkeyModulus = await pubkeyModulusFromJWK(googleJWTPubkey);
 
     // Generate proof using JWT circuit
     const proof = await JWT_CIRCUIT_HELPER.generateProof({
       idToken,
-      jwtPubkey: googleJWTPubkeyModulus,
+      jwtPubkey: googleJWTPubkey,
+      ephemeralKey: ephemeralKey,
+      domain,
     });
 
     const anonGroup = GoogleOAuthProvider.getAnonGroup(domain);
@@ -56,8 +59,9 @@ export const GoogleOAuthProvider: AnonGroupProvider = {
   //
   verifyProof: async (
     proof: Uint8Array,
-    ephemeralPubkey: string,
     anonGroupId: string,
+    ephemeralPubkey: bigint,
+    ephemeralPubkeyExpiry: Date,
     proofArgs: { keyId: string }
   ) => {
     // Verify the pubkey belongs to Google
@@ -69,13 +73,11 @@ export const GoogleOAuthProvider: AnonGroupProvider = {
     }
     const googleJWTPubkeyModulus = await pubkeyModulusFromJWK(googlePubkeyJWK);
 
-    // Hash the ephemeral pubkey is the nonce
-    const ephemeralPubkeyHash = await hashPublicKey(ephemeralPubkey);
-
     return await JWT_CIRCUIT_HELPER.verifyProof(proof, {
       domain: anonGroupId,
-      nonce: ephemeralPubkeyHash,
       jwtPubKey: googleJWTPubkeyModulus,
+      ephemeralPubkey: ephemeralPubkey,
+      ephemeralPubkeyExpiry: ephemeralPubkeyExpiry,
     });
   },
   //
@@ -293,16 +295,4 @@ export async function fetchGooglePublicKey(keyId: string) {
   }
 
   return key;
-}
-
-async function hashPublicKey(key: string) {
-  const messageHash = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(key)
-  );
-
-  return Array.from(new Uint8Array(messageHash))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("")
-    .slice(0, 32); // Only using 32 bytes for the nonce
 }

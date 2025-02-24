@@ -42,11 +42,6 @@ const nextConfig = {
       syncWebAssembly: true,
       layers: true,
     };
-    config.plugins.push(
-      new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
-        resource.request = resource.request.replace(/^node:/, "");
-      })
-    );
     return config
   },
   // async headers() {

@@ -1,5 +1,5 @@
 import { Message, SignedMessage, SignedMessageWithProof } from "./types";
-import { getEphemeralPubkey } from "./key";
+import { getEphemeralPubkey } from "./ephemeral-key";
 
 export async function fetchMessages({
   limit,
@@ -44,7 +44,7 @@ export async function fetchMessages({
   const messages = await response.json();
   return messages.map((message: Message) => ({
     ...message,
-    timestamp: new Date(message.timestamp).getTime(),
+    timestamp: new Date(message.timestamp),
   }));
 }
 
@@ -72,20 +72,29 @@ export async function fetchMessage(
   }
 
   const message = await response.json();
-  message.timestamp = new Date(message.timestamp).getTime();
-  message.proof = Uint8Array.from(message.proof);
+  try {
+    message.signature = BigInt(message.signature);
+    message.ephemeralPubkey = BigInt(message.ephemeralPubkey);
+    message.ephemeralPubkeyExpiry = new Date(message.ephemeralPubkeyExpiry);
+    message.timestamp = new Date(message.timestamp);
+    message.proof = Uint8Array.from(message.proof);
+  } catch (error) {
+    console.warn("Error parsing message:", error);
+  }
 
   return message;
 }
 
 export async function createMembership({
   ephemeralPubkey,
+  ephemeralPubkeyExpiry,
   groupId,
   provider,
   proof,
   proofArgs
 }: {
   ephemeralPubkey: string;
+  ephemeralPubkeyExpiry: Date;
   groupId: string;
   provider: string;
   proof: Uint8Array;
@@ -95,7 +104,8 @@ export async function createMembership({
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      ephemeralPubkey: ephemeralPubkey.toString(),
+      ephemeralPubkey,
+      ephemeralPubkeyExpiry: ephemeralPubkeyExpiry.toISOString(),
       groupId,
       provider,
       proof: Array.from(proof),
@@ -116,7 +126,11 @@ export async function createMessage(signedMessage: SignedMessage) {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(signedMessage),
+    body: JSON.stringify({
+      ...signedMessage,
+      ephemeralPubkey: signedMessage.ephemeralPubkey.toString(),
+      signature: signedMessage.signature.toString(),
+    }),
   });
 
   if (!response.ok) {

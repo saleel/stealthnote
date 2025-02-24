@@ -9,15 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@aztec/bb.js": "0.66.0",
-    "@noir-lang/noir_js": "^1.0.0-beta.1",
+    "@aztec/bb.js": "0.72.1",
+    "@noble/ed25519": "^2.2.3",
+    "@noble/hashes": "^1.7.1",
+    "@noir-lang/noir_js": "^1.0.0-beta.2",
     "@reacticons/ionicons": "^7.1.0",
     "@supabase/supabase-js": "^2.45.4",
     "@uidotdev/usehooks": "^2.4.1",
-    "@zk-email/helpers": "^6.1.6",
     "dotenv": "^16.4.5",
     "javascript-time-ago": "^2.5.11",
     "next": "14.2.11",
+    "noir-jwt": "0.4.5",
     "react": "^18",
     "react-dom": "^18",
     "unique-names-generator": "^4.7.1"

@@ -40,7 +40,7 @@ const MessageList: React.FC<MessageListProps> = ({
       if (observer.current) observer.current.disconnect();
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && hasMore) {
-          loadMessages(messages[messages.length - 1]?.timestamp);
+          loadMessages(messages[messages.length - 1]?.timestamp.getTime());
         }
       });
       if (node) observer.current.observe(node);
@@ -91,7 +91,7 @@ const MessageList: React.FC<MessageListProps> = ({
         groupId,
         isInternal: !!isInternal,
         limit: MESSAGES_PER_PAGE,
-        afterTimestamp: messages[0]?.timestamp,
+        afterTimestamp: messages[0]?.timestamp.getTime(),
       });
 
       if (newMessages.length > 0) {

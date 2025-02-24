@@ -25,8 +25,9 @@ export default async function handler(
 
 async function createMembership(req: NextApiRequest, res: NextApiResponse) {
   const {
-    ephemeralPubkey,
     groupId,
+    ephemeralPubkey,
+    ephemeralPubkeyExpiry,
     provider: providerName,
     proof,
     proofArgs,
@@ -37,8 +38,9 @@ async function createMembership(req: NextApiRequest, res: NextApiResponse) {
   try {
     const isValid = await provider.verifyProof(
       Uint8Array.from(proof),
-      ephemeralPubkey,
       groupId,
+      BigInt(ephemeralPubkey),
+      new Date(ephemeralPubkeyExpiry),
       proofArgs
     );
     if (!isValid) {
@@ -49,6 +51,7 @@ async function createMembership(req: NextApiRequest, res: NextApiResponse) {
       {
         provider: providerName,
         pubkey: ephemeralPubkey,
+        pubkey_expiry: new Date(ephemeralPubkeyExpiry),
         proof: JSON.stringify(proof),
         proof_args: JSON.stringify(proofArgs),
         group_id: groupId,

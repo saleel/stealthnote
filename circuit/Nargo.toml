@@ -6,4 +6,4 @@ compiler_version = ">=1.0.0"
 version = "0.3.0"
 
 [dependencies]
-jwt = { tag = "v0.3.1", git = "https://github.com/saleel/noir-jwt" }
+jwt = { tag = "main", git = "https://github.com/saleel/noir-jwt" }

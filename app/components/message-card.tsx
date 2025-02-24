@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Image from "next/image";
 import TimeAgo from "javascript-time-ago";
 import Link from "next/link";
@@ -7,7 +7,7 @@ import type { SignedMessageWithProof } from "../lib/types";
 import { generateNameFromPubkey } from "../lib/utils";
 import { setMessageLiked, isMessageLiked } from "../lib/store";
 import { fetchMessage, toggleLike } from "../lib/api";
-import { hasEphemeralKey } from "../lib/key";
+import { hasEphemeralKey } from "../lib/ephemeral-key";
 import { verifyMessage } from "../lib/core";
 import { Providers } from "../lib/providers";
 
@@ -18,9 +18,10 @@ interface MessageCardProps {
 
 type VerificationStatus = "idle" | "verifying" | "valid" | "invalid" | "error";
 
-const timeAgo = new TimeAgo("en-US");
 
 const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {
+  const timeAgo = useRef(new TimeAgo("en-US")).current;
+
   const provider = Providers[message.anonGroupProvider];
   const anonGroup = provider.getAnonGroup(message.anonGroupId);
 
@@ -29,9 +30,6 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {
   const [isLiked, setIsLiked] = useState(isMessageLiked(message.id));
   const [verificationStatus, setVerificationStatus] =
     useState<VerificationStatus>("idle");
-
-  // Data
-  const timestamp = new Date(message.timestamp);
 
   const isGroupPage = window.location.pathname === `/${provider.getSlug()}/${message.anonGroupId}`;
   const isMessagePage = window.location.pathname === `/messages/${message.id}`;
@@ -101,16 +99,16 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {
     const timestampComponent = (
       <span
         className="message-card-header-timestamp"
-        title={timestamp.toLocaleString()}
+        title={message.timestamp.toLocaleString()}
       >
-        {timeAgo.format(timestamp)}
+        {timeAgo.format(new Date(message.timestamp))}
       </span>
     );
 
     if (isInternal) {
       return (
         <div className="message-card-header-sender-name internal">
-          <span>{generateNameFromPubkey(message.ephemeralPubkey)}</span>
+          <span>{generateNameFromPubkey(message.ephemeralPubkey.toString())}</span>
           {timestampComponent}
         </div>
       );

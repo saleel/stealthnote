@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
-import { verifyMessageSignature } from "../../../lib/key";
+import { verifyMessageSignature } from "../../../lib/ephemeral-key";
 import { SignedMessage } from "../../../lib/types";
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -31,26 +31,28 @@ export async function postMessage(
   res: NextApiResponse
 ) {
   try {
-    const signedMessage = (await request.body);
+    const body = (await request.body);
 
-    const {
-      id,
-      anonGroupId,
-      anonGroupProvider,
-      text,
-      timestamp,
-      internal,
-      signature,
-      ephemeralPubkey,
-    } = signedMessage;
+    const signedMessage: SignedMessage = {
+      id: body.id,
+      anonGroupId: body.anonGroupId,
+      anonGroupProvider: body.anonGroupProvider,
+      text: body.text,
+      timestamp: new Date(body.timestamp),
+      internal: body.internal,
+      signature: BigInt(body.signature),
+      ephemeralPubkey: BigInt(body.ephemeralPubkey),
+      ephemeralPubkeyExpiry: new Date(body.ephemeralPubkeyExpiry),
+      likes: 0,
+    }
 
     // Verify pubkey is registered
     const { data, error } = await supabase
       .from("memberships")
       .select("*")
-      .eq("pubkey", ephemeralPubkey)
-      .eq("group_id", anonGroupId)
-      .eq("provider", anonGroupProvider)
+      .eq("pubkey", signedMessage.ephemeralPubkey.toString())
+      .eq("group_id", signedMessage.anonGroupId)
+      .eq("provider", signedMessage.anonGroupProvider)
       .single();
 
     if (error) {
@@ -61,6 +63,10 @@ export async function postMessage(
       throw new Error("Pubkey not registered");
     }
 
+    if (signedMessage.ephemeralPubkeyExpiry < new Date()) {
+      throw new Error("Ephemeral pubkey expired");
+    }
+
     const isValid = await verifyMessageSignature(signedMessage);
     if (!isValid) {
       throw new Error("Message signature check failed");
@@ -68,14 +74,14 @@ export async function postMessage(
 
     const { error: insertError } = await supabase.from("messages").insert([
       {
-        id,
-        group_id: anonGroupId,
-        group_provider: anonGroupProvider,
-        text,
-        timestamp: new Date(timestamp).toISOString(),
-        signature,
-        pubkey: ephemeralPubkey,
-        internal,
+        id: signedMessage.id,
+        group_id: signedMessage.anonGroupId,
+        group_provider: signedMessage.anonGroupProvider,
+        text: signedMessage.text,
+        timestamp: signedMessage.timestamp.toISOString(),
+        signature: signedMessage.signature.toString(),
+        pubkey: signedMessage.ephemeralPubkey.toString(),
+        internal: signedMessage.internal,
       },
     ]);
 
@@ -86,6 +92,7 @@ export async function postMessage(
     res.status(201).json({ message: "Message saved successfully" });
     res.end();
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: (error as Error).message });
     res.end();
   }
@@ -171,7 +178,7 @@ export async function fetchMessages(
     return;
   }
 
-  const messages: SignedMessage[] = data.map((message) => ({
+  const messages: Partial<SignedMessage>[] = data.map((message) => ({
     id: message.id,
     anonGroupId: message.group_id,
     anonGroupProvider: message.group_provider,
