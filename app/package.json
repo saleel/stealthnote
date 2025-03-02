@@ -23,6 +23,7 @@
     "noir-jwt": "0.4.5",
     "react": "^18",
     "react-dom": "^18",
+    "twitter-api-v2": "^1.20.2",
     "unique-names-generator": "^4.7.1"
   },
   "devDependencies": {

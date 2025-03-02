@@ -48,6 +48,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
   async function handleSignIn(providerName: string) {
     try {
       setIsRegistering(providerName);
+      setStatus(`Generating cryptographic proof of your membership while keeping your identity secret...`);
 
       const { anonGroup } = await generateKeyPairAndRegister(providerName);
 

@@ -142,6 +142,16 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     background-color: #f8f9fa;
   }
+
+  &:disabled {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+  }
+
+  &:last-child {
+    margin-right: 0;
+  }
 }
 
 @media (max-width: 768px) {
