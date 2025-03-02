@@ -50,34 +50,49 @@
   padding-right: 0.5rem;
 }
 
-.message-form-refresh-button {
-  margin-left: 0.5rem;
-  margin-right: 2rem;
-  background-color: transparent;
-  color: var(--shade-800);
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  height: 2rem;
-  width: 2rem;
+.message-form-footer-buttons {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
-
-  &:hover {
-    color: var(--shade-950);
-    transform: rotate(90deg);
-  }
+  margin-left: 1rem;
 
   &:disabled {
     cursor: not-allowed;
+  }
+
+  button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    color: var(--shade-700);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+
+    &:hover {
+      color: var(--shade-950);
+    }
   }
 }
 
 .message-form-refresh-icon {
   font-size: 1.5rem;
   margin-bottom: 3px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    color: var(--shade-950);
+    transform: rotate(90deg);
+  }
+}
+
+.message-form-reset-icon {
+  font-size: 1.1rem;
+  margin-top: 3px;
+  font-weight: bold;
 }
 
 .message-form-post-button {
@@ -102,28 +117,26 @@
   }
 }
 
-.google-sign-in-button {
+.message-form-oauth-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message-form-oauth-button {
   background-color: white;
   border: 1px solid var(--shade-400);
   border-radius: 0px;
-  padding: 0.6rem 0.5rem;
+  padding: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.3s ease;
-  min-width: 180px;
   height: 40px;
-
-  img {
-    margin-right: 12px;
-  }
-
-  span {
-    color: #3c4043;
-    font-family: 'Roboto', sans-serif;
-  }
+  width: 40px;
+  margin-right: 0.5rem;
 
   &:hover {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);

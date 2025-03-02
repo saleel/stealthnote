@@ -2,9 +2,9 @@
 
 import React from "react";
 import Image from "next/image";
-import googleLogo from "@/assets/google.png";
+import microsoftLogo from "@/assets/microsoft.png";
 
-const SignWithGoogleButton = (props: { onClick: () => void; isLoading: boolean, disabled: boolean }) => {
+const SignInWithMicrosoftButton = (props: { onClick: () => void; isLoading: boolean, disabled: boolean }) => {
   return (
     <button onClick={() => props.onClick()} className="message-form-oauth-button" disabled={props.disabled}>
       {props.isLoading ? (
@@ -12,8 +12,8 @@ const SignWithGoogleButton = (props: { onClick: () => void; isLoading: boolean, 
       ) : (
         <>
           <Image
-            src={googleLogo}
-            alt="Google logo"
+            src={microsoftLogo}
+            alt="Microsoft logo"
             width={24}
             height={24}
           />
@@ -23,4 +23,4 @@ const SignWithGoogleButton = (props: { onClick: () => void; isLoading: boolean, 
   );
 };
 
-export default SignWithGoogleButton;
+export default SignInWithMicrosoftButton;

@@ -7,8 +7,8 @@ interface DecodedJWT {
   [key: string]: unknown;
 }
 
-const MS_CLIENT_ID = "YOUR_MICROSOFT_CLIENT_ID"; // Replace with your actual client ID
-const REDIRECT_URI = "https://wild-chefs-jam.loca.lt/microsoft";
+const MS_CLIENT_ID = "22304457-c987-48e2-acc2-c37f26901d2a"; // Replace with your actual client ID
+const REDIRECT_URI = "http://localhost:3000/microsoft";
 
 function decodeJWT(token: string): DecodedJWT {
   try {
