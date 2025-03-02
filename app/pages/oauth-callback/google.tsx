@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-export default function AuthCallback() {
+export default function GoogleOAuthCallback() {
   useEffect(() => {
     const hashParams = new URLSearchParams(window.location.hash.slice(1));
 

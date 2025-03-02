@@ -124,7 +124,7 @@ export async function signInWithMicrosoft({
     auth: {
       clientId: clientId,
       authority: "https://login.microsoftonline.com/common",
-      redirectUri: window.location.origin + "/auth",
+      redirectUri: `${window.location.origin}/oauth-callback/microsoft`,
     },
     cache: {
       cacheLocation: "sessionStorage",

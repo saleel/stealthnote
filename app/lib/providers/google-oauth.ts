@@ -155,7 +155,7 @@ async function signInWithGooglePopup({
   localStorage.setItem(LocalStorageKeys.GoogleOAuthNonce, nonce);
 
   // Construct the Google OAuth URL
-  const redirectUri = `${window.location.origin}/auth`;
+  const redirectUri = `${window.location.origin}/oauth-callback/google`;
   const scope = "openid email";
   const authUrl =
     `https://accounts.google.com/o/oauth2/v2/auth?` +
