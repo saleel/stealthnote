@@ -97,7 +97,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
     }
   }
 
-  const isTextAreaDisabled = isRegistering || isPosting || !isRegistered;
+  const isTextAreaDisabled = !!isRegistering || isPosting || !isRegistered;
 
   return (
     <div className="message-form">

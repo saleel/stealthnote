@@ -1,5 +1,5 @@
 import { JWT_CIRCUIT_HELPER } from "../circuits/jwt-0.3.0";
-import { AnonGroupProvider, EphemeralKey, LocalStorageKeys } from "../types";
+import { AnonGroupProvider, EphemeralKey } from "../types";
 import { pubkeyModulusFromJWK } from "../utils";
 
 /**
@@ -90,6 +90,7 @@ export const MicrosoftOAuthProvider: AnonGroupProvider = {
 
 declare global {
   interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     msal?: any;
   }
 }

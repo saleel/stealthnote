@@ -32,6 +32,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.11",
     "sass": "^1.79.4",
+    "sharp": "^0.33.5",
     "typescript": "^5",
     "webpack": "^5.95.0"
   },
