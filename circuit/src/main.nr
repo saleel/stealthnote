@@ -17,10 +17,13 @@ global NONCE_LENGTH: u32 = 77;
  * @param b64_offset: Offset needed in `partial_data` to make the payloadB64 a multiple of 4
  *                    Signed data is $header.$payload. $payload might not be a multiple of 4 in `partial_data`, so we need to offset
  *                    Not attack-able by giving an incorrect offset, as string match of hd and nonce will fail
- * @param pubkey_modulus_limbs: RSA public key modulus limbs (2048-bit split into 18 limbs)
- * @param redc_params_limbs: RSA reduction parameters limbs
- * @param signature_limbs: RSA signature limbs
+ * @param jwt_pubkey_modulus_limbs: RSA public key modulus limbs (2048-bit split into 18 limbs)
+ * @param jwt_pubkey_redc_params_limbs: RSA reduction parameters limbs
+ * @param jwt_signature_limbs: RSA signature limbs
  * @param domain: Domain name (`hd` key) as a byte array of ascii characters padded to MAX_DOMAIN_LENGTH
+ * @param ephemeral_pubkey: Public key of the ephemeral keypair that is used to sign messages
+ * @param ephemeral_pubkey_salt: Salt of the ephemeral keypair that is used to sign messages
+ * @param ephemeral_pubkey_expiry: Expiry of the ephemeral keypair that is used to sign messages
  * @param nonce: JWT `nonce` as a byte array of ascii characters - 32 bytes
  **/
 fn main(

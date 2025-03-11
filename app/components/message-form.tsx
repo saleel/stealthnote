@@ -8,7 +8,7 @@ import { generateKeyPairAndRegister, postMessage } from "../lib/core";
 import { generateNameFromPubkey } from "../lib/utils";
 import { Providers } from "../lib/providers";
 import SignWithGoogleButton from "./siwg";
-import SignInWithMicrosoftButton from "./siwm";
+// import SignInWithMicrosoftButton from "./siwm";
 
 type MessageFormProps = {
   isInternal?: boolean;
@@ -171,11 +171,11 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
               isLoading={isRegistering === "google-oauth"}
               disabled={!!isRegistering}
             />
-            <SignInWithMicrosoftButton
+            {/* <SignInWithMicrosoftButton
               onClick={() => handleSignIn("microsoft-oauth")}
               isLoading={isRegistering === "microsoft-oauth"}
               disabled={!!isRegistering}
-            />
+            /> */}
           </div>
         )}
       </div>
