@@ -137,7 +137,11 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
                 onClick={() => handleSignIn("google-oauth")}
                 tabIndex={-1}
               >
-                <span className="message-form-refresh-icon">⟳</span>
+                {isRegistering ? (
+                  <span className="spinner-icon" />
+                ) : (
+                  <span className="message-form-refresh-icon">⟳</span>
+                )}
               </button>
               <button
                 title={
