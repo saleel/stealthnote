@@ -171,11 +171,11 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
               isLoading={isRegistering === "google-oauth"}
               disabled={!!isRegistering}
             />
-            <SignInWithMicrosoftButton
+            {/* <SignInWithMicrosoftButton
               onClick={() => handleSignIn("microsoft-oauth")}
               isLoading={isRegistering === "microsoft-oauth"}
               disabled={!!isRegistering}
-            />
+            /> */}
           </div>
         )}
       </div>
