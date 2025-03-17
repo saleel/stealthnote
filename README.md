@@ -1,46 +1,24 @@
 # StealthNote
 
-StealthNote is an application for people in an organization to anonymously broadcast messages.
+StealthNote is a platform to anonymously post messages while proving you belong to an organization -
+without revealing who you are.
 
-We use Zero Knowledge Proofs to prove that you are part of an organization by verifying JWT token generated for your Google Workspace account.
+We use [Zero Knowledge Proofs](https://en.wikipedia.org/wiki/Zero-knowledge_proof) to prove that you have a valid Google Workspace account from your organization, while keeping your email address and other details private.
+
+The messages you post cannot be &quot;provably&quot; linked to you.
 
 Try it out at [stealthnote.xyz](https://stealthnote.xyz).
 
-## Run locally
 
-Set your environment variables:
-```sh
-# Supabase credentials
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
 
-# Google Client ID
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=
-```
+## Contributing
 
-Run below commands to start the Next.js app:
-```sh
-#PWD = app
-yarn
-yarn dev
-```
+This project is open source and is licenced under the MIT License. Feel free to fork the repository and build similar applications.
 
-<br />
+If you find any bugs or have any suggestions, please raise an issue. Do not raise a PR without raising an issue first, as the code is not in a position to accept major contributions yet.
 
-## Building circuits
 
-```
-nargo version 0.38.0
-bb version 0.61.0
-```
 
-```sh
-#PWD = circuits
-./build.sh
-```
+## Notes
 
-<br />
-
-Built with [Noir](https://www.noir-lang.org/). 
-
-Inspired by [Blind](https://www.teamblind.com/), [Nozee](https://www.nozee.xyz/).
+Built with [Noir](https://www.noir-lang.org/). *Inspired by [Blind](https://www.teamblind.com/), [Nozee](https://www.nozee.xyz/).*
