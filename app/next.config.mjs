@@ -45,11 +45,10 @@ const nextConfig = {
     return config
   },
   // async headers() {
-  //   // These headers are necessary to enabled SharedArrayBuffer 
-  //   // which is needed for multi-threaded proof generation
   //   return [
   //     {
-  //       source: '/:path*',
+  //       // Exclude all oauth-callback paths
+  //       source: '/((?!oauth-callback).*)',
   //       headers: [
   //         {
   //           key: 'Cross-Origin-Embedder-Policy',
@@ -58,6 +57,28 @@ const nextConfig = {
   //         {
   //           key: 'Cross-Origin-Opener-Policy',
   //           value: 'same-origin',
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       // Special case for iOS devices - disable COOP/COEP
+  //       source: '/((?!oauth-callback).*)',
+  //       headers: [
+  //         {
+  //           key: 'Cross-Origin-Embedder-Policy',
+  //           value: 'unsafe-none',
+  //         },
+  //         {
+  //           key: 'Cross-Origin-Opener-Policy',
+  //           value: 'unsafe-none',
+  //         },
+  //       ],
+  //       // Only apply these headers for iOS devices
+  //       has: [
+  //         {
+  //           type: 'header',
+  //           key: 'user-agent',
+  //           value: '(.*iPhone|iPad|iPod.*)',
   //         },
   //       ],
   //     },

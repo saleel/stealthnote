@@ -23,7 +23,7 @@ export const WelcomeModal = () => {
         <h2 className={'modal-title'}>Welcome to StealthNote!</h2>
         <div className={'modal-content'}>
           <p>
-            StealthNote is a platform to post messages anonymously while proving you belong to an organization -
+            StealthNote is a platform to anonymously post messages while proving you belong to an organization -
             without revealing who you are.
           </p>
           <p>

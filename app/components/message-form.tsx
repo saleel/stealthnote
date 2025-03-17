@@ -35,7 +35,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
     : `Someone from ${anonGroup?.title}`;
 
   const welcomeMessage = `
-    Sign in with your Google/Microsoft work account to anonymously post as "Someone from your company".
+    Sign in with your Google work account to anonymously post as "Someone from your company".
   `;
 
   // State
@@ -48,7 +48,8 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
   async function handleSignIn(providerName: string) {
     try {
       setIsRegistering(providerName);
-      setStatus(`Generating cryptographic proof of your membership while keeping your identity secret...`);
+      setStatus(`Generating cryptographic proof of your membership without revealing your identity.
+        This will take about 20 seconds...`);
 
       const { anonGroup } = await generateKeyPairAndRegister(providerName);
 

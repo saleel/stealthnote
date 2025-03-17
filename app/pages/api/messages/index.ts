@@ -173,6 +173,7 @@ export async function fetchMessages(
   const { data, error } = await query;
 
   if (error) {
+    console.error(error);
     res.status(500).json({ error: error.message });
     res.end();
     return;

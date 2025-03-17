@@ -33,22 +33,25 @@ export default function GroupPage() {
 
       <div className="domain-page">
         <div className="company-info">
-          <div className="company-logo">
-            <Image
-              src={anonGroup.logoUrl}
-              alt={anonGroup.title}
-              width={50}
-              height={50}
-            />
-          </div>
-          <div>
-            <div className="company-title">{anonGroup.title}</div>
-            <div className="company-description">
-              Messages sent here are only visible to members of {anonGroup.title}
+          <div style={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: "1rem" }}>
+            <div className="company-logo">
+              <Image
+                src={anonGroup.logoUrl}
+                alt={anonGroup.title}
+                width={50}
+                height={50}
+              />
+            </div>
+            <div>
+              <div className="company-title">{anonGroup.title} Internal Board</div>
             </div>
           </div>
+
+          <div className="company-description">
+            Messages sent here are hidden from the public board, and only visible to members of {anonGroup.title}
+            . Server hosting these messages can still see them.
+          </div>
         </div>
-        
 
         <MessageList
           groupId={groupId}

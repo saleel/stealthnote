@@ -109,7 +109,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               </Link>
               <Link
                 onClick={() => setIsSidebarOpen(false)}
-                href="https://x.com/_saleel"
+                href="https://x.com/stealthnote_"
                 target="_blank"
                 rel="noopener noreferrer"
                 title="Twitter"
