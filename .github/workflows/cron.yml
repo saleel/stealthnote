@@ -1,4 +1,4 @@
-name: Cron Job
+name: Cross post
 
 on:
   schedule:
@@ -12,4 +12,4 @@ jobs:
     steps:
       - name: Call API endpoint
         run: |
-          curl -X GET https://stealthnote.xyz/api/twitter 
+          curl -X POST https://stealthnote.xyz/api/twitter
