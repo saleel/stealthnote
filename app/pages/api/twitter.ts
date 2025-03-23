@@ -104,7 +104,7 @@ const postTweet = async (message: Message): Promise<boolean> => {
       ? `@${twitterHandles[companyDomain]} (${companyDomain})`
       : companyDomain;
     const prefix = `Someone from ${companyText} said:\n\n`;
-    const suffix = `\n\nVerify: https://stealthnote.xyz/messages/${message.id}?t.co=true`;
+    const suffix = `\n\nVerify: https://stealthnote.xyz/messages/${message.id}`;
     const maxTweetLength = 280;
     const maxContentLength = maxTweetLength - prefix.length - suffix.length;
 
