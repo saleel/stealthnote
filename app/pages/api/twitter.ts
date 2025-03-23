@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { TwitterApi } from 'twitter-api-v2';
 import { createClient } from '@supabase/supabase-js';
-import companies from '../../assets/companies.json';
+import twitterHandles from '../../assets/twitter-handles.json';
 import { Message } from '../../lib/types';
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -96,10 +96,12 @@ const markMessageAsTweeted = async (messageId: string): Promise<void> => {
  */
 const postTweet = async (message: Message): Promise<boolean> => {
   try {
-    const company = message.anonGroupId in companies
-      ? '@' + companies[message.anonGroupId as keyof typeof companies]
-      : message.anonGroupId;
-    const prefix = `Someone from ${company} said:\n\n`;
+    const companyDomain = message.anonGroupId as keyof typeof twitterHandles;
+    
+    const companyText = message.anonGroupId in twitterHandles
+      ? `@${twitterHandles[companyDomain]} (${companyDomain})`
+      : companyDomain;
+    const prefix = `Someone from ${companyText} said:\n\n`;
     const suffix = `\n\nVerify: https://stealthnote.xyz/messages/${message.id}`;
     const maxTweetLength = 280;
     const maxContentLength = maxTweetLength - prefix.length - suffix.length;
