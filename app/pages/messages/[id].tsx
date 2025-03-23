@@ -17,7 +17,7 @@ export default function SingleMessagePage() {
   );
 
 
-  if (isFetching) {
+  if (isFetching || !message) {
     return (
       <Layout>
         <div className="flex-center">
@@ -25,10 +25,6 @@ export default function SingleMessagePage() {
         </div>
       </Layout>
     );
-  }
-
-  if (!message) {
-    return <div className="error">Message not found</div>;
   }
 
   return (
