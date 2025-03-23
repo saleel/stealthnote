@@ -135,27 +135,27 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
           <p className="sidebar-nav-copyright">
             <span>Made with </span>
-            <a 
+            <Link 
               href="https://noir-lang.org" 
               target="_blank" 
               rel="noopener noreferrer" 
               style={{ color: '#382E81' }}
             >
               Noir
-            </a>
+            </Link>
             <span> ❤️ </span>
           </p>
           <div className="sidebar-nav-footer-links">
-            <a
+            <Link
               href="/disclaimer"
             >
               Disclaimer
-            </a>
-            <a
+            </Link>
+            <Link
               href="/privacy"
             >
               Privacy Policy
-            </a>
+            </Link>
           </div>
         </aside>
         <main className="container">
