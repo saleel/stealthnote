@@ -99,11 +99,10 @@ const markMessageAsTweeted = async (messageId: string): Promise<void> => {
 const postTweet = async (message: Message): Promise<boolean> => {
   try {
     const companyDomain = message.anonGroupId as keyof typeof twitterHandles;
-    const cleanedUrl = `\u200B${companyDomain}`
     
     const companyText = message.anonGroupId in twitterHandles
-      ? `@${twitterHandles[companyDomain]} (${cleanedUrl})`
-      : cleanedUrl;
+      ? `@${twitterHandles[companyDomain]} (${companyDomain})`
+      : companyDomain;
     const prefix = `Someone from ${companyText} said:\n\n`;
     const suffix = `\n\nVerify: https://stealthnote.xyz/messages/${message.id}`;
     const maxTweetLength = 280;

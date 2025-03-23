@@ -30,6 +30,27 @@ export default function SingleMessagePage() {
   return (
     <div className="single-message-container">
       <MessageCard message={message} />
+
+      {/* <div className="single-message-container-footer">
+        <p>
+          This message was posted on signed with the below public key
+          <br />
+          <code>
+            {message.ephemeralPubkey}
+          </code>
+        </p>
+        <p>
+          Sender also provided a ZK proof of membership in {message.anonGroupId}
+          using {message.anonGroupProvider}.
+          <code>
+            {message.proof}
+          </code>
+        </p>
+        <p>
+          Verifying the message signature and the ZK proof verifies that this post
+          was submitted by a somone from {message.anonGroupId}.
+        </p>
+      </div> */}
     </div>
   );
 }
