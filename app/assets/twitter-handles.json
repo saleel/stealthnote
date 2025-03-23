@@ -1,5 +1,6 @@
 {
   "aztecprotocol.com": "aztecnetwork",
+  "aztec-labs.com": "aztecnetwork",
   "optimism.io": "optimismFND",
   "arbitrum.io": "arbitrum",
   "polygon.technology": "0xPolygon",
@@ -56,6 +57,7 @@
   "near.org": "NEARProtocol",
   "sui.io": "SuiNetwork",
   "aptos.dev": "AptosLabs",
+  "aptos-labs.com": "AptosLabs",
   "ton.org": "ton_blockchain",
   "tezos.com": "tezos",
   "cardano.org": "Cardano",
