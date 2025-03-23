@@ -122,6 +122,28 @@ button.sidebar-nav-footer-item {
   cursor: pointer;
 }
 
+.sidebar-nav-copyright {
+  margin-top: 3rem;
+  font-size: 0.8rem;
+
+  a {
+    text-decoration: none;
+    color: var(--shade-600);
+
+    &:hover {
+      color: var(--shade-900);
+    }
+  }
+}
+
+.sidebar-nav-footer-links {
+  @extend .sidebar-nav-copyright;
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+}
+
 .mobile-header {
   display: none;
 }
