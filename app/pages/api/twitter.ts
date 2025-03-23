@@ -97,7 +97,7 @@ const markMessageAsTweeted = async (messageId: string): Promise<void> => {
 const postTweet = async (message: Message): Promise<boolean> => {
   try {
     const company = message.anonGroupId in companies
-      ? companies[message.anonGroupId as keyof typeof companies]
+      ? '@' + companies[message.anonGroupId as keyof typeof companies]
       : message.anonGroupId;
     const prefix = `Someone from ${company} said:\n\n`;
     const suffix = `\n\nVerify: https://stealthnote.xyz/messages/${message.id}`;

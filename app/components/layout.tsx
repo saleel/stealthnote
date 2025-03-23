@@ -35,6 +35,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
 
+  React.useEffect(() => {
+    console.log(
+      '%c📝 If you run in to any errors, please create an issue at https://github.com/saleel/stealthnote/issues\n' +
+      '🐦 You can also reach out to me on Twitter at https://twitter.com/_saleel',
+      'background: #efefef; color: black; font-size: 16px; padding: 10px; border-radius: 3px;'
+    );
+  }, []);
+
   return (
     <>
       <div className="page">
@@ -89,7 +97,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               </button>
               <Link
                 onClick={() => setIsSidebarOpen(false)}
-                href="https://saleel.xyz/blog/stealthnote"
+                href="https://saleel.xyz/blog/stealthnote/"
                 target="_blank"
                 rel="noopener noreferrer"
                 title="How it works"
@@ -119,6 +127,31 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               </Link>
             </div>
           </nav>
+
+          <p className="sidebar-nav-copyright">
+            <span>Made with </span>
+            <a 
+              href="https://noir-lang.org" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              style={{ color: '#382E81' }}
+            >
+              Noir
+            </a>
+            <span> ❤️ </span>
+          </p>
+          <div className="sidebar-nav-footer-links">
+            <a
+              href="/disclaimer"
+            >
+              Disclaimer
+            </a>
+            <a
+              href="/privacy"
+            >
+              Privacy Policy
+            </a>
+          </div>
         </aside>
         <main className="container">
           <div className="content">{children}</div>

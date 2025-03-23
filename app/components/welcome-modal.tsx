@@ -38,9 +38,9 @@ export const WelcomeModal = () => {
             organization, while keeping your email address and other details private.
           </p>
           <p>
-            The messages you post cannot be &quot;provably&quot; linked to you.
+            The messages you post cannot be linked to you (except for some edge cases).
             Read more about how it works {' '}
-            <a href="https://saleel.xyz/blog/stealthnote" target="_blank" rel="noopener noreferrer">here</a>.
+            <a href="https://saleel.xyz/blog/stealthnote/" target="_blank" rel="noopener noreferrer">here</a>.
           </p>
         </div>
       </div>
