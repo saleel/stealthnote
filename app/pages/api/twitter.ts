@@ -66,6 +66,7 @@ const getLatestMessages = async (): Promise<Message[]> => {
     .eq('internal', false)
     .eq('tweeted', false)
     .gt('likes', 0)
+    .gt('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
     .order('likes', { ascending: false })
     .limit(1);
 
