@@ -26,6 +26,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     null
   );
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const [consoleShown, setConsoleShown] = React.useState(false);
 
   let slug = null;
   if (currentProvider && currentGroupId) {
@@ -39,12 +40,17 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, [isDark]);
 
   React.useEffect(() => {
+    if (consoleShown) {
+      return;
+    }
+
     console.log(
       '%c📝 If you run in to any errors, please create an issue at https://github.com/saleel/stealthnote/issues\n' +
       '🐦 You can also reach out to me on Twitter at https://twitter.com/_saleel',
       'background: #efefef; color: black; font-size: 16px; padding: 10px; border-radius: 3px;'
     );
-  }, []);
+    setConsoleShown(true);
+  }, [consoleShown]);
 
   return (
     <>

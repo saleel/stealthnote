@@ -61,7 +61,7 @@ function loadEphemeralKey() {
     publicKey: BigInt(ephemeralKey.publicKey),
     salt: BigInt(ephemeralKey.salt),
     expiry: ephemeralKey.expiry,
-    ephemeralPubkeyHash: BigInt(ephemeralKey.ephemeralPubkeyHash),
+    ephemeralPubkeyHash: ephemeralKey.ephemeralPubkeyHash ? BigInt(ephemeralKey.ephemeralPubkeyHash) : null,
   } as EphemeralKey;
 }
 
