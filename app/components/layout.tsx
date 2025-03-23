@@ -2,12 +2,15 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import IonIcon from "@reacticons/ionicons";
 import { LocalStorageKeys } from "../lib/types";
 import { Providers } from "../lib/providers";
 import { WelcomeModal } from './welcome-modal';
+import logo from "@/assets/logo.png";
+
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isDark, setIsDark] = useLocalStorage<boolean>(
@@ -62,7 +65,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </div>
         <aside className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
           <div className="logo">
-            <Link href="/">StealthNote</Link>
+            <Link href="/">
+              <Image src={logo} alt="StealthNote" width={150} height={50} />
+            </Link>
           </div>
           <nav className="sidebar-nav">
             <div className="sidebar-nav-header">
