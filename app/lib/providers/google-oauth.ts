@@ -67,6 +67,7 @@ export const GoogleOAuthProvider: AnonGroupProvider = {
     // Verify the pubkey belongs to Google
     const googlePubkeyJWK = await fetchGooglePublicKey(proofArgs.keyId);
     if (!googlePubkeyJWK) {
+      alert(`You can no longer verify this message as Google has rotated their public key.`)
       throw new Error(
         "[Google OAuth] Proof verification failed: could not validate Google public key."
       );
