@@ -99,10 +99,10 @@ const markMessageAsTweeted = async (messageId: string): Promise<void> => {
 const postTweet = async (message: Message): Promise<boolean> => {
   try {
     const companyDomain = message.anonGroupId as keyof typeof twitterHandles;
-    const companyDomainCleaned = '.' + companyDomain;
+    const companyDomainCleaned = '-' + companyDomain;
     
     const companyText = message.anonGroupId in twitterHandles
-      ? `${companyDomainCleaned} @${twitterHandles[companyDomain]}`
+      ? `@${twitterHandles[companyDomain]} ${companyDomainCleaned}`
       : companyDomainCleaned;
     const prefix = `Someone from ${companyText} said:\n\n`;
     const suffix = `\n\nVerify: https://stealthnote.xyz/messages/${message.id}`;
