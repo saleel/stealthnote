@@ -1,0 +1,9 @@
+[package]
+name = "stealthnote_email"
+type = "bin"
+authors = ["saleel"]
+compiler_version = ">=1.0.0"
+version = "0.3.1"
+
+[dependencies]
+zkemail = { tag = "chore/update-dependencies", git = "https://github.com/zkemail/zkemail.nr", directory = "lib" }
