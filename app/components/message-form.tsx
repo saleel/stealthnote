@@ -4,10 +4,11 @@ import { useLocalStorage } from "@uidotdev/usehooks";
 import IonIcon from "@reacticons/ionicons";
 import { LocalStorageKeys, Message, SignedMessageWithProof } from "../lib/types";
 import { getEphemeralPubkey } from "../lib/ephemeral-key";
-import { generateKeyPairAndRegister, postMessage } from "../lib/core";
+import { registerMembership, postMessage } from "../lib/core";
 import { generateNameFromPubkey } from "../lib/utils";
 import { Providers } from "../lib/providers";
 import SignWithGoogleButton from "./siwg";
+import ProveByEmailButton from "./prove-by-email-button";
 // import SignInWithMicrosoftButton from "./siwm";
 
 type MessageFormProps = {
@@ -53,14 +54,15 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
   const [isRegistering, setIsRegistering] = useState("");
   const [status, setStatus] = useState(!isRegistered ? welcomeMessage : "");
 
+
   // Handlers
-  async function handleSignIn(providerName: string) {
+  async function handleSignIn(providerName: string, args?: any) {
     try {
       setIsRegistering(providerName);
       setStatus(`Generating cryptographic proof of your membership without revealing your identity.
         This will take about 20 seconds...`);
 
-      const { anonGroup } = await generateKeyPairAndRegister(providerName);
+      const { anonGroup } = await registerMembership(providerName, args);
 
       setCurrentGroupId(anonGroup.id);
       setCurrentProvider(providerName);
@@ -111,6 +113,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
   const isTextAreaDisabled = !!isRegistering || isPosting || !isRegistered;
 
   const randomPrompt = prompts(currentGroupId ?? "your company")[randomPromptIndex]
+
 
   return (
     <div className="message-form">
@@ -181,6 +184,11 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
             <SignWithGoogleButton
               onClick={() => handleSignIn("google-oauth")}
               isLoading={isRegistering === "google-oauth"}
+              disabled={!!isRegistering}
+            />
+            <ProveByEmailButton
+              onSubmitEmail={(args) => handleSignIn("prove-by-email", args)}
+              isLoading={isRegistering === "prove-by-email"}
               disabled={!!isRegistering}
             />
             {/* <SignInWithMicrosoftButton

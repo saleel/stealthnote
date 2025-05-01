@@ -44,14 +44,6 @@ export const GoogleOAuthProvider: AnonGroupProvider = {
       ephemeralKey: ephemeralKey,
       domain,
     });
-    const googleJWTPubkeyModulus = await pubkeyModulusFromJWK(googleJWTPubkey);
-
-    console.log(await JWTCircuitHelper.verifyProof(proof.proof, {
-      domain,
-      jwtPubKey: googleJWTPubkeyModulus,
-      ephemeralPubkey: ephemeralKey.publicKey,
-      ephemeralPubkeyExpiry: ephemeralKey.expiry,
-    }));
 
     const anonGroup = GoogleOAuthProvider.getAnonGroup(domain);
 

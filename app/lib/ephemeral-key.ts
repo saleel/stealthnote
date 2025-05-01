@@ -36,7 +36,23 @@ export async function generateEphemeralKey(): Promise<EphemeralKey> {
 
   saveEphemeralKey(ephemeralKey);
 
-  return { ...ephemeralKey, privateKey: 0n }; // no need to expose private key outside this file
+  return getEphemeralKey() as EphemeralKey;
+}
+
+export function getEphemeralKey(): EphemeralKey | null {
+  const ephemeralKey = loadEphemeralKey();
+  if (!ephemeralKey) {
+    return null;
+  }
+
+  return {
+    ...ephemeralKey,
+    privateKey: 0n, // no need to expose private key outside this file
+    publicKey: BigInt(ephemeralKey.publicKey),
+    salt: BigInt(ephemeralKey.salt),
+    expiry: new Date(ephemeralKey.expiry),
+    ephemeralPubkeyHash: BigInt(ephemeralKey.ephemeralPubkeyHash),
+  } as EphemeralKey;
 }
 
 function saveEphemeralKey(ephemeralKey: EphemeralKey) {
@@ -86,6 +102,14 @@ export function getEphemeralPubkey() {
     return null;
   }
   return ephemeralKey.publicKey;
+}
+
+export function getEphemeralPubkeyHash() {
+  const ephemeralKey = loadEphemeralKey();
+  if (!ephemeralKey) {
+    return null;
+  }
+  return ephemeralKey.ephemeralPubkeyHash;
 }
 
 export async function signMessage(message: Message) {

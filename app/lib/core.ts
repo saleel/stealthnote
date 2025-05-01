@@ -4,8 +4,9 @@ import { generateEphemeralKey, signMessage, verifyMessageSignature } from "./eph
 import { initProver } from "./lazy-modules";
 import { Providers } from "./providers";
 
-export async function generateKeyPairAndRegister(
-  providerName: keyof typeof Providers
+export async function registerMembership(
+  providerName: keyof typeof Providers,
+  args?: object
 ) {
   // Initialize prover without await to preload aztec bundle
   initProver();
@@ -15,7 +16,7 @@ export async function generateKeyPairAndRegister(
 
   // Ask the AnonGroup provider to generate a proof
   const provider = Providers[providerName];
-  const { anonGroup, proof, proofArgs } = await provider.generateProof(ephemeralKey);
+  const { anonGroup, proof, proofArgs } = await provider.generateProof(ephemeralKey, args);
 
   // Send proof to server to create an AnonGroup membership
   await createMembership({

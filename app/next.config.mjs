@@ -1,7 +1,9 @@
 import dotenv from 'dotenv';
 import webpack from 'webpack';
+import buffer from 'buffer';
 
 dotenv.config();
+
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -42,6 +44,24 @@ const nextConfig = {
       syncWebAssembly: true,
       layers: true,
     };
+    config.plugins.push(
+      new webpack.ProvidePlugin({
+        Buffer: ['buffer', 'Buffer'],
+      }),
+      new webpack.NormalModuleReplacementPlugin(/node:/, (resource) => {
+        const mod = resource.request.replace(/^node:/, "");
+        switch (mod) {
+          case "buffer":
+            resource.request = "buffer";
+            break;
+          case "stream":
+            resource.request = "readable-stream";
+            break;
+          default:
+            throw new Error(`Not found ${mod}`);
+        }
+      }),
+    );
     return config
   },
   // async headers() {

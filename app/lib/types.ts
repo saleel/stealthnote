@@ -39,7 +39,7 @@ export interface AnonGroupProvider {
    * @param ephemeralPubkeyHash - Hash of the ephemeral pubkey, expiry and salt
    * @returns Returns the AnonGroup and membership proof, along with additional args that may be needed for verification
    */
-  generateProof(ephemeralKey: EphemeralKey): Promise<{
+  generateProof(ephemeralKey: EphemeralKey, args?: object): Promise<{
     proof: Uint8Array;
     anonGroup: AnonGroup;
     proofArgs: object;
