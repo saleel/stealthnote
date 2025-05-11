@@ -1,5 +1,5 @@
 [package]
-name = "stealthnote_email"
+name = "stealthnote_email_2048"
 type = "bin"
 authors = ["saleel"]
 compiler_version = ">=1.0.0"

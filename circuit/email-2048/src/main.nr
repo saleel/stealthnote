@@ -2,7 +2,7 @@ use std::{collections::bounded_vec::BoundedVec};
 use zkemail::{
     dkim::RSAPubkey,
     headers::{email_address::get_email_address},
-    KEY_LIMBS_1024,
+    KEY_LIMBS_2048,
     MAX_EMAIL_ADDRESS_LENGTH,
     Sequence,
 };
@@ -13,9 +13,9 @@ global MAX_EMAIL_LENGTH: u32 = 320;
 
 fn main(
     email_header: BoundedVec<u8, MAX_EMAIL_HEADER_LENGTH>,
-    dkim_pubkey_moulus_limbs: pub [Field; 9],
-    dkim_pubkey_redc_params_limbs: [Field; 9],
-    dkim_signature: [Field; 9],
+    dkim_pubkey_moulus_limbs: pub [Field; KEY_LIMBS_2048],
+    dkim_pubkey_redc_params_limbs: [Field; KEY_LIMBS_2048],
+    dkim_signature: [Field; KEY_LIMBS_2048],
     from_header_sequence: Sequence,
     from_address_sequence: Sequence,
     to_header_sequence: Sequence,

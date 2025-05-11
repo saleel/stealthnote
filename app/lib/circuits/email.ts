@@ -51,7 +51,15 @@ export const EmailCircuitHelper = {
     };
 
     const { Noir, UltraHonkBackend } = await initProver();
-    const circuitArtifact = await import(`../../assets/email/circuit.json`);
+    let circuitArtifact;
+    if (zkEmailInputs.pubkey.modulus.length === 18) {
+      circuitArtifact = await import(`../../assets/email_2048/circuit.json`);
+    } else if (zkEmailInputs.pubkey.modulus.length === 9) {
+      circuitArtifact = await import(`../../assets/email_1024/circuit.json`);
+    } else {
+      throw new Error("[Email Circuit] Unsupported DKIM public key modulus length");
+    }
+
     const backend = new UltraHonkBackend(circuitArtifact.bytecode, { threads: 8 });
     const noir = new Noir(circuitArtifact as CompiledCircuit);
 
@@ -86,14 +94,27 @@ export const EmailCircuitHelper = {
       );
     }
 
-    const { BarretenbergVerifier } = await initVerifier();
-    const vkey = await import(`../../assets/email/circuit-vkey.json`);
+    const rsaKeyLength = dkimPubKey.toString(2).length;
+    let limbSize;
+    let vkey;
 
-    // Public Inputs = pubkey_limbs(9 / 18) domain(64) + ephemeral_pubkey(1)
+    if (rsaKeyLength === 1024) {
+      limbSize = 9;
+      vkey = await import(`../../assets/email_1024/vkey.json`);
+    } else if (rsaKeyLength === 2048) {
+      limbSize = 18;
+      vkey = await import(`../../assets/email_2048/vkey.json`);
+    } else {
+      throw new Error("[Email Circuit] Unsupported DKIM public key length");
+    }
+
+    const { BarretenbergVerifier } = await initVerifier();
+
+    // Public Inputs = pubkey_limbs(9 / 18) + domain(64) + ephemeral_pubkey(1)
     const publicInputs = [];
 
     // Push modulus limbs as 64 char hex strings (18 Fields)
-    const modulusLimbs = splitBigIntToLimbs(dkimPubKey, 120, 9);
+    const modulusLimbs = splitBigIntToLimbs(dkimPubKey, 120, limbSize);
     publicInputs.push(
       ...modulusLimbs.map((s) => "0x" + s.toString(16).padStart(64, "0"))
     );
@@ -119,6 +140,7 @@ export const EmailCircuitHelper = {
     const verifier = new BarretenbergVerifier({
       crsPath: process.env.TEMP_DIR,
     });
+
     const result = await verifier.verifyUltraHonkProof(
       proofData,
       Uint8Array.from(vkey)

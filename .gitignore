@@ -2,7 +2,7 @@
 node_modules
 
 .DS_Store
-circuit/target
+circuit/*/target
 circuit/Prover.toml
 
 .env

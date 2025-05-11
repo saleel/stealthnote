@@ -93,7 +93,7 @@ export const JWTCircuitHelper = {
 
     const { BarretenbergVerifier } = await initVerifier();
 
-    const vkey = await import(`../../assets/jwt/circuit-vkey.json`);
+    const vkey = await import(`../../assets/jwt/vkey.json`);
 
     // Public Inputs = pubkey_limbs(18) + domain(64) + ephemeral_pubkey(1) + ephemeral_pubkey_expiry(1) = 84
     const publicInputs = [];
