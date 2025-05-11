@@ -24,6 +24,7 @@
     "postal-mime": "^2.4.3",
     "react": "^18",
     "react-dom": "^18",
+    "react-dropzone": "^14.3.8",
     "twitter-api-v2": "^1.20.2",
     "unique-names-generator": "^4.7.1"
   },

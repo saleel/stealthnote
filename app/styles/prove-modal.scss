@@ -1,0 +1,31 @@
+.prove-modal {
+	transition: height 0.3s ease;
+	overflow: hidden;
+}
+
+.prove-modal-button {
+	background-color: white;
+	border: 1px solid var(--shade-600);
+	border-radius: 0px;
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	font-size: 1rem;
+	transition: width 0.3s ease;
+	margin: 1rem auto;
+	min-width: 200px;
+	height: 3rem;
+
+	&:hover {
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+		background-color: var(--shade-100);
+	}
+
+	&:disabled {
+		background-color: var(--shade-100);
+		color: var(--shade-400);
+		cursor: not-allowed;
+	}
+}

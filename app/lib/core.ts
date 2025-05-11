@@ -1,6 +1,6 @@
 import type { Message, SignedMessage, SignedMessageWithProof } from "./types";
 import { createMembership, createMessage } from "./api";
-import { generateEphemeralKey, signMessage, verifyMessageSignature } from "./ephemeral-key";
+import { getEphemeralKey, signMessage, verifyMessageSignature } from "./ephemeral-key";
 import { initProver } from "./lazy-modules";
 import { Providers } from "./providers";
 
@@ -12,7 +12,10 @@ export async function registerMembership(
   initProver();
 
   // Generate ephemeral key pair and a random salt
-  const ephemeralKey = await generateEphemeralKey();
+  const ephemeralKey = await getEphemeralKey();
+  if (!ephemeralKey) {
+    throw new Error("No ephemeral key found");
+  }
 
   // Ask the AnonGroup provider to generate a proof
   const provider = Providers[providerName];

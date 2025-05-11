@@ -7,9 +7,8 @@ import { getEphemeralPubkey } from "../lib/ephemeral-key";
 import { registerMembership, postMessage } from "../lib/core";
 import { generateNameFromPubkey } from "../lib/utils";
 import { Providers } from "../lib/providers";
-import SignWithGoogleButton from "./siwg";
-import ProveByEmailButton from "./prove-by-email-button";
-// import SignInWithMicrosoftButton from "./siwm";
+import ProveModal from "./prove-modal";
+
 
 type MessageFormProps = {
   isInternal?: boolean;
@@ -45,7 +44,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
     : `Someone from ${anonGroup?.title}`;
 
   const welcomeMessage = `
-    Sign in with your Google work account to anonymously post as "Someone from your company".
+    Prove you own a company email address privately to post as "Someone from your company".
   `;
 
   // State
@@ -53,10 +52,11 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
   const [isPosting, setIsPosting] = useState(false);
   const [isRegistering, setIsRegistering] = useState("");
   const [status, setStatus] = useState(!isRegistered ? welcomeMessage : "");
+  const [isProveModalOpen, setIsProveModalOpen] = useState(false);
 
 
   // Handlers
-  async function handleSignIn(providerName: string, args?: any) {
+  async function handleSignIn(providerName: string, args?: object) {
     try {
       setIsRegistering(providerName);
       setStatus(`Generating cryptographic proof of your membership without revealing your identity.
@@ -174,29 +174,31 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
               onClick={onSubmitMessage}
               disabled={!!isRegistering || isPosting || message.length === 0}
             >
-              {isPosting ? <span className="spinner-icon small" /> : "Post"}
+              {isPosting ?
+                <span className="spinner-icon medium" style={{ borderLeftColor: "white" }} />
+                : "Post"
+              }
             </button>
           </>
         )}
 
         {!isRegistered && (
-          <div className="message-form-oauth-buttons">
-            <SignWithGoogleButton
-              onClick={() => handleSignIn("google-oauth")}
-              isLoading={isRegistering === "google-oauth"}
-              disabled={!!isRegistering}
+          <>
+            <button
+              className="message-form-prove-button"
+              onClick={() => setIsProveModalOpen(true)}
+            >
+              {isRegistering ?
+                <span className="spinner-icon medium" style={{ borderLeftColor: "white" }} />
+                : "Prove"
+              }
+            </button>
+            <ProveModal
+              isOpen={isProveModalOpen}
+              onClose={() => setIsProveModalOpen(false)}
+              onSubmit={handleSignIn}
             />
-            <ProveByEmailButton
-              onSubmitEmail={(args) => handleSignIn("prove-by-email", args)}
-              isLoading={isRegistering === "prove-by-email"}
-              disabled={!!isRegistering}
-            />
-            {/* <SignInWithMicrosoftButton
-              onClick={() => handleSignIn("microsoft-oauth")}
-              isLoading={isRegistering === "microsoft-oauth"}
-              disabled={!!isRegistering}
-            /> */}
-          </div>
+          </>
         )}
       </div>
     </div>

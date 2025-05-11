@@ -96,7 +96,7 @@
 }
 
 .message-form-post-button {
-  background-color: var(--primary-900);
+  background-color: var(--shade-700);
   color: white;
   border: none;
   border-radius: 3px;
@@ -104,11 +104,11 @@
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.2s;
-  min-width: 70px;
+  min-width: 80px;
   height: 2rem;
 
   &:hover {
-    background-color: var(--primary-950);
+    background-color: var(--shade-800);
   }
 
   &:disabled {
@@ -117,41 +117,8 @@
   }
 }
 
-.message-form-oauth-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.message-form-oauth-button {
-  background-color: white;
-  border: 1px solid var(--shade-400);
-  border-radius: 0px;
-  padding: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-  height: 40px;
-  width: 40px;
-  margin-right: 0.5rem;
-
-  &:hover {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    background-color: #f8f9fa;
-  }
-
-  &:disabled {
-    background-color: #f8f9fa;
-    color: #6c757d;
-    cursor: not-allowed;
-  }
-
-  &:last-child {
-    margin-right: 0;
-  }
+.message-form-prove-button {
+  @extend .message-form-post-button;
 }
 
 @media (max-width: 768px) {

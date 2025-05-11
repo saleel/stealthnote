@@ -6,7 +6,7 @@ import { ProveByEmailProvider } from "./prove-by-email";
 export const Providers: Record<string, AnonGroupProvider> = {
   "google-oauth": GoogleOAuthProvider,
   "microsoft-oauth": MicrosoftOAuthProvider,
-  "prove-by-email": ProveByEmailProvider,
+  "email": ProveByEmailProvider,
 };
 
 export const ProviderSlugKeyMap: Record<string, AnonGroupProvider> = {

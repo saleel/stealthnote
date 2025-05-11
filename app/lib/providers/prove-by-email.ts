@@ -7,7 +7,7 @@ import { AnonGroupProvider, EphemeralKey } from "../types";
  */
 export const ProveByEmailProvider: AnonGroupProvider = {
   //
-  name: () => "prove-by-email",
+  name: () => "email",
   //
   getSlug: () => "domain",
   //
