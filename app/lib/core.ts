@@ -1,16 +1,12 @@
 import type { Message, SignedMessage, SignedMessageWithProof } from "./types";
 import { createMembership, createMessage } from "./api";
 import { getEphemeralKey, signMessage, verifyMessageSignature } from "./ephemeral-key";
-import { initProver } from "./lazy-modules";
 import { Providers } from "./providers";
 
 export async function registerMembership(
   providerName: keyof typeof Providers,
   args?: object
 ) {
-  // Initialize prover without await to preload aztec bundle
-  initProver();
-
   // Generate ephemeral key pair and a random salt
   const ephemeralKey = await getEphemeralKey();
   if (!ephemeralKey) {

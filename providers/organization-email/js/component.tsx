@@ -4,11 +4,12 @@ import React, { useState, useMemo } from "react";
 import IonIcon from "@reacticons/ionicons";
 import { useDropzone } from 'react-dropzone';
 import emailParser from "postal-mime";
+import { EphemeralKey } from "./types";
 
 
 const ProveByEmail = (props: {
   onSubmit: (email: { email: string, domain: string, dkimSelector: string }) => void;
-  getEphemeralKey: () => Promise<string>;
+  getEphemeralKey: () => Promise<EphemeralKey>;
 }) => {
   const { onSubmit, getEphemeralKey } = props;
 

@@ -2,10 +2,9 @@
 
 import React from "react";
 import IonIcon from "@reacticons/ionicons";
-import ProveBySIWG from "./prove-by-siwg";
+import ProveByGoogleJWT from "@stealthnote/google-jwt-provider/component";
 import { generateEphemeralKey } from "../lib/ephemeral-key";
-import ProveByEmail from "./prove-by-email";
-
+import { Component as ProveByEmail } from "@stealthnote/organization-email";
 
 const ProveModal = (props: {
   isOpen: boolean;
@@ -42,7 +41,7 @@ const ProveModal = (props: {
           <hr />
           <br />
 
-          <ProveBySIWG
+          <ProveByGoogleJWT
             getEphemeralKey={() => generateEphemeralKey()}
             onSubmit={(args) => {
               onSubmit("google-oauth", args);

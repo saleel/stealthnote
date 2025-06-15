@@ -1,0 +1,9 @@
+[package]
+name = "stealthnote_jwt"
+type = "bin"
+authors = ["saleel"]
+compiler_version = ">=1.0.0"
+version = "0.3.1"
+
+[dependencies]
+jwt = { tag = "v0.4.4", git = "https://github.com/saleel/noir-jwt" }

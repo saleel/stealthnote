@@ -1,13 +1,12 @@
 import { InputMap, type CompiledCircuit } from "@noir-lang/noir_js";
 import { generateEmailVerifierInputs } from "@zk-email/zkemail-nr";
 import { getAddressHeaderSequence } from "@zk-email/zkemail-nr/dist/utils";
-import { initProver, initVerifier } from "../lazy-modules";
-import { EphemeralKey } from "../types";
-import { splitBigIntToLimbs } from "../utils";
+import { EphemeralKey } from "./types";
+import { splitBigIntToLimbs } from "./utils";
 
 const MAX_DOMAIN_LENGTH = 64;
 
-export const EmailCircuitHelper = {
+export default {
   version: "0.1.0",
   generateProof: async ({
     email,
@@ -50,12 +49,14 @@ export const EmailCircuitHelper = {
       ephemeral_pubkey: (ephemeralKey.publicKey >> 3n).toString(),
     };
 
-    const { Noir, UltraHonkBackend } = await initProver();
+    const { Noir } = await import("@noir-lang/noir_js");
+    const { UltraHonkBackend } = await import("@aztec/bb.js");
+
     let circuitArtifact;
     if (zkEmailInputs.pubkey.modulus.length === 18) {
-      circuitArtifact = await import(`../../assets/email_2048/circuit.json`);
+      circuitArtifact = await import(`../circuits/email-2048/artifacts/circuit.json`);
     } else if (zkEmailInputs.pubkey.modulus.length === 9) {
-      circuitArtifact = await import(`../../assets/email_1024/circuit.json`);
+      circuitArtifact = await import(`../circuits/email-1024/artifacts/circuit.json`);
     } else {
       throw new Error("[Email Circuit] Unsupported DKIM public key modulus length");
     }
@@ -100,18 +101,18 @@ export const EmailCircuitHelper = {
 
     if (rsaKeyLength === 1024) {
       limbSize = 9;
-      vkey = await import(`../../assets/email_1024/vkey.json`);
+      vkey = await import(`../circuits/email-1024/artifacts/vkey.json`);
     } else if (rsaKeyLength === 2048) {
       limbSize = 18;
-      vkey = await import(`../../assets/email_2048/vkey.json`);
+      vkey = await import(`../circuits/email-2048/artifacts/vkey.json`);
     } else {
       throw new Error("[Email Circuit] Unsupported DKIM public key length");
     }
 
-    const { BarretenbergVerifier } = await initVerifier();
+    const { BarretenbergVerifier } = await import("@aztec/bb.js");
 
     // Public Inputs = pubkey_limbs(9 / 18) + domain(64) + ephemeral_pubkey(1)
-    const publicInputs = [];
+    const publicInputs: string[] = [];
 
     // Push modulus limbs as 64 char hex strings (18 Fields)
     const modulusLimbs = splitBigIntToLimbs(dkimPubKey, 120, limbSize);

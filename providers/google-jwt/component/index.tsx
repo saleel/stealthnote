@@ -2,13 +2,20 @@
 
 import React from "react";
 import Image from "next/image";
-import googleLogo from "../assets/google.png";
-import { LocalStorageKeys, EphemeralKey } from "../lib/types";
+import googleLogo from "./google.png";
+import { EphemeralKey } from "../js/types";
 
-const ProveBySIWG = (props: {
-  getEphemeralKey: () => Promise<EphemeralKey>,
+const LocalStorageKeys = {
+  GoogleOAuthState: "google-oauth-state",
+  GoogleOAuthNonce: "google-oauth-nonce",
+};
+
+export interface ProveBySIWGProps {
+  getEphemeralKey: () => Promise<EphemeralKey>;
   onSubmit: (args: { idToken: string }) => void;
-}) => {
+}
+
+const ProveBySIWG: React.FC<ProveBySIWGProps> = (props) => {
   const { getEphemeralKey, onSubmit } = props;
   const [isLoading, setIsLoading] = React.useState(false);
 
