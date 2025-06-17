@@ -22,7 +22,7 @@ const ProveModal = (props: {
     return (
       <ProviderComponent
         getEphemeralKey={() => generateEphemeralKey()}
-        onSubmit={(args: any) => {
+        onSubmit={(args: object) => {
           onSubmit(provider.name(), args);
           onClose();
         }}

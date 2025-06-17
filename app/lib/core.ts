@@ -73,9 +73,7 @@ export async function verifyMessage(message: SignedMessageWithProof) {
 
     return isValid;
   } catch (error) {
-    // @ts-expect-error - error is an unknown type
-    alert(error.message);
-    // @ts-expect-error - error is an unknown type
-    throw new Error(error.message);
+    alert((error as Error).message);
+    throw error;
   }
 }

@@ -6,7 +6,7 @@
     "app"
   ],
   "scripts": {
-    "build": "yarn workspaces run build",
+    "build": "yarn workspace @stealthnote/app build",
     "dev": "yarn workspace @stealthnote/app dev",
     "start": "yarn workspace @stealthnote/app start"
   },
