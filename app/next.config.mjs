@@ -1,14 +1,13 @@
 import dotenv from "dotenv";
 import webpack from "webpack";
-import buffer from "buffer";
 
 dotenv.config();
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: [
-    "@stealthnote/google-jwt-provider",
-    "@stealthnote/organization-email",
+    "@stealthnote/provider-organization-google-jwt",
+    "@stealthnote/provider-organization-email",
   ],
   experimental: {
     outputFileTracingIncludes: {
@@ -47,21 +46,6 @@ const nextConfig = {
       syncWebAssembly: true,
       layers: true,
     };
-
-    // // Add rule for TSX files in node_modules
-    // config.module.rules.push({
-    //   test: /\.tsx?$/,
-    //   include: [/providers\/google-jwt/],
-    //   use: [
-    //     {
-    //       loader: 'ts-loader',
-    //       options: {
-    //         transpileOnly: true,
-    //       },
-    //     },
-    //   ],
-    // });
-
     config.plugins.push(
       new webpack.ProvidePlugin({
         Buffer: ["buffer", "Buffer"],

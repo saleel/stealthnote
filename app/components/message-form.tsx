@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import IonIcon from "@reacticons/ionicons";
-import { LocalStorageKeys, Message, SignedMessageWithProof } from "../lib/types";
+import { LocalStorageKeys, Message, SignedMessageWithProof } from "../../types";
 import { getEphemeralPubkey } from "../lib/ephemeral-key";
 import { registerMembership, postMessage } from "../lib/core";
 import { generateNameFromPubkey } from "../lib/utils";

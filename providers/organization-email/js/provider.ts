@@ -1,22 +1,23 @@
 import { InputMap, type CompiledCircuit } from "@noir-lang/noir_js";
 import { generateEmailVerifierInputs } from "@zk-email/zkemail-nr";
 import { getAddressHeaderSequence } from "@zk-email/zkemail-nr/dist/utils";
-import { EphemeralKey } from "./types";
+import { AnonGroupProvider, EphemeralKey } from "../../../types";
 import { splitBigIntToLimbs } from "./utils";
 
 const MAX_DOMAIN_LENGTH = 64;
 
-export default {
-  version: "0.1.0",
-  generateProof: async ({
-    email,
-    ephemeralKey,
-    domain,
-  }: {
-    email: string;
-    ephemeralKey: EphemeralKey;
-    domain: string;
-  }) => {
+const OrganizationEmailProvider: AnonGroupProvider = {
+  //
+  name: () => "organization-email",
+  //
+  getSlug: () => "domain",
+  //
+  generateProof: async (ephemeralKey: EphemeralKey, args: { email: string, domain: string, dkimSelector: string }) => {
+    const { email, domain, dkimSelector } = args;
+    if (!email || !domain || !dkimSelector) {
+      throw new Error("[OrganizationEmailProvider] Invalid arguments: email, domain and dkimSelector are required");
+    }
+
     const zkEmailInputs = await generateEmailVerifierInputs(Buffer.from(email), {
       maxHeadersLength: 640,
       ignoreBodyHashCheck: true,
@@ -54,9 +55,9 @@ export default {
 
     let circuitArtifact;
     if (zkEmailInputs.pubkey.modulus.length === 18) {
-      circuitArtifact = await import(`../circuits/email-2048/artifacts/circuit.json`);
+      circuitArtifact = await import(`../nr/email-2048/artifacts/circuit.json`);
     } else if (zkEmailInputs.pubkey.modulus.length === 9) {
-      circuitArtifact = await import(`../circuits/email-1024/artifacts/circuit.json`);
+      circuitArtifact = await import(`../nr/email-1024/artifacts/circuit.json`);
     } else {
       throw new Error("[Email Circuit] Unsupported DKIM public key modulus length");
     }
@@ -72,28 +73,36 @@ export default {
 
     console.log(`Proof generated in ${provingTime}ms`);
 
-    return proof;
+    const anonGroup = OrganizationEmailProvider.getAnonGroup(domain);
+
+    const proofArgs = {
+      dkimSelector: args.dkimSelector,
+    };
+
+    return {
+      proof: proof.proof,
+      anonGroup,
+      proofArgs,
+    };
   },
 
   //
 
   verifyProof: async (
     proof: Uint8Array,
-    { domain,
-      dkimPubKey,
-      ephemeralPubkey
-     }:
-      {
-        domain: string;
-        dkimPubKey: bigint;
-        ephemeralPubkey: bigint;
-      }
+    anonGroupId: string,
+    ephemeralPubkey: bigint,
+    ephemeralPubkeyExpiry: Date,
+    proofArgs: { dkimSelector: string }
   ) => {
-    if (!domain || !dkimPubKey || !ephemeralPubkey) {
+    const dkimPubKey = await fetchDKIMPubkey(anonGroupId, proofArgs.dkimSelector);
+    if (!dkimPubKey) {
       throw new Error(
-        "[Email Circuit] Proof verification failed: invalid public inputs"
+        "[Prove With Email] Proof verification failed: could not fetch DKIM pubkey."
       );
     }
+
+    const domain = anonGroupId;
 
     const rsaKeyLength = dkimPubKey.toString(2).length;
     let limbSize;
@@ -101,10 +110,10 @@ export default {
 
     if (rsaKeyLength === 1024) {
       limbSize = 9;
-      vkey = await import(`../circuits/email-1024/artifacts/vkey.json`);
+      vkey = await import(`../nr/email-1024/artifacts/vkey.json`);
     } else if (rsaKeyLength === 2048) {
       limbSize = 18;
-      vkey = await import(`../circuits/email-2048/artifacts/vkey.json`);
+      vkey = await import(`../nr/email-2048/artifacts/vkey.json`);
     } else {
       throw new Error("[Email Circuit] Unsupported DKIM public key length");
     }
@@ -149,4 +158,78 @@ export default {
 
     return result;
   },
+
+  getAnonGroup: (anonGroupId: string) => {
+    return {
+      id: anonGroupId,
+      title: anonGroupId,
+      logoUrl: `https://img.logo.dev/${anonGroupId}?token=pk_SqdEexoxR3akcyJz7PneXg`,
+    };
+  },
 };
+
+export default OrganizationEmailProvider;
+
+interface DNSResponse {
+  Status: number;
+  Answer?: Array<{
+    name: string;
+    type: number;
+    TTL: number;
+    data: string;
+  }>;
+}
+
+export async function fetchDKIMPubkey(domain: string, selector: string): Promise<bigint> {
+  // Use Google HTTP DNS to fetch DKIM pubkey
+  const dkimRecordName = `${selector}._domainkey.${domain}`;
+  const googleDnsUrl = `https://dns.google/resolve?name=${dkimRecordName}&type=TXT`;
+  const googleDnsResponse = await fetch(googleDnsUrl);
+  const googleDnsData = await googleDnsResponse.json() as DNSResponse;
+
+  if (!googleDnsData.Answer?.[0]?.data) {
+    throw new Error(`No DKIM record found for ${dkimRecordName}`);
+  }
+
+  // DKIM record is in format: "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A..."
+  const dkimRecord = googleDnsData.Answer[0].data;
+  const dkimParts = dkimRecord.split(';').map((part: string) => part.trim());
+
+  // Find the p= part which contains the base64 encoded public key
+  const publicKeyPart = dkimParts.find((part: string) => part.startsWith('p='));
+  if (!publicKeyPart) {
+    throw new Error('No public key found in DKIM record');
+  }
+
+  // Extract the base64 public key
+  const base64PubKey = publicKeyPart.substring(2);
+
+  const binaryDerString = atob(base64PubKey);
+  const binaryDer = new Uint8Array([...binaryDerString].map(c => c.charCodeAt(0)));
+
+  // Use WebCrypto to import the key
+  const key = await globalThis.crypto.subtle.importKey(
+    'spki',
+    binaryDer.buffer,
+    {
+      name: 'RSA-PSS',
+      hash: 'SHA-256'
+    },
+    true,
+    ['verify']
+  );
+
+  // Export the key as jwk to access the modulus
+  const jwk = await globalThis.crypto.subtle.exportKey('jwk', key);
+
+  // Decode base64url modulus to BigInt
+  const modulusB64Url = jwk.n;
+  const modulusBin = Uint8Array.from(atob(modulusB64Url!.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+
+  // Convert binary modulus to BigInt
+  const hex = [...modulusBin].map(b => b.toString(16).padStart(2, '0')).join('');
+  const modulusBigInt = BigInt('0x' + hex);
+
+
+  return modulusBigInt;
+}

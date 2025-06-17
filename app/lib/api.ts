@@ -1,4 +1,4 @@
-import { Message, SignedMessage, SignedMessageWithProof } from "./types";
+import { Message, SignedMessage, SignedMessageWithProof } from "../../types";
 import { getEphemeralPubkey } from "./ephemeral-key";
 
 export async function fetchMessages({

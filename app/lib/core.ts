@@ -1,4 +1,4 @@
-import type { Message, SignedMessage, SignedMessageWithProof } from "./types";
+import type { Message, SignedMessage, SignedMessageWithProof } from "../../types";
 import { createMembership, createMessage } from "./api";
 import { getEphemeralKey, signMessage, verifyMessageSignature } from "./ephemeral-key";
 import { Providers } from "./providers";

@@ -6,7 +6,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import IonIcon from "@reacticons/ionicons";
-import { LocalStorageKeys } from "../lib/types";
+import { LocalStorageKeys } from "../../types";
 import { Providers } from "../lib/providers";
 import { WelcomeModal } from './welcome-modal';
 import logo from "@/assets/logo.png";

@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react";
 import IonIcon from "@reacticons/ionicons";
 import { useDropzone } from 'react-dropzone';
 import emailParser from "postal-mime";
-import { EphemeralKey } from "./types";
+import { EphemeralKey } from "../../../types";
 
 
 const ProveByEmail = (props: {

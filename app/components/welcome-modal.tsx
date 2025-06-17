@@ -1,7 +1,8 @@
-import { LocalStorageKeys } from '@/lib/types';
 import IonIcon from '@reacticons/ionicons';
 import { useLocalStorage } from '@uidotdev/usehooks';
 import { useState } from 'react';
+import { LocalStorageKeys } from "../../types";
+
 
 export const WelcomeModal = () => {
   const [hasSeenWelcome, setHasSeenWelcome] = useLocalStorage(LocalStorageKeys.HasSeenWelcomeMessage, false);

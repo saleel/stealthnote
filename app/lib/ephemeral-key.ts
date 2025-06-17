@@ -1,8 +1,9 @@
 import { Barretenberg, Fr } from "@aztec/bb.js";
 import * as ed25519 from '@noble/ed25519';
-import { sha512 } from '@noble/hashes/sha512';
-import { EphemeralKey, LocalStorageKeys, Message, SignedMessage } from "./types";
+import { sha512 } from '@noble/hashes/sha2';
+import { EphemeralKey, Message, SignedMessage, LocalStorageKeys } from "../../types";
 import { bytesToBigInt, bigIntToBytes } from "./utils";
+
 
 ed25519.etc.sha512Sync = (...m) => sha512(ed25519.etc.concatBytes(...m));
 

@@ -2,9 +2,9 @@
 
 import React from "react";
 import IonIcon from "@reacticons/ionicons";
-import ProveByGoogleJWT from "@stealthnote/google-jwt-provider/component";
 import { generateEphemeralKey } from "../lib/ephemeral-key";
-import { Component as ProveByEmail } from "@stealthnote/organization-email";
+import { Component as ProveByEmail } from "@stealthnote/provider-organization-email";
+import { Component as ProveByGoogleJWT } from "@stealthnote/provider-organization-google-jwt";
 
 const ProveModal = (props: {
   isOpen: boolean;

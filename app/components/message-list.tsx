@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { fetchMessages } from "../lib/api";
 import MessageCard from "./message-card";
-import { SignedMessageWithProof } from "../lib/types";
+import { SignedMessageWithProof } from "../../types";
 import MessageForm from "./message-form";
 
 const MESSAGES_PER_PAGE = 30;

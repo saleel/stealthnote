@@ -11,8 +11,8 @@
   "dependencies": {
     "@noble/ed25519": "^2.2.3",
     "@noble/hashes": "^1.7.1",
-    "@stealthnote/google-jwt-provider": "file:../providers/google-jwt",
-    "@stealthnote/organization-email": "file:../providers/organization-email",
+    "@stealthnote/provider-organization-google-jwt": "link:../providers/organization-google-jwt",
+    "@stealthnote/provider-organization-email": "link:../providers/organization-email",
     "@supabase/supabase-js": "^2.45.4",
     "@uidotdev/usehooks": "^2.4.1",
     "dotenv": "^16.4.5",

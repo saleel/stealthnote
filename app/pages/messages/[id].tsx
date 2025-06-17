@@ -2,7 +2,7 @@ import { useRouter } from "next/router";
 import MessageCard from "../../components/message-card";
 import Layout from "../../components/layout";
 import { fetchMessage } from "../../lib/api";
-import type { SignedMessageWithProof } from "../../lib/types";
+import type { SignedMessageWithProof } from "../../../types";
 import usePromise from "../../hooks/use-promise";
 
 export default function SingleMessagePage() {

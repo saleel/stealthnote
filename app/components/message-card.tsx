@@ -3,7 +3,7 @@ import Image from "next/image";
 import TimeAgo from "javascript-time-ago";
 import Link from "next/link";
 import IonIcon from "@reacticons/ionicons";
-import type { SignedMessageWithProof } from "../lib/types";
+import type { SignedMessageWithProof } from "../../types";
 import { generateNameFromPubkey } from "../lib/utils";
 import { setMessageLiked, isMessageLiked } from "../lib/store";
 import { fetchMessage, toggleLike } from "../lib/api";
