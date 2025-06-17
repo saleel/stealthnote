@@ -1,34 +1,38 @@
-import dotenv from "dotenv";
-import webpack from "webpack";
+import dotenv from 'dotenv';
+import webpack from 'webpack';
 
 dotenv.config();
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: [
-    "@stealthnote/provider-organization-google-jwt",
-    "@stealthnote/provider-organization-email",
-  ],
+  transpilePackages: ['@stealthnote/provider-organization-google-jwt', '@stealthnote/provider-organization-email'],
   experimental: {
     outputFileTracingIncludes: {
-      "/*": [
-        "./node_modules/@aztec/bb.js/dest/node/barretenberg_wasm/*",
-      ]
+      '/api/messages': [
+        '../node_modules/@aztec/bb.js/dest/node/barretenberg_wasm/**/*',
+        '../node_modules/@aztec/bb.js/dest/node/barretenberg_wasm/barretenberg_wasm_thread/factory/node/thread.worker.js',
+        '../node_modules/@aztec/bb.js/dest/node/barretenberg_wasm/barretenberg_wasm_main/factory/node/main.worker.js',
+      ],
+      '/api/messages/': [
+        '../node_modules/@aztec/bb.js/dest/node/barretenberg_wasm/**/*',
+        '../node_modules/@aztec/bb.js/dest/node/barretenberg_wasm/barretenberg_wasm_thread/factory/node/thread.worker.js',
+        '../node_modules/@aztec/bb.js/dest/node/barretenberg_wasm/barretenberg_wasm_main/factory/node/main.worker.js',
+      ],
     },
   },
   reactStrictMode: false,
   sassOptions: {
-    includePaths: ["./"],
+    includePaths: ['./'],
   },
   images: {
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "developers.google.com",
+        protocol: 'https',
+        hostname: 'developers.google.com',
       },
       {
-        protocol: "https",
-        hostname: "img.logo.dev",
+        protocol: 'https',
+        hostname: 'img.logo.dev',
       },
     ],
   },
@@ -43,21 +47,21 @@ const nextConfig = {
     };
     config.plugins.push(
       new webpack.ProvidePlugin({
-        Buffer: ["buffer", "Buffer"],
+        Buffer: ['buffer', 'Buffer'],
       }),
       new webpack.NormalModuleReplacementPlugin(/node:/, (resource) => {
-        const mod = resource.request.replace(/^node:/, "");
+        const mod = resource.request.replace(/^node:/, '');
         switch (mod) {
-          case "buffer":
-            resource.request = "buffer";
+          case 'buffer':
+            resource.request = 'buffer';
             break;
-          case "stream":
-            resource.request = "readable-stream";
+          case 'stream':
+            resource.request = 'readable-stream';
             break;
           default:
             throw new Error(`Not found ${mod}`);
         }
-      })
+      }),
     );
     return config;
   },
