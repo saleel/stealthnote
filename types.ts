@@ -67,6 +67,12 @@ export interface AnonGroupProvider {
    * @returns Promise resolving to the AnonGroup
    */
   getAnonGroup(groupId: string): AnonGroup;
+
+  /**
+   * Get the react component for the provider
+   * @returns The react component
+   */
+  getComponent(): React.FunctionComponent<any>;
 }
 
 /**

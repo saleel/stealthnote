@@ -8,9 +8,8 @@ import { useLocalStorage } from "@uidotdev/usehooks";
 import IonIcon from "@reacticons/ionicons";
 import { LocalStorageKeys } from "../../types";
 import { Providers } from "../lib/providers";
-import { WelcomeModal } from './welcome-modal';
+import { WelcomeModal } from "./welcome-modal";
 import logo from "@/assets/logo.png";
-
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isDark, setIsDark] = useLocalStorage<boolean>(
@@ -31,7 +30,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   let slug = null;
   if (currentProvider && currentGroupId) {
     const provider = Providers[currentProvider];
-    slug = provider.getSlug();
+
+    if (provider) {
+      slug = provider.getSlug();
+    } else {
+      window.localStorage.removeItem(LocalStorageKeys.CurrentProvider);
+      window.localStorage.removeItem(LocalStorageKeys.CurrentGroupId);
+    }
   }
 
   // Set dark mode
@@ -45,9 +50,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
 
     console.log(
-      '%c📝 If you run in to any errors, please create an issue at https://github.com/saleel/stealthnote/issues\n' +
-      '🐦 You can also reach out to me on Twitter at https://twitter.com/_saleel',
-      'background: #efefef; color: black; font-size: 16px; padding: 10px; border-radius: 3px;'
+      "%c📝 If you run in to any errors, please create an issue at https://github.com/saleel/stealthnote/issues\n" +
+        "🐦 You can also reach out to me on Twitter at https://twitter.com/_saleel",
+      "background: #efefef; color: black; font-size: 16px; padding: 10px; border-radius: 3px;"
     );
     setConsoleShown(true);
   }, [consoleShown]);
@@ -141,27 +146,19 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
           <p className="sidebar-nav-copyright">
             <span>Made with </span>
-            <Link 
-              href="https://noir-lang.org" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              style={{ color: '#382E81' }}
+            <Link
+              href="https://noir-lang.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "#382E81" }}
             >
               Noir
             </Link>
             <span> ❤️ </span>
           </p>
           <div className="sidebar-nav-footer-links">
-            <Link
-              href="/disclaimer"
-            >
-              Disclaimer
-            </Link>
-            <Link
-              href="/privacy"
-            >
-              Privacy Policy
-            </Link>
+            <Link href="/disclaimer">Disclaimer</Link>
+            <Link href="/privacy">Privacy Policy</Link>
           </div>
         </aside>
         <main className="container">

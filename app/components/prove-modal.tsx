@@ -3,8 +3,8 @@
 import React from "react";
 import IonIcon from "@reacticons/ionicons";
 import { generateEphemeralKey } from "../lib/ephemeral-key";
-import { Component as ProveByEmail } from "@stealthnote/provider-organization-email";
-import { Component as ProveByGoogleJWT } from "@stealthnote/provider-organization-google-jwt";
+import { Providers } from "../lib/providers";
+import { AnonGroupProvider } from "../../types";
 
 const ProveModal = (props: {
   isOpen: boolean;
@@ -17,10 +17,22 @@ const ProveModal = (props: {
     return null;
   }
 
+  function renderProvider(provider: AnonGroupProvider) {
+    const ProviderComponent = provider.getComponent();
+    return (
+      <ProviderComponent
+        getEphemeralKey={() => generateEphemeralKey()}
+        onSubmit={(args: any) => {
+          onSubmit(provider.name(), args);
+          onClose();
+        }}
+      />
+    );
+  }
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-
         <div className="modal-header">
           <h3 className="modal-title">Prove you own a company email address</h3>
           <button className="modal-close-button" onClick={onClose}>
@@ -29,25 +41,14 @@ const ProveModal = (props: {
         </div>
 
         <div className="modal-content">
-          <ProveByEmail
-            getEphemeralKey={() => generateEphemeralKey()}
-            onSubmit={(args) => {
-              onSubmit("email", args);
-              onClose();
-            }}
-          />
-
-          <br />
-          <hr />
-          <br />
-
-          <ProveByGoogleJWT
-            getEphemeralKey={() => generateEphemeralKey()}
-            onSubmit={(args) => {
-              onSubmit("google-oauth", args);
-              onClose();
-            }}
-          />
+          {Object.values(Providers).map((provider) => (
+            <React.Fragment key={provider.name()}>
+              {renderProvider(provider)}
+              <br />
+              <hr />
+              <br />
+            </React.Fragment>
+          ))}
         </div>
       </div>
     </div>
