@@ -1,9 +1,4 @@
-import {
-  uniqueNamesGenerator,
-  Config,
-  adjectives,
-  animals,
-} from "unique-names-generator";
+import { uniqueNamesGenerator, Config, adjectives, animals } from 'unique-names-generator';
 
 export function getLogoUrl(domain: string) {
   return `https://img.logo.dev/${domain}?token=pk_SqdEexoxR3akcyJz7PneXg`;
@@ -15,10 +10,10 @@ export function generateNameFromPubkey(pubkey: string): string {
 
   const customConfig: Config = {
     dictionaries: [adjectives, animals],
-    separator: " ",
+    separator: ' ',
     length: 2,
     seed: seed,
-    style: "capital",
+    style: 'capital',
   };
 
   return uniqueNamesGenerator(customConfig);
@@ -34,7 +29,6 @@ function simpleHash(str: string): number {
   return Math.abs(hash);
 }
 
-
 export function bytesToBigInt(bytes: Uint8Array) {
   let result = BigInt(0);
   for (let i = 0; i < bytes.length; i++) {
@@ -46,16 +40,12 @@ export function bytesToBigInt(bytes: Uint8Array) {
 export function bigIntToBytes(bigInt: bigint, length: number) {
   const bytes = new Uint8Array(length);
   for (let i = 0; i < length; i++) {
-    bytes[length - 1 - i] = Number(bigInt >> BigInt(i * 8) & BigInt(0xff));
+    bytes[length - 1 - i] = Number((bigInt >> BigInt(i * 8)) & BigInt(0xff));
   }
   return bytes;
 }
 
-export function splitBigIntToLimbs(
-  bigInt: bigint,
-  byteLength: number,
-  numLimbs: number
-): bigint[] {
+export function splitBigIntToLimbs(bigInt: bigint, byteLength: number, numLimbs: number): bigint[] {
   const chunks: bigint[] = [];
   const mask = (1n << BigInt(byteLength)) - 1n;
   for (let i = 0; i < numLimbs; i++) {

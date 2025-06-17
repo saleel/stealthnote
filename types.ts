@@ -39,7 +39,10 @@ export interface AnonGroupProvider {
    * @param ephemeralPubkeyHash - Hash of the ephemeral pubkey, expiry and salt
    * @returns Returns the AnonGroup and membership proof, along with additional args that may be needed for verification
    */
-  generateProof(ephemeralKey: EphemeralKey, args?: object): Promise<{
+  generateProof(
+    ephemeralKey: EphemeralKey,
+    args?: object,
+  ): Promise<{
     proof: Uint8Array;
     anonGroup: AnonGroup;
     proofArgs: object;
@@ -58,7 +61,7 @@ export interface AnonGroupProvider {
     anonGroupId: string,
     ephemeralPubkey: bigint,
     ephemeralPubkeyExpiry: Date,
-    proofArgs: object
+    proofArgs: object,
   ): Promise<boolean>;
 
   /**
@@ -112,9 +115,9 @@ export interface SignedMessageWithProof extends SignedMessage {
 }
 
 export const LocalStorageKeys = {
-  EphemeralKey: "ephemeralKey",
-  CurrentGroupId: "currentGroupId",
-  CurrentProvider: "currentProvider",
-  DarkMode: "darkMode",
-  HasSeenWelcomeMessage: "hasSeenWelcomeMessage",
+  EphemeralKey: 'ephemeralKey',
+  CurrentGroupId: 'currentGroupId',
+  CurrentProvider: 'currentProvider',
+  DarkMode: 'darkMode',
+  HasSeenWelcomeMessage: 'hasSeenWelcomeMessage',
 };

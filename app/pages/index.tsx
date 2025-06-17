@@ -1,6 +1,6 @@
-import React from "react";
-import Head from "next/head";
-import MessageList from "../components/message-list";
+import React from 'react';
+import Head from 'next/head';
+import MessageList from '../components/message-list';
 
 export default function HomePage() {
   return (

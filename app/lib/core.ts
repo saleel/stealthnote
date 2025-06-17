@@ -1,16 +1,13 @@
-import type { Message, SignedMessage, SignedMessageWithProof } from "../../types";
-import { createMembership, createMessage } from "./api";
-import { getEphemeralKey, signMessage, verifyMessageSignature } from "./ephemeral-key";
-import { Providers } from "./providers";
+import type { Message, SignedMessage, SignedMessageWithProof } from '../../types';
+import { createMembership, createMessage } from './api';
+import { getEphemeralKey, signMessage, verifyMessageSignature } from './ephemeral-key';
+import { Providers } from './providers';
 
-export async function registerMembership(
-  providerName: keyof typeof Providers,
-  args?: object
-) {
+export async function registerMembership(providerName: keyof typeof Providers, args?: object) {
   // Generate ephemeral key pair and a random salt
   const ephemeralKey = await getEphemeralKey();
   if (!ephemeralKey) {
-    throw new Error("No ephemeral key found");
+    throw new Error('No ephemeral key found');
   }
 
   // Ask the AnonGroup provider to generate a proof
@@ -48,17 +45,17 @@ export async function postMessage(message: Message) {
 
 export async function verifyMessage(message: SignedMessageWithProof) {
   try {
-    if (new Date(message.timestamp).getTime() < new Date("2025-02-23").getTime()) {
+    if (new Date(message.timestamp).getTime() < new Date('2025-02-23').getTime()) {
       throw new Error(
-        "Messages generated before 2025-02-23 are not verifiable due to major changes in the circuit. " +
-        "Future versions of this app will be backward compatible."
+        'Messages generated before 2025-02-23 are not verifiable due to major changes in the circuit. ' +
+          'Future versions of this app will be backward compatible.',
       );
     }
 
     // Verify the message signature (signed with sender's ephemeral pubkey)
     let isValid = await verifyMessageSignature(message);
     if (!isValid) {
-      throw new Error("Signature verification failed for the message");
+      throw new Error('Signature verification failed for the message');
     }
 
     // Verify the proof that the sender (their ephemeral pubkey) belongs to the AnonGroup
@@ -68,7 +65,7 @@ export async function verifyMessage(message: SignedMessageWithProof) {
       message.anonGroupId,
       message.ephemeralPubkey,
       message.ephemeralPubkeyExpiry,
-      message.proofArgs
+      message.proofArgs,
     );
 
     return isValid;

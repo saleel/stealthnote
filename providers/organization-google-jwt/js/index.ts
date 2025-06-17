@@ -1,9 +1,9 @@
-import { AnonGroupProvider, EphemeralKey } from "../../../types";
-import { pubkeyModulusFromJWK, fetchGooglePublicKey } from "./utils";
-import { generateInputs } from "noir-jwt";
-import { InputMap, type CompiledCircuit } from "@noir-lang/noir_js";
-import { splitBigIntToLimbs } from "./utils";
-import Component from "./component";
+import { AnonGroupProvider, EphemeralKey } from '../../../types';
+import { pubkeyModulusFromJWK, fetchGooglePublicKey } from './utils';
+import { generateInputs } from 'noir-jwt';
+import { InputMap, type CompiledCircuit } from '@noir-lang/noir_js';
+import { splitBigIntToLimbs } from './utils';
+import Component from './component';
 
 const MAX_DOMAIN_LENGTH = 64;
 
@@ -12,22 +12,20 @@ const MAX_DOMAIN_LENGTH = 64;
  */
 const GoogleOAuthProvider: AnonGroupProvider = {
   //
-  name: () => "organization-google-jwt",
+  name: () => 'organization-google-jwt',
   //
-  getSlug: () => "domain",
+  getSlug: () => 'domain',
   //
   getComponent: () => Component,
   //
   generateProof: async (ephemeralKey: EphemeralKey, { idToken }: { idToken: string }) => {
-    const [headersB64, payloadB64] = idToken.split(".");
+    const [headersB64, payloadB64] = idToken.split('.');
     const headers = JSON.parse(atob(headersB64));
     const payload = JSON.parse(atob(payloadB64));
 
     const domain = payload.hd;
     if (!domain) {
-      throw new Error(
-        "You can use this app with a Google account that is part of an organization."
-      );
+      throw new Error('You can use this app with a Google account that is part of an organization.');
     }
 
     // Get Google pubkey
@@ -35,15 +33,13 @@ const GoogleOAuthProvider: AnonGroupProvider = {
     const jwtPubkey = await fetchGooglePublicKey(keyId);
 
     if (!idToken || !jwtPubkey) {
-      throw new Error(
-        "[JWT Circuit] Proof generation failed: idToken and jwtPubkey are required"
-      );
+      throw new Error('[JWT Circuit] Proof generation failed: idToken and jwtPubkey are required');
     }
 
     const jwtInputs = await generateInputs({
       jwt: idToken,
       pubkey: jwtPubkey,
-      shaPrecomputeTillKeys: ["email", "email_verified", "nonce"],
+      shaPrecomputeTillKeys: ['email', 'email_verified', 'nonce'],
       maxSignedDataLength: 640,
     });
 
@@ -67,10 +63,10 @@ const GoogleOAuthProvider: AnonGroupProvider = {
       },
     };
 
-    console.log("JWT circuit inputs", inputs);
+    console.log('JWT circuit inputs', inputs);
 
-    const { Noir } = await import("@noir-lang/noir_js");
-    const { UltraHonkBackend } = await import("@aztec/bb.js");
+    const { Noir } = await import('@noir-lang/noir_js');
+    const { UltraHonkBackend } = await import('@aztec/bb.js');
 
     const circuitArtifact = await import(`../nr/artifacts/circuit.json`);
     const backend = new UltraHonkBackend(circuitArtifact.bytecode, { threads: 8 });
@@ -88,7 +84,7 @@ const GoogleOAuthProvider: AnonGroupProvider = {
 
     const proofArgs = {
       keyId,
-      jwtCircuitVersion: "0.3.1",
+      jwtCircuitVersion: '0.3.1',
     };
 
     return {
@@ -103,32 +99,28 @@ const GoogleOAuthProvider: AnonGroupProvider = {
     anonGroupId: string,
     ephemeralPubkey: bigint,
     ephemeralPubkeyExpiry: Date,
-    proofArgs: { keyId: string, jwtCircuitVersion: string }
+    proofArgs: { keyId: string; jwtCircuitVersion: string },
   ) => {
-    if (proofArgs.jwtCircuitVersion !== "0.3.1") {
+    if (proofArgs.jwtCircuitVersion !== '0.3.1') {
       throw new Error(
         'This proof was generated with an older version of StealthNote JWT circuit and ' +
-        'cannot be verified at this time. You can run an older version of the app to verify this proof.'
+          'cannot be verified at this time. You can run an older version of the app to verify this proof.',
       );
     }
 
     // Verify the pubkey belongs to Google
     const googlePubkeyJWK = await fetchGooglePublicKey(proofArgs.keyId);
     if (!googlePubkeyJWK) {
-      throw new Error(
-        "[Google OAuth] Proof verification failed: could not validate Google public key."
-      );
+      throw new Error('[Google OAuth] Proof verification failed: could not validate Google public key.');
     }
     const googleJWTPubkeyModulus = await pubkeyModulusFromJWK(googlePubkeyJWK);
     const domain = anonGroupId;
 
     if (!domain || !googleJWTPubkeyModulus || !ephemeralPubkey || !ephemeralPubkeyExpiry) {
-      throw new Error(
-        "[JWT Circuit] Proof verification failed: invalid public inputs"
-      );
+      throw new Error('[JWT Circuit] Proof verification failed: invalid public inputs');
     }
 
-    const { BarretenbergVerifier } = await import("@aztec/bb.js");
+    const { BarretenbergVerifier } = await import('@aztec/bb.js');
 
     const vkey = await import('../nr/artifacts/vkey.json');
 
@@ -137,25 +129,24 @@ const GoogleOAuthProvider: AnonGroupProvider = {
 
     // Push modulus limbs as 64 char hex strings (18 Fields)
     const modulusLimbs = splitBigIntToLimbs(googleJWTPubkeyModulus, 120, 18);
-    publicInputs.push(
-      ...modulusLimbs.map((s) => "0x" + s.toString(16).padStart(64, "0"))
-    );
+    publicInputs.push(...modulusLimbs.map((s) => '0x' + s.toString(16).padStart(64, '0')));
 
     // Push domain + domain length (BoundedVec of 64 bytes)
     const domainUint8Array = new Uint8Array(64);
     domainUint8Array.set(Uint8Array.from(new TextEncoder().encode(domain)));
-    publicInputs.push(
-      ...Array.from(domainUint8Array).map(
-        (s) => "0x" + s.toString(16).padStart(64, "0")
-      )
-    );
-    publicInputs.push("0x" + domain.length.toString(16).padStart(64, "0"));
+    publicInputs.push(...Array.from(domainUint8Array).map((s) => '0x' + s.toString(16).padStart(64, '0')));
+    publicInputs.push('0x' + domain.length.toString(16).padStart(64, '0'));
 
     // Push ephemeral pubkey (1 Field)
-    publicInputs.push("0x" + (ephemeralPubkey >> 3n).toString(16).padStart(64, "0"));
+    publicInputs.push('0x' + (ephemeralPubkey >> 3n).toString(16).padStart(64, '0'));
 
     // Push ephemeral pubkey expiry (1 Field)
-    publicInputs.push("0x" + Math.floor(ephemeralPubkeyExpiry.getTime() / 1000).toString(16).padStart(64, "0"));
+    publicInputs.push(
+      '0x' +
+        Math.floor(ephemeralPubkeyExpiry.getTime() / 1000)
+          .toString(16)
+          .padStart(64, '0'),
+    );
 
     const proofData = {
       proof: proof,
@@ -165,10 +156,7 @@ const GoogleOAuthProvider: AnonGroupProvider = {
     const verifier = new BarretenbergVerifier({
       crsPath: process.env.TEMP_DIR,
     });
-    const result = await verifier.verifyUltraHonkProof(
-      proofData,
-      Uint8Array.from(vkey)
-    );
+    const result = await verifier.verifyUltraHonkProof(proofData, Uint8Array.from(vkey));
 
     return result;
   },

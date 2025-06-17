@@ -1,14 +1,13 @@
-import React, { useState } from "react";
-import dynamic from "next/dynamic";
-import { useLocalStorage } from "@uidotdev/usehooks";
-import IonIcon from "@reacticons/ionicons";
-import { LocalStorageKeys, Message, SignedMessageWithProof } from "../../types";
-import { getEphemeralPubkey } from "../lib/ephemeral-key";
-import { registerMembership, postMessage } from "../lib/core";
-import { generateNameFromPubkey } from "../lib/utils";
-import { Providers } from "../lib/providers";
-import ProveModal from "./prove-modal";
-
+import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
+import { useLocalStorage } from '@uidotdev/usehooks';
+import IonIcon from '@reacticons/ionicons';
+import { LocalStorageKeys, Message, SignedMessageWithProof } from '../../types';
+import { getEphemeralPubkey } from '../lib/ephemeral-key';
+import { registerMembership, postMessage } from '../lib/core';
+import { generateNameFromPubkey } from '../lib/utils';
+import { Providers } from '../lib/providers';
+import ProveModal from './prove-modal';
 
 type MessageFormProps = {
   isInternal?: boolean;
@@ -22,25 +21,18 @@ const prompts = (companyName: string) => [
   `What would you say if you weren’t being watched?`,
   `What’s the thing nobody’s admitting at ${companyName}?`,
 ];
-const randomPromptIndex = Math.floor(Math.random() * prompts("").length);
+const randomPromptIndex = Math.floor(Math.random() * prompts('').length);
 
 const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
-  const [currentGroupId, setCurrentGroupId] = useLocalStorage<string | null>(
-    "currentGroupId",
-    null
-  );
-  const [currentProvider, setCurrentProvider] = useLocalStorage<string | null>(
-    LocalStorageKeys.CurrentProvider,
-    null
-  );
+  const [currentGroupId, setCurrentGroupId] = useLocalStorage<string | null>('currentGroupId', null);
+  const [currentProvider, setCurrentProvider] = useLocalStorage<string | null>(LocalStorageKeys.CurrentProvider, null);
 
   const provider = currentProvider ? Providers[currentProvider] : null;
-  const anonGroup =
-    provider && currentGroupId ? provider.getAnonGroup(currentGroupId) : null;
+  const anonGroup = provider && currentGroupId ? provider.getAnonGroup(currentGroupId) : null;
 
   const isRegistered = !!currentGroupId;
   const senderName = isInternal
-    ? generateNameFromPubkey(getEphemeralPubkey()?.toString() ?? "")
+    ? generateNameFromPubkey(getEphemeralPubkey()?.toString() ?? '')
     : `Someone from ${anonGroup?.title}`;
 
   const welcomeMessage = `
@@ -48,12 +40,11 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
   `;
 
   // State
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
   const [isPosting, setIsPosting] = useState(false);
-  const [isRegistering, setIsRegistering] = useState("");
-  const [status, setStatus] = useState(!isRegistered ? welcomeMessage : "");
+  const [isRegistering, setIsRegistering] = useState('');
+  const [status, setStatus] = useState(!isRegistered ? welcomeMessage : '');
   const [isProveModalOpen, setIsProveModalOpen] = useState(false);
-
 
   // Handlers
   async function handleSignIn(providerName: string, args?: object) {
@@ -66,12 +57,12 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
 
       setCurrentGroupId(anonGroup.id);
       setCurrentProvider(providerName);
-      setStatus("");
+      setStatus('');
     } catch (error) {
-      console.error("Error:", error);
+      console.error('Error:', error);
       setStatus(`Error: ${(error as Error).message}`);
     } finally {
-      setIsRegistering("");
+      setIsRegistering('');
     }
   }
 
@@ -89,7 +80,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
 
     try {
       const messageObj: Message = {
-        id: crypto.randomUUID().split("-").slice(0, 2).join(""),
+        id: crypto.randomUUID().split('-').slice(0, 2).join(''),
         timestamp: new Date(),
         text: message,
         internal: !!isInternal,
@@ -100,7 +91,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
 
       const signedMessage = await postMessage(messageObj);
 
-      setMessage("");
+      setMessage('');
       onSubmit(signedMessage as SignedMessageWithProof);
     } catch (err) {
       console.error(err);
@@ -112,12 +103,11 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
 
   const isTextAreaDisabled = !!isRegistering || isPosting || !isRegistered;
 
-  const randomPrompt = prompts(currentGroupId ?? "your company")[randomPromptIndex]
-
+  const randomPrompt = prompts(currentGroupId ?? 'your company')[randomPromptIndex];
 
   return (
     <div className="message-form">
-      <div style={{ position: "relative" }}>
+      <div style={{ position: 'relative' }}>
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
@@ -126,26 +116,22 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
           disabled={isTextAreaDisabled}
         />
         {!isTextAreaDisabled && message.length > 0 && (
-          <span className="message-form-character-count">
-            {message.length}/280
-          </span>
+          <span className="message-form-character-count">{message.length}/280</span>
         )}
       </div>
 
       <div className="message-form-footer">
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <span className="message-form-footer-message">
-            {status ? status : `Posting as "${senderName}"`}
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <span className="message-form-footer-message">{status ? status : `Posting as "${senderName}"`}</span>
 
           {isRegistered && (
             <div className="message-form-footer-buttons">
               <button
                 title={
-                  "Multiple messages sent by one identity can be linked." +
-                  " Refresh your identity by generating a new proof."
+                  'Multiple messages sent by one identity can be linked.' +
+                  ' Refresh your identity by generating a new proof.'
                 }
-                onClick={() => handleSignIn("google-oauth")}
+                onClick={() => handleSignIn('google-oauth')}
                 tabIndex={-1}
               >
                 {isRegistering ? (
@@ -154,14 +140,10 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
                   <span className="message-form-refresh-icon">⟳</span>
                 )}
               </button>
-              <button
-                title={
-                  "Delete your identity and start over."
-                }
-                onClick={() => resetIdentity()}
-                tabIndex={-1}
-              >
-                <span className="message-form-reset-icon"><IonIcon name="close-outline" /></span>
+              <button title={'Delete your identity and start over.'} onClick={() => resetIdentity()} tabIndex={-1}>
+                <span className="message-form-reset-icon">
+                  <IonIcon name="close-outline" />
+                </span>
               </button>
             </div>
           )}
@@ -174,30 +156,17 @@ const MessageForm: React.FC<MessageFormProps> = ({ isInternal, onSubmit }) => {
               onClick={onSubmitMessage}
               disabled={!!isRegistering || isPosting || message.length === 0}
             >
-              {isPosting ?
-                <span className="spinner-icon medium" style={{ borderLeftColor: "white" }} />
-                : "Post"
-              }
+              {isPosting ? <span className="spinner-icon medium" style={{ borderLeftColor: 'white' }} /> : 'Post'}
             </button>
           </>
         )}
 
         {!isRegistered && (
           <>
-            <button
-              className="message-form-prove-button"
-              onClick={() => setIsProveModalOpen(true)}
-            >
-              {isRegistering ?
-                <span className="spinner-icon medium" style={{ borderLeftColor: "white" }} />
-                : "Prove"
-              }
+            <button className="message-form-prove-button" onClick={() => setIsProveModalOpen(true)}>
+              {isRegistering ? <span className="spinner-icon medium" style={{ borderLeftColor: 'white' }} /> : 'Prove'}
             </button>
-            <ProveModal
-              isOpen={isProveModalOpen}
-              onClose={() => setIsProveModalOpen(false)}
-              onSubmit={handleSignIn}
-            />
+            <ProveModal isOpen={isProveModalOpen} onClose={() => setIsProveModalOpen(false)} onSubmit={handleSignIn} />
           </>
         )}
       </div>

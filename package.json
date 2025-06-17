@@ -8,7 +8,19 @@
   "scripts": {
     "build": "yarn workspace @stealthnote/app build",
     "dev": "yarn workspace @stealthnote/app dev",
-    "start": "yarn workspace @stealthnote/app start"
+    "start": "yarn workspace @stealthnote/app start",
+    "lint:fix": "prettier --write \"**/*.{js,jsx,ts,tsx,json}\"",
+    "lint": "prettier --check \"**/*.{js,jsx,ts,tsx,json}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5"
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "all",
+    "arrowParens": "always",
+    "printWidth": 120
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

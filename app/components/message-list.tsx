@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import Link from "next/link";
-import { fetchMessages } from "../lib/api";
-import MessageCard from "./message-card";
-import { SignedMessageWithProof } from "../../types";
-import MessageForm from "./message-form";
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
+import { fetchMessages } from '../lib/api';
+import MessageCard from './message-card';
+import { SignedMessageWithProof } from '../../types';
+import MessageForm from './message-form';
 
 const MESSAGES_PER_PAGE = 30;
 const INITIAL_POLL_INTERVAL = 10000; // 10 seconds
@@ -17,16 +17,12 @@ type MessageListProps = {
   groupId?: string;
 };
 
-const MessageList: React.FC<MessageListProps> = ({
-  isInternal,
-  showMessageForm,
-  groupId,
-}) => {
+const MessageList: React.FC<MessageListProps> = ({ isInternal, showMessageForm, groupId }) => {
   // State
   const [messages, setMessages] = useState<SignedMessageWithProof[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [pollInterval, setPollInterval] = useState(INITIAL_POLL_INTERVAL);
 
   // Refs
@@ -46,7 +42,7 @@ const MessageList: React.FC<MessageListProps> = ({
       if (node) observer.current.observe(node);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [messages, loading, hasMore]
+    [messages, loading, hasMore],
   );
 
   // Cached helpers
@@ -67,9 +63,7 @@ const MessageList: React.FC<MessageListProps> = ({
         messages.forEach((m) => {
           existingMessageIds[m.id!] = true;
         });
-        const cleanedMessages = fetchedMessages.filter(
-          (m: SignedMessageWithProof) => !existingMessageIds[m.id!]
-        );
+        const cleanedMessages = fetchedMessages.filter((m: SignedMessageWithProof) => !existingMessageIds[m.id!]);
 
         setMessages((prevMessages) => [...prevMessages, ...cleanedMessages]);
         setHasMore(fetchedMessages.length === MESSAGES_PER_PAGE);
@@ -80,7 +74,7 @@ const MessageList: React.FC<MessageListProps> = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [groupId, isInternal]
+    [groupId, isInternal],
   );
 
   const checkForNewMessages = useCallback(async () => {
@@ -98,12 +92,10 @@ const MessageList: React.FC<MessageListProps> = ({
         setMessages((prevMessages) => [...newMessages, ...prevMessages]);
         setPollInterval(INITIAL_POLL_INTERVAL);
       } else {
-        setPollInterval((prevInterval) =>
-          Math.min(prevInterval + 10000, MAX_POLL_INTERVAL)
-        );
+        setPollInterval((prevInterval) => Math.min(prevInterval + 10000, MAX_POLL_INTERVAL));
       }
     } catch (error) {
-      console.error("Error checking for new messages:", error);
+      console.error('Error checking for new messages:', error);
     }
   }, [groupId, isInternal, messages]);
 
@@ -163,14 +155,11 @@ const MessageList: React.FC<MessageListProps> = ({
         </p>
         {!isInternal ? (
           <p>
-            Head over to the <Link href="/">homepage</Link> to send an anonymous
-            message by proving you are a member of <span>{groupId}</span>!
+            Head over to the <Link href="/">homepage</Link> to send an anonymous message by proving you are a member of{' '}
+            <span>{groupId}</span>!
           </p>
         ) : (
-          <p>
-            No messages yet. Be the first one to send anonymous messages to your
-            teammates.
-          </p>
+          <p>No messages yet. Be the first one to send anonymous messages to your teammates.</p>
         )}
       </div>
     );
@@ -178,20 +167,12 @@ const MessageList: React.FC<MessageListProps> = ({
 
   return (
     <>
-      {showMessageForm && (
-        <MessageForm isInternal={isInternal} onSubmit={onNewMessageSubmit} />
-      )}
+      {showMessageForm && <MessageForm isInternal={isInternal} onSubmit={onNewMessageSubmit} />}
 
       <div className="message-list" ref={messageListRef}>
         {messages.map((message, index) => (
-          <div
-            key={message.id || index}
-            ref={index === messages.length - 1 ? lastMessageElementRef : null}
-          >
-            <MessageCard
-              message={message as SignedMessageWithProof}
-              isInternal={isInternal}
-            />
+          <div key={message.id || index} ref={index === messages.length - 1 ? lastMessageElementRef : null}>
+            <MessageCard message={message as SignedMessageWithProof} isInternal={isInternal} />
           </div>
         ))}
         {loading && renderLoading()}

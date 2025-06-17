@@ -1,24 +1,24 @@
-import { InputMap, type CompiledCircuit } from "@noir-lang/noir_js";
-import { generateEmailVerifierInputs } from "@zk-email/zkemail-nr";
-import { getAddressHeaderSequence } from "@zk-email/zkemail-nr/dist/utils";
-import { AnonGroupProvider, EphemeralKey } from "../../../types";
-import { splitBigIntToLimbs, fetchDKIMPubkey } from "./utils";
-import Component from "./component";
+import { InputMap, type CompiledCircuit } from '@noir-lang/noir_js';
+import { generateEmailVerifierInputs } from '@zk-email/zkemail-nr';
+import { getAddressHeaderSequence } from '@zk-email/zkemail-nr/dist/utils';
+import { AnonGroupProvider, EphemeralKey } from '../../../types';
+import { splitBigIntToLimbs, fetchDKIMPubkey } from './utils';
+import Component from './component';
 
 const MAX_DOMAIN_LENGTH = 64;
 
 const OrganizationEmailProvider: AnonGroupProvider = {
   //
-  name: () => "organization-email",
+  name: () => 'organization-email',
   //
-  getSlug: () => "domain",
+  getSlug: () => 'domain',
   //
   getComponent: () => Component,
   //
-  generateProof: async (ephemeralKey: EphemeralKey, args: { email: string, domain: string, dkimSelector: string }) => {
+  generateProof: async (ephemeralKey: EphemeralKey, args: { email: string; domain: string; dkimSelector: string }) => {
     const { email, domain, dkimSelector } = args;
     if (!email || !domain || !dkimSelector) {
-      throw new Error("[OrganizationEmailProvider] Invalid arguments: email, domain and dkimSelector are required");
+      throw new Error('[OrganizationEmailProvider] Invalid arguments: email, domain and dkimSelector are required');
     }
 
     const zkEmailInputs = await generateEmailVerifierInputs(Buffer.from(email), {
@@ -29,13 +29,9 @@ const OrganizationEmailProvider: AnonGroupProvider = {
     const domainUint8Array = new Uint8Array(MAX_DOMAIN_LENGTH);
     domainUint8Array.set(Uint8Array.from(new TextEncoder().encode(domain)));
 
-    const fromSequence = getAddressHeaderSequence(
-      Buffer.from(Uint8Array.from(zkEmailInputs.header.storage)), "from"
-    );
+    const fromSequence = getAddressHeaderSequence(Buffer.from(Uint8Array.from(zkEmailInputs.header.storage)), 'from');
 
-    const toSequence = getAddressHeaderSequence(
-      Buffer.from(Uint8Array.from(zkEmailInputs.header.storage)), "to"
-    );
+    const toSequence = getAddressHeaderSequence(Buffer.from(Uint8Array.from(zkEmailInputs.header.storage)), 'to');
 
     const circuitInputs = {
       email_header: zkEmailInputs.header,
@@ -53,8 +49,8 @@ const OrganizationEmailProvider: AnonGroupProvider = {
       ephemeral_pubkey: (ephemeralKey.publicKey >> 3n).toString(),
     };
 
-    const { Noir } = await import("@noir-lang/noir_js");
-    const { UltraHonkBackend } = await import("@aztec/bb.js");
+    const { Noir } = await import('@noir-lang/noir_js');
+    const { UltraHonkBackend } = await import('@aztec/bb.js');
 
     let circuitArtifact;
     if (zkEmailInputs.pubkey.modulus.length === 18) {
@@ -62,7 +58,7 @@ const OrganizationEmailProvider: AnonGroupProvider = {
     } else if (zkEmailInputs.pubkey.modulus.length === 9) {
       circuitArtifact = await import(`../nr/email-1024/artifacts/circuit.json`);
     } else {
-      throw new Error("[Email Circuit] Unsupported DKIM public key modulus length");
+      throw new Error('[Email Circuit] Unsupported DKIM public key modulus length');
     }
 
     const backend = new UltraHonkBackend(circuitArtifact.bytecode, { threads: 8 });
@@ -96,13 +92,11 @@ const OrganizationEmailProvider: AnonGroupProvider = {
     anonGroupId: string,
     ephemeralPubkey: bigint,
     ephemeralPubkeyExpiry: Date,
-    proofArgs: { dkimSelector: string }
+    proofArgs: { dkimSelector: string },
   ) => {
     const dkimPubKey = await fetchDKIMPubkey(anonGroupId, proofArgs.dkimSelector);
     if (!dkimPubKey) {
-      throw new Error(
-        "[Prove With Email] Proof verification failed: could not fetch DKIM pubkey."
-      );
+      throw new Error('[Prove With Email] Proof verification failed: could not fetch DKIM pubkey.');
     }
 
     const domain = anonGroupId;
@@ -118,32 +112,26 @@ const OrganizationEmailProvider: AnonGroupProvider = {
       limbSize = 18;
       vkey = await import(`../nr/email-2048/artifacts/vkey.json`);
     } else {
-      throw new Error("[Email Circuit] Unsupported DKIM public key length");
+      throw new Error('[Email Circuit] Unsupported DKIM public key length');
     }
 
-    const { BarretenbergVerifier } = await import("@aztec/bb.js");
+    const { BarretenbergVerifier } = await import('@aztec/bb.js');
 
     // Public Inputs = pubkey_limbs(9 / 18) + domain(64) + ephemeral_pubkey(1)
     const publicInputs: string[] = [];
 
     // Push modulus limbs as 64 char hex strings (18 Fields)
     const modulusLimbs = splitBigIntToLimbs(dkimPubKey, 120, limbSize);
-    publicInputs.push(
-      ...modulusLimbs.map((s) => "0x" + s.toString(16).padStart(64, "0"))
-    );
+    publicInputs.push(...modulusLimbs.map((s) => '0x' + s.toString(16).padStart(64, '0')));
 
     // Push domain + domain length (BoundedVec of 64 bytes)
     const domainUint8Array = new Uint8Array(64);
     domainUint8Array.set(Uint8Array.from(new TextEncoder().encode(domain)));
-    publicInputs.push(
-      ...Array.from(domainUint8Array).map(
-        (s) => "0x" + s.toString(16).padStart(64, "0")
-      )
-    );
-    publicInputs.push("0x" + domain.length.toString(16).padStart(64, "0"));
+    publicInputs.push(...Array.from(domainUint8Array).map((s) => '0x' + s.toString(16).padStart(64, '0')));
+    publicInputs.push('0x' + domain.length.toString(16).padStart(64, '0'));
 
     // Push ephemeral pubkey (1 Field)
-    publicInputs.push("0x" + (ephemeralPubkey >> 3n).toString(16).padStart(64, "0"));
+    publicInputs.push('0x' + (ephemeralPubkey >> 3n).toString(16).padStart(64, '0'));
 
     const proofData = {
       proof: proof,
@@ -154,10 +142,7 @@ const OrganizationEmailProvider: AnonGroupProvider = {
       crsPath: process.env.TEMP_DIR,
     });
 
-    const result = await verifier.verifyUltraHonkProof(
-      proofData,
-      Uint8Array.from(vkey)
-    );
+    const result = await verifier.verifyUltraHonkProof(proofData, Uint8Array.from(vkey));
 
     return result;
   },

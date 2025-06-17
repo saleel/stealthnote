@@ -1,24 +1,21 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { createClient } from "@supabase/supabase-js";
-import { SignedMessageWithProof } from "../../../../types";
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from '@supabase/supabase-js';
+import { SignedMessageWithProof } from '../../../../types';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  throw new Error("Missing Supabase environment variables");
+  throw new Error('Missing Supabase environment variables');
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method === "GET") {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method === 'GET') {
     getSingleMessage(req, res);
   } else {
-    res.setHeader("Allow", ["GET"]);
+    res.setHeader('Allow', ['GET']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }
@@ -28,18 +25,18 @@ async function getSingleMessage(req: NextApiRequest, res: NextApiResponse) {
     const { id } = req.query;
 
     if (!id) {
-      res.status(400).json({ error: "Message ID is required" });
+      res.status(400).json({ error: 'Message ID is required' });
       res.end();
       return;
     }
 
     const { data, error } = await supabase
-      .from("messages")
+      .from('messages')
       .select(
         /* eslint-disable-next-line max-len */
-        "id, group_id, group_provider, text, timestamp, signature, pubkey, internal, likes, memberships(proof, pubkey_expiry, proof_args)"
+        'id, group_id, group_provider, text, timestamp, signature, pubkey, internal, likes, memberships(proof, pubkey_expiry, proof_args)',
       )
-      .eq("id", id)
+      .eq('id', id)
       .single();
 
     if (error) {
@@ -47,31 +44,29 @@ async function getSingleMessage(req: NextApiRequest, res: NextApiResponse) {
     }
 
     if (!data) {
-      res.status(404).json({ error: "Message not found" });
+      res.status(404).json({ error: 'Message not found' });
       res.end();
       return;
     }
 
     if (data.internal) {
       const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        res
-          .status(401)
-          .json({ error: "Authorization required for internal messages" });
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        res.status(401).json({ error: 'Authorization required for internal messages' });
         res.end();
         return;
       }
 
-      const pubkey = authHeader.split(" ")[1];
+      const pubkey = authHeader.split(' ')[1];
       const { data: membershipData, error: membershipError } = await supabase
-        .from("memberships")
-        .select("*")
-        .eq("pubkey", pubkey)
-        .eq("group_id", data.group_id)
+        .from('memberships')
+        .select('*')
+        .eq('pubkey', pubkey)
+        .eq('group_id', data.group_id)
         .single();
 
       if (membershipError || !membershipData) {
-        res.status(401).json({ error: "Invalid public key for this group" });
+        res.status(401).json({ error: 'Invalid public key for this group' });
         res.end();
         return;
       }
@@ -99,7 +94,7 @@ async function getSingleMessage(req: NextApiRequest, res: NextApiResponse) {
     res.end();
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: 'Internal server error' });
     res.end();
   }
 }

@@ -8,7 +8,7 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  throw new Error("Missing Supabase environment variables");
+  throw new Error('Missing Supabase environment variables');
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -21,10 +21,7 @@ const twitterClient = new TwitterApi({
   accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET!,
 });
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -46,7 +43,7 @@ export default async function handler(
       } else {
         console.log(`Successfully tweeted: ${message.text}`);
         await markMessageAsTweeted(message.id);
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     }
 
@@ -84,10 +81,7 @@ const getLatestMessages = async (): Promise<Message[]> => {
  * Marks a message as tweeted in Supabase
  */
 const markMessageAsTweeted = async (messageId: string): Promise<void> => {
-  const { error } = await supabase
-    .from('messages')
-    .update({ tweeted: true })
-    .eq('id', messageId);
+  const { error } = await supabase.from('messages').update({ tweeted: true }).eq('id', messageId);
 
   if (error) {
     console.error('Error marking message as tweeted:', error);
@@ -101,10 +95,11 @@ const postTweet = async (message: Message): Promise<boolean> => {
   try {
     const companyDomain = message.anonGroupId as keyof typeof twitterHandles;
     const companyDomainCleaned = '-' + companyDomain;
-    
-    const companyText = message.anonGroupId in twitterHandles
-      ? `@${twitterHandles[companyDomain]} ${companyDomainCleaned}`
-      : companyDomainCleaned;
+
+    const companyText =
+      message.anonGroupId in twitterHandles
+        ? `@${twitterHandles[companyDomain]} ${companyDomainCleaned}`
+        : companyDomainCleaned;
     const prefix = `Someone from ${companyText} said:\n\n`;
     const suffix = `\n\nVerify: https://stealthnote.xyz/messages/${message.id}`;
     const maxTweetLength = 280;
@@ -130,7 +125,7 @@ const postTweet = async (message: Message): Promise<boolean> => {
         const tweetText = parts[i] + (isLast ? suffix : ` ${partNum}`);
 
         const reply = await twitterClient.v2.tweet(tweetText, {
-          reply: { in_reply_to_tweet_id: previousTweetId }
+          reply: { in_reply_to_tweet_id: previousTweetId },
         });
         previousTweetId = reply.data.id;
       }

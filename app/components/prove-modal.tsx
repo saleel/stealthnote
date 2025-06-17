@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React from "react";
-import IonIcon from "@reacticons/ionicons";
-import { generateEphemeralKey } from "../lib/ephemeral-key";
-import { Providers } from "../lib/providers";
-import { AnonGroupProvider } from "../../types";
+import React from 'react';
+import IonIcon from '@reacticons/ionicons';
+import { generateEphemeralKey } from '../lib/ephemeral-key';
+import { Providers } from '../lib/providers';
+import { AnonGroupProvider } from '../../types';
 
 const ProveModal = (props: {
   isOpen: boolean;

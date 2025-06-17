@@ -1,6 +1,6 @@
-import GoogleOAuthProvider from "@stealthnote/provider-organization-google-jwt";
-import ProveByEmailProvider from "@stealthnote/provider-organization-email";
-import { AnonGroupProvider } from "../../types";
+import GoogleOAuthProvider from '@stealthnote/provider-organization-google-jwt';
+import ProveByEmailProvider from '@stealthnote/provider-organization-email';
+import { AnonGroupProvider } from '../../types';
 
 export const Providers: Record<string, AnonGroupProvider> = {
   [ProveByEmailProvider.name()]: ProveByEmailProvider,
