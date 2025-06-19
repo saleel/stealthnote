@@ -22,6 +22,10 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, isInternal }) => {
   const timeAgo = useRef(new TimeAgo('en-US')).current;
 
   const provider = Providers[message.anonGroupProvider];
+  if (!provider) {
+    return null;
+  }
+
   const anonGroup = provider.getAnonGroup(message.anonGroupId);
 
   // States
