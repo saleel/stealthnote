@@ -27,12 +27,13 @@ export async function fetchDKIMPubkey(domain: string, selector: string): Promise
   const googleDnsResponse = await fetch(googleDnsUrl);
   const googleDnsData = (await googleDnsResponse.json()) as DNSResponse;
 
-  if (!googleDnsData.Answer?.[0]?.data) {
+  const txtAnswer = googleDnsData.Answer?.find((answer) => answer.type === 16);
+  if (!txtAnswer?.data) {
     throw new Error(`No DKIM record found for ${dkimRecordName}`);
   }
 
   // DKIM record is in format: "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A..."
-  const dkimRecord = googleDnsData.Answer[0].data;
+  const dkimRecord = txtAnswer.data;
   const dkimParts = dkimRecord.split(';').map((part: string) => part.trim());
 
   // Find the p= part which contains the base64 encoded public key
